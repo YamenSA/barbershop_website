@@ -1,8 +1,9 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Optional
 from uuid import UUID
 
+from sqlalchemy import DateTime
 from sqlmodel import Field, Relationship, SQLModel
 
 from app.core.base import TimestampModel, UUIDModel
@@ -21,8 +22,14 @@ class Customer(UUIDModel, TimestampModel, table=True):
     name: str = Field(nullable=False)
     email: str = Field(unique=True, index=True, nullable=False)
     phone: Optional[str] = Field(default=None)
-    last_active_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
-    anonymized_at: Optional[datetime] = Field(default=None)
+    last_active_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc),
+        nullable=False,
+        sa_type=DateTime(timezone=True),
+    )
+    anonymized_at: Optional[datetime] = Field(
+        default=None, sa_type=DateTime(timezone=True)
+    )
 
 
 class Appointment(UUIDModel, TimestampModel, table=True):
@@ -36,8 +43,8 @@ class Appointment(UUIDModel, TimestampModel, table=True):
     guest_name: Optional[str] = Field(default=None)
     guest_phone: Optional[str] = Field(default=None)
     
-    starts_at: datetime = Field(nullable=False)
-    ends_at: datetime = Field(nullable=False)
+    starts_at: datetime = Field(nullable=False, sa_type=DateTime(timezone=True))
+    ends_at: datetime = Field(nullable=False, sa_type=DateTime(timezone=True))
     status: AppointmentStatus = Field(
         default=AppointmentStatus.confirmed, nullable=False
     )

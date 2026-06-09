@@ -7,7 +7,6 @@ Create Date: 2026-06-09 13:20:00.000000
 """
 from alembic import op
 import sqlalchemy as sa
-import sqlmodel
 
 
 # revision identifiers, used by Alembic.
@@ -22,10 +21,10 @@ def upgrade() -> None:
     op.create_table('customers',
     sa.Column('created_at', sa.DateTime(), nullable=False),
     sa.Column('updated_at', sa.DateTime(), nullable=False),
-    sa.Column('id', sqlmodel.sql.sqltypes.GUID(), nullable=False),
-    sa.Column('name', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
-    sa.Column('email', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
-    sa.Column('phone', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
+    sa.Column('id', sa.UUID(), nullable=False),
+    sa.Column('name', sa.String(), nullable=False),
+    sa.Column('email', sa.String(), nullable=False),
+    sa.Column('phone', sa.String(), nullable=True),
     sa.Column('last_active_at', sa.DateTime(), nullable=False),
     sa.Column('anonymized_at', sa.DateTime(), nullable=True),
     sa.PrimaryKeyConstraint('id')
@@ -37,16 +36,16 @@ def upgrade() -> None:
     op.create_table('appointments',
     sa.Column('created_at', sa.DateTime(), nullable=False),
     sa.Column('updated_at', sa.DateTime(), nullable=False),
-    sa.Column('id', sqlmodel.sql.sqltypes.GUID(), nullable=False),
-    sa.Column('team_member_id', sqlmodel.sql.sqltypes.GUID(), nullable=False),
-    sa.Column('service_id', sqlmodel.sql.sqltypes.GUID(), nullable=False),
-    sa.Column('customer_id', sqlmodel.sql.sqltypes.GUID(), nullable=True),
-    sa.Column('guest_name', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
-    sa.Column('guest_phone', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
+    sa.Column('id', sa.UUID(), nullable=False),
+    sa.Column('team_member_id', sa.UUID(), nullable=False),
+    sa.Column('service_id', sa.UUID(), nullable=False),
+    sa.Column('customer_id', sa.UUID(), nullable=True),
+    sa.Column('guest_name', sa.String(), nullable=True),
+    sa.Column('guest_phone', sa.String(), nullable=True),
     sa.Column('starts_at', sa.DateTime(), nullable=False),
     sa.Column('ends_at', sa.DateTime(), nullable=False),
     sa.Column('status', sa.Enum('confirmed', 'completed', 'cancelled', 'no_show', name='appointmentstatus'), nullable=False),
-    sa.Column('notes', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
+    sa.Column('notes', sa.String(), nullable=True),
     sa.ForeignKeyConstraint(['customer_id'], ['customers.id'], ),
     sa.ForeignKeyConstraint(['service_id'], ['services.id'], ),
     sa.ForeignKeyConstraint(['team_member_id'], ['team_members.id'], ),
@@ -77,7 +76,7 @@ def upgrade() -> None:
         ADD CONSTRAINT no_overlapping_confirmed_appointments
         EXCLUDE USING GIST (
             team_member_id WITH =,
-            tstzrange(starts_at, ends_at, '[)') WITH &&
+            tsrange(starts_at, ends_at, '[)') WITH &&
         ) WHERE (status = 'confirmed')
     """)
 

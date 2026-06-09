@@ -12,6 +12,9 @@ class Settings(BaseSettings):
     ADMIN_USERNAME: str
     ADMIN_PASSWORD: str
     RATE_LIMIT_LOGIN_PER_MINUTE: int = 20
+    # Set False for local HTTP development so the session cookie is stored
+    # by the browser; MUST be True in production (HTTPS).
+    COOKIE_SECURE: bool = False
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 

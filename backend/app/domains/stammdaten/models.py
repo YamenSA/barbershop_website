@@ -2,6 +2,7 @@ import datetime as dt
 from typing import List, Optional
 from uuid import UUID
 
+from sqlalchemy import DateTime
 from sqlmodel import Field, Relationship, SQLModel
 
 from app.core.base import TimestampModel, UUIDModel
@@ -76,8 +77,8 @@ class WorkingException(UUIDModel, TimestampModel, table=True):
     __tablename__ = "working_exceptions"
 
     team_member_id: UUID = Field(foreign_key="team_members.id", nullable=False)
-    starts_at: dt.datetime = Field(nullable=False)
-    ends_at: dt.datetime = Field(nullable=False)
+    starts_at: dt.datetime = Field(nullable=False, sa_type=DateTime(timezone=True))
+    ends_at: dt.datetime = Field(nullable=False, sa_type=DateTime(timezone=True))
     reason: Optional[str] = Field(default=None)
 
     member: TeamMember = Relationship()
@@ -93,8 +94,9 @@ class DayOverride(UUIDModel, table=True):
     custom_end_time: Optional[dt.time] = Field(default=None)
     reason: Optional[str] = Field(default=None)
     created_at: dt.datetime = Field(
-        default_factory=dt.datetime.now,
+        default_factory=lambda: dt.datetime.now(dt.timezone.utc),
         nullable=False,
+        sa_type=DateTime(timezone=True),
     )
 
     member: TeamMember = Relationship()

@@ -1,5 +1,5 @@
 import asyncio
-from logging.config import file_config
+from logging.config import fileConfig
 
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
@@ -10,9 +10,9 @@ from alembic import context
 from app.core.config import settings
 
 # Import models here
-from app.domains.stammdaten.models import Service, TeamMember, SalonHours, SalonClosure, WorkingHours, WorkingException, DayOverride
-from app.domains.booking.models import Appointment, Customer
-from app.domains.auth.models import AdminAccount
+from app.domains.stammdaten.models import Service, TeamMember, SalonHours, SalonClosure, WorkingHours, WorkingException, DayOverride  # noqa: F401
+from app.domains.booking.models import Appointment, Customer  # noqa: F401
+from app.domains.auth.models import AdminAccount  # noqa: F401
 
 # this is the Alembic Config object, which provides access to the values within the .ini file in use.
 config = context.config
@@ -20,7 +20,7 @@ config = context.config
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
 if config.config_file_name is not None:
-    file_config(config.config_file_name)
+    fileConfig(config.config_file_name)
 
 # add your model's MetaData object here
 # for 'autogenerate' support
@@ -72,7 +72,7 @@ async def run_migrations_online() -> None:
     and associate a connection with the context.
 
     """
-    configuration = config.get_section(config.config_ini_section)
+    configuration = config.get_section(config.config_ini_section) or {}
     configuration["sqlalchemy.url"] = settings.DATABASE_URL
     connectable = async_engine_from_config(
         configuration,
