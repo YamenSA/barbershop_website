@@ -7,11 +7,10 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.core.config import settings
 from app.core.database import get_session
+from app.domains.auth.dependencies import get_current_admin
+from app.domains.auth.models import AdminAccount
 from app.main import app
 
-# Use a test database or an in-memory sqlite for tests if possible.
-# For now, we'll use the same DATABASE_URL but we should be careful.
-# Ideally, we'd use an async sqlite for tests.
 TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
 
 engine = create_async_engine(TEST_DATABASE_URL, echo=False, future=True)
@@ -30,12 +29,35 @@ async def session_fixture():
         await conn.run_sync(SQLModel.metadata.drop_all)
 
 
+@pytest.fixture(name="mock_admin")
+def mock_admin_fixture() -> AdminAccount:
+    return AdminAccount(username="testadmin", hashed_password="irrelevant-mocked")
+
+
 @pytest.fixture(name="client")
-async def client_fixture(session: AsyncSession):
+async def client_fixture(session: AsyncSession, mock_admin: AdminAccount):
+    """Authenticated client — get_current_admin always returns mock_admin."""
+    def get_session_override():
+        return session
+
+    async def get_admin_override():
+        return mock_admin
+
+    app.dependency_overrides[get_session] = get_session_override
+    app.dependency_overrides[get_current_admin] = get_admin_override
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        yield client
+    app.dependency_overrides.clear()
+
+
+@pytest.fixture(name="auth_client")
+async def auth_client_fixture(session: AsyncSession):
+    """Unauthenticated client — real get_current_admin for auth endpoint tests.
+    Uses https:// so httpx honours Secure cookie attribute on subsequent requests."""
     def get_session_override():
         return session
 
     app.dependency_overrides[get_session] = get_session_override
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="https://test") as client:
         yield client
     app.dependency_overrides.clear()

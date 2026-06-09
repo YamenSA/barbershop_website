@@ -1,4 +1,5 @@
-from typing import List
+from datetime import date
+from typing import List, Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, status
@@ -7,6 +8,9 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.core.database import get_session
 from app.domains.stammdaten.schemas import (
+    ClosureConflictWarning,
+    DayOverrideCreate,
+    DayOverrideRead,
     SalonClosureCreate,
     SalonClosureRead,
     SalonHoursRead,
@@ -24,8 +28,9 @@ from app.domains.stammdaten.schemas import (
     WorkingHoursUpdate,
 )
 from app.domains.stammdaten.service import StammdatenService
+from app.domains.auth.dependencies import get_current_admin
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(get_current_admin)])
 
 
 # --- Services ---
@@ -38,8 +43,11 @@ async def create_service(
 
 
 @router.get("/services", response_model=List[ServiceRead])
-async def get_services(session: AsyncSession = Depends(get_session)):
-    return await StammdatenService.get_services(session)
+async def get_services(
+    active_only: bool = True,
+    session: AsyncSession = Depends(get_session),
+):
+    return await StammdatenService.get_services(session, active_only)
 
 
 @router.get("/services/{service_id}", response_model=ServiceRead)
@@ -75,8 +83,11 @@ async def create_team_member(
 
 
 @router.get("/team-members", response_model=List[TeamMemberRead])
-async def get_team_members(session: AsyncSession = Depends(get_session)):
-    return await StammdatenService.get_team_members(session)
+async def get_team_members(
+    active_only: bool = True,
+    session: AsyncSession = Depends(get_session),
+):
+    return await StammdatenService.get_team_members(session, active_only)
 
 
 @router.get("/team-members/{member_id}", response_model=TeamMemberRead)
@@ -186,3 +197,35 @@ async def delete_working_exception(
     exception_id: UUID, session: AsyncSession = Depends(get_session)
 ):
     await StammdatenService.delete_working_exception(session, exception_id)
+
+
+# --- Day Overrides ---
+
+@router.get("/team-members/{member_id}/day-overrides", response_model=List[DayOverrideRead])
+async def list_day_overrides(
+    member_id: UUID,
+    from_date: Optional[date] = None,
+    to_date: Optional[date] = None,
+    session: AsyncSession = Depends(get_session)
+):
+    return await StammdatenService.list_day_overrides(session, member_id, from_date, to_date)
+
+
+@router.post(
+    "/team-members/{member_id}/day-overrides",
+    response_model=DayOverrideRead,
+    status_code=status.HTTP_201_CREATED
+)
+async def create_day_override(
+    member_id: UUID,
+    override_in: DayOverrideCreate,
+    session: AsyncSession = Depends(get_session)
+):
+    return await StammdatenService.create_day_override(session, member_id, override_in)
+
+
+@router.delete("/day-overrides/{override_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_day_override(
+    override_id: UUID, session: AsyncSession = Depends(get_session)
+):
+    await StammdatenService.delete_day_override(session, override_id)

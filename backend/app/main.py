@@ -22,11 +22,24 @@ def create_app() -> FastAPI:
 
     setup_exception_handlers(app)
 
+    from slowapi import _rate_limit_exceeded_handler
+    from slowapi.errors import RateLimitExceeded
+    from app.domains.auth.router import limiter as auth_limiter
+
+    app.state.limiter = auth_limiter
+    app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+    from app.domains.auth.router import router as auth_router
+    app.include_router(auth_router, prefix="/api/v1")
+
     from app.domains.stammdaten.router import router as stammdaten_router
     app.include_router(stammdaten_router, prefix="/api/v1")
 
     from app.domains.booking.router import router as booking_router
     app.include_router(booking_router, prefix="/api/v1")
+
+    from app.domains.booking.admin_router import router as admin_booking_router
+    app.include_router(admin_booking_router, prefix="/api/v1")
 
     return app
 

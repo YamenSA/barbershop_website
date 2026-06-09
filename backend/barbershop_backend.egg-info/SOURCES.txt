@@ -4,6 +4,7 @@ app/core/base.py
 app/core/config.py
 app/core/database.py
 app/core/exceptions.py
+app/domains/auth/models.py
 app/domains/booking/availability.py
 app/domains/booking/models.py
 app/domains/booking/retention.py

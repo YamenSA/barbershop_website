@@ -35,6 +35,7 @@ async def test_booking_integrity_overlap_fails(
             "guest_name": "Hans",
             "guest_phone": "+49123",
             "starts_at": start_time.isoformat(),
+            "admin_override": True,
         },
     )
     assert response1.status_code == 201
@@ -48,6 +49,7 @@ async def test_booking_integrity_overlap_fails(
             "guest_name": "Klaus",
             "guest_phone": "+49456",
             "starts_at": (start_time + timedelta(minutes=30)).isoformat(),
+            "admin_override": True,
         },
     )
     # Expected: 409 Conflict due to EXCLUDE constraint
@@ -75,9 +77,10 @@ async def test_adjacent_slots_allowed(client: AsyncClient, session: AsyncSession
             "guest_name": "Hans",
             "guest_phone": "+49123",
             "starts_at": start_time.isoformat(),
+            "admin_override": True,
         },
     )
-    
+
     # Second: 10:45 - 11:30 (Adjacent is allowed in halboffenes Intervall [))
     response = await client.post(
         "/api/v1/appointments",
@@ -87,6 +90,7 @@ async def test_adjacent_slots_allowed(client: AsyncClient, session: AsyncSession
             "guest_name": "Klaus",
             "guest_phone": "+49456",
             "starts_at": (start_time + timedelta(minutes=45)).isoformat(),
+            "admin_override": True,
         },
     )
     assert response.status_code == 201
@@ -113,6 +117,7 @@ async def test_cancelled_doesnt_block(client: AsyncClient, session: AsyncSession
             "guest_name": "Hans",
             "guest_phone": "+49123",
             "starts_at": start_time.isoformat(),
+            "admin_override": True,
         },
     )
     apt_id = resp.json()["id"]
@@ -129,6 +134,7 @@ async def test_cancelled_doesnt_block(client: AsyncClient, session: AsyncSession
             "guest_name": "Klaus",
             "guest_phone": "+49456",
             "starts_at": start_time.isoformat(),
+            "admin_override": True,
         },
     )
     assert response.status_code == 201
@@ -154,6 +160,7 @@ async def test_customer_booking(client: AsyncClient, session: AsyncSession):
             "service_id": str(service.id),
             "customer_id": str(customer.id),
             "starts_at": datetime(2026, 7, 15, 14, 0, tzinfo=timezone.utc).isoformat(),
+            "admin_override": True,
         },
     )
     assert response.status_code == 201

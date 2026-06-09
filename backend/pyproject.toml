@@ -13,6 +13,11 @@ dependencies = [
     "pydantic[email]>=2.7.0",
     "pydantic-settings>=2.2.0",
     "uvicorn[standard]>=0.30.0",
+    "python-jose[cryptography]>=3.3.0",
+    "passlib[bcrypt]>=1.7.4",
+    "slowapi>=0.1.9",
+    "fpdf2>=2.7.0",
+    "cachetools>=5.3.3",
 ]
 requires-python = ">=3.11"
 

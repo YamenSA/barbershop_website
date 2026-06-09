@@ -11,6 +11,7 @@ class ServiceBase(BaseModel):
     name: str
     duration_minutes: int
     price_cents: int
+    description: Optional[str] = None
     is_active: bool = True
 
 
@@ -22,6 +23,7 @@ class ServiceUpdate(BaseModel):
     name: Optional[str] = None
     duration_minutes: Optional[int] = None
     price_cents: Optional[int] = None
+    description: Optional[str] = None
     is_active: Optional[bool] = None
 
 
@@ -86,7 +88,13 @@ class SalonClosureBase(BaseModel):
 
 
 class SalonClosureCreate(SalonClosureBase):
-    pass
+    force: bool = False
+
+
+class ClosureConflictWarning(BaseModel):
+    code: str = "CLOSURE_CONFLICT_WARNING"
+    conflicting_appointment_count: int
+    requires_confirmation: bool = True
 
 
 class SalonClosureRead(SalonClosureBase):
@@ -130,4 +138,25 @@ class WorkingExceptionCreate(WorkingExceptionBase):
 class WorkingExceptionRead(WorkingExceptionBase):
     id: UUID
     team_member_id: UUID
+    model_config = ConfigDict(from_attributes=True)
+
+
+# --- Day Overrides ---
+
+class DayOverrideBase(BaseModel):
+    date: date
+    override_type: str  # 'day_off' or 'extra_hours'
+    custom_start_time: Optional[time] = None
+    custom_end_time: Optional[time] = None
+    reason: Optional[str] = None
+
+
+class DayOverrideCreate(DayOverrideBase):
+    pass
+
+
+class DayOverrideRead(DayOverrideBase):
+    id: UUID
+    team_member_id: UUID
+    created_at: datetime
     model_config = ConfigDict(from_attributes=True)

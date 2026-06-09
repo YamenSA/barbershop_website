@@ -7,6 +7,7 @@ from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.domains.stammdaten.models import (
+    DayOverride,
     SalonClosure,
     SalonHours,
     Service,
@@ -42,19 +43,36 @@ async def get_available_slots(
     if not salon_hours or not salon_hours.is_open:
         return []
 
-    # 4. Check working hours
-    working_stmt = select(WorkingHours).where(
-        WorkingHours.team_member_id == team_member_id,
-        WorkingHours.day_of_week == weekday,
+    # 4. Check for DayOverride
+    override_stmt = select(DayOverride).where(
+        DayOverride.team_member_id == team_member_id,
+        DayOverride.date == target_date,
     )
-    working_result = await session.execute(working_stmt)
-    working_hours = working_result.scalar_one_or_none()
-    if not working_hours:
-        return []
+    override_result = await session.execute(override_stmt)
+    day_override = override_result.scalar_one_or_none()
 
-    # 5. Calculate base window (intersection of salon and working hours)
-    start_time = max(salon_hours.open_time, working_hours.start_time)
-    end_time = min(salon_hours.close_time, working_hours.end_time)
+    if day_override:
+        if day_override.override_type == "day_off":
+            return []
+        # extra_hours
+        working_start = day_override.custom_start_time
+        working_end = day_override.custom_end_time
+    else:
+        # 5. Check regular working hours
+        working_stmt = select(WorkingHours).where(
+            WorkingHours.team_member_id == team_member_id,
+            WorkingHours.day_of_week == weekday,
+        )
+        working_result = await session.execute(working_stmt)
+        working_hours = working_result.scalar_one_or_none()
+        if not working_hours:
+            return []
+        working_start = working_hours.start_time
+        working_end = working_hours.end_time
+
+    # 6. Calculate base window (intersection of salon and working hours)
+    start_time = max(salon_hours.open_time, working_start)
+    end_time = min(salon_hours.close_time, working_end)
     
     if start_time >= end_time:
         return []
