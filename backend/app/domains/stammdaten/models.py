@@ -24,6 +24,7 @@ class Service(UUIDModel, TimestampModel, table=True):
     name: str = Field(index=True, unique=True, nullable=False)
     duration_minutes: int = Field(nullable=False)
     price_cents: int = Field(nullable=False)
+    description: Optional[str] = Field(default=None)
     is_active: bool = Field(default=True, nullable=False)
 
     team_members: List["TeamMember"] = Relationship(
@@ -78,5 +79,22 @@ class WorkingException(UUIDModel, TimestampModel, table=True):
     starts_at: dt.datetime = Field(nullable=False)
     ends_at: dt.datetime = Field(nullable=False)
     reason: Optional[str] = Field(default=None)
+
+    member: TeamMember = Relationship()
+
+
+class DayOverride(UUIDModel, table=True):
+    __tablename__ = "day_overrides"
+
+    team_member_id: UUID = Field(foreign_key="team_members.id", nullable=False)
+    date: dt.date = Field(nullable=False)
+    override_type: str = Field(nullable=False)  # 'day_off' or 'extra_hours'
+    custom_start_time: Optional[dt.time] = Field(default=None)
+    custom_end_time: Optional[dt.time] = Field(default=None)
+    reason: Optional[str] = Field(default=None)
+    created_at: dt.datetime = Field(
+        default_factory=dt.datetime.now,
+        nullable=False,
+    )
 
     member: TeamMember = Relationship()

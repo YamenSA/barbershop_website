@@ -9,6 +9,11 @@ from sqlmodel import SQLModel
 from alembic import context
 from app.core.config import settings
 
+# Import models here
+from app.domains.stammdaten.models import Service, TeamMember, SalonHours, SalonClosure, WorkingHours, WorkingException, DayOverride
+from app.domains.booking.models import Appointment, Customer
+from app.domains.auth.models import AdminAccount
+
 # this is the Alembic Config object, which provides access to the values within the .ini file in use.
 config = context.config
 

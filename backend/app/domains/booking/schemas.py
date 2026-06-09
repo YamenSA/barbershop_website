@@ -35,7 +35,7 @@ class AppointmentBase(BaseModel):
 
 
 class AppointmentCreate(AppointmentBase):
-    pass
+    admin_override: bool = False  # not persisted — skips schedule check when True
 
 
 class AppointmentRead(BaseModel):
@@ -54,3 +54,35 @@ class AppointmentRead(BaseModel):
 
 class AppointmentStatusUpdate(BaseModel):
     status: AppointmentStatus
+
+
+class AppointmentUpdate(BaseModel):
+    starts_at: Optional[datetime] = None
+    team_member_id: Optional[UUID] = None
+    notes: Optional[str] = None
+
+
+class AppointmentSummary(BaseModel):
+    id: UUID
+    team_member_id: UUID
+    service_id: UUID
+    customer_id: Optional[UUID] = None
+    guest_name: Optional[str] = None
+    guest_phone: Optional[str] = None
+    starts_at: datetime
+    ends_at: datetime
+    status: AppointmentStatus
+    model_config = ConfigDict(from_attributes=True)
+
+
+class WorkingMemberSummary(BaseModel):
+    team_member_id: UUID
+    name: str
+    start_time: str
+    end_time: str
+
+
+class DashboardResponse(BaseModel):
+    date: str
+    appointments: List[AppointmentSummary]
+    working_today: List[WorkingMemberSummary]

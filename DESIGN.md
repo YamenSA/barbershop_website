@@ -107,7 +107,18 @@ Shadows appear only as a response to interaction state: a primary button receivi
 - **Mobile treatment:** Hamburger menu to a full-screen drawer (Midnight Marble bg), primary CTA ("Book now") pinned to bottom of drawer.
 - **CTA in nav:** Malachite primary button, always visible on desktop. Collapsed into drawer on mobile; sticky booking button persists at bottom of viewport on mobile.
 
-## 6. Do's and Don'ts
+## 6. Design Tooling Hierarchy
+
+**DESIGN.md is the single source of truth.** Agent skills serve this document — they do not override it.
+
+| Skill | Role |
+|---|---|
+| `impeccable` | Generator — builds Hero, components, tokens from this spec |
+| `emil-design-eng` | Refiner — audits and polishes animations, micro-interactions, feel in Phase 2/3 |
+
+At conflict: DESIGN.md + Performance Budget win. When both skills are active, Impeccable generates first; Emil reviews second. Never two generators in parallel on the same component.
+
+## 7. Do's and Don'ts
 
 ### Do:
 - **Do** use Malachite (`oklch(0.65 0.19 140)`) as the primary CTA color across the entire site — it is the single identity signal.

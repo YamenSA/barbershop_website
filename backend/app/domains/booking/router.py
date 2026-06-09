@@ -11,12 +11,14 @@ from app.domains.booking.schemas import (
     AppointmentCreate,
     AppointmentRead,
     AppointmentStatusUpdate,
+    AppointmentUpdate,
     CustomerCreate,
     CustomerRead,
 )
 from app.domains.booking.service import BookingService
+from app.domains.auth.dependencies import get_current_admin
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(get_current_admin)])
 
 
 @router.get("/availability", response_model=List[SlotResult])
@@ -40,9 +42,12 @@ async def create_appointment(
 
 @router.get("/appointments", response_model=List[AppointmentRead])
 async def list_appointments(
-    team_member_id: Optional[UUID] = None, session: AsyncSession = Depends(get_session)
+    team_member_id: Optional[UUID] = None,
+    from_date: Optional[date] = None,
+    to_date: Optional[date] = None,
+    session: AsyncSession = Depends(get_session),
 ):
-    return await BookingService.list_appointments(session, team_member_id)
+    return await BookingService.list_appointments(session, team_member_id, from_date, to_date)
 
 
 @router.get("/appointments/{appointment_id}", response_model=AppointmentRead)
@@ -50,6 +55,15 @@ async def get_appointment(
     appointment_id: UUID, session: AsyncSession = Depends(get_session)
 ):
     return await BookingService.get_appointment(session, appointment_id)
+
+
+@router.patch("/appointments/{appointment_id}", response_model=AppointmentRead)
+async def patch_appointment(
+    appointment_id: UUID,
+    update_in: AppointmentUpdate,
+    session: AsyncSession = Depends(get_session),
+):
+    return await BookingService.patch_appointment(session, appointment_id, update_in)
 
 
 @router.patch("/appointments/{appointment_id}/status", response_model=AppointmentRead)
@@ -73,8 +87,11 @@ async def create_customer(
 
 
 @router.get("/customers", response_model=List[CustomerRead])
-async def list_customers(session: AsyncSession = Depends(get_session)):
-    return await BookingService.get_customers(session)
+async def list_customers(
+    search: Optional[str] = None,
+    session: AsyncSession = Depends(get_session),
+):
+    return await BookingService.get_customers(session, search)
 
 
 @router.get("/customers/{customer_id}", response_model=CustomerRead)

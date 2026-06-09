@@ -1,7 +1,7 @@
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan
-at `specs/001-fundament/plan.md`.
+at `specs/002-admin/plan.md`.
 <!-- SPECKIT END -->
 
 ## Domänen-Glossar (DE → EN Code-Bezeichner)
@@ -19,6 +19,8 @@ Specs sind auf Deutsch geschrieben; Code verwendet englische Bezeichner. Mapping
 | Termin | Appointment |
 | Kunde | Customer |
 | Anonymisierungslauf | `run_retention_job` |
+| Tages-Überschreibung | `DayOverride` |
+| Admin-Konto | `AdminAccount` |
 
 ## Implementation Notes
 

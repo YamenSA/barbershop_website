@@ -1,3 +1,4 @@
+from datetime import date, datetime, timezone, time as time_type
 from typing import List, Optional
 from uuid import UUID
 
@@ -6,6 +7,7 @@ from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.domains.stammdaten.models import (
+    DayOverride,
     SalonClosure,
     SalonHours,
     Service,
@@ -15,6 +17,7 @@ from app.domains.stammdaten.models import (
     WorkingHours,
 )
 from app.domains.stammdaten.schemas import (
+    DayOverrideCreate,
     SalonClosureCreate,
     SalonHoursUpdate,
     ServiceCreate,
@@ -36,8 +39,10 @@ class StammdatenService:
         return service
 
     @staticmethod
-    async def get_services(session: AsyncSession) -> List[Service]:
-        statement = select(Service).where(Service.is_active == True)
+    async def get_services(session: AsyncSession, active_only: bool = True) -> List[Service]:
+        statement = select(Service)
+        if active_only:
+            statement = statement.where(Service.is_active == True)
         results = await session.execute(statement)
         return results.scalars().all()
 
@@ -81,8 +86,10 @@ class StammdatenService:
         return member
 
     @staticmethod
-    async def get_team_members(session: AsyncSession) -> List[TeamMember]:
-        statement = select(TeamMember).where(TeamMember.is_active == True)
+    async def get_team_members(session: AsyncSession, active_only: bool = True) -> List[TeamMember]:
+        statement = select(TeamMember)
+        if active_only:
+            statement = statement.where(TeamMember.is_active == True)
         results = await session.execute(statement)
         return results.scalars().all()
 
@@ -145,14 +152,12 @@ class StammdatenService:
         result = await session.execute(statement)
         hours = result.scalar_one_or_none()
         if not hours:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="Salon hours not found"
-            )
-        
+            hours = SalonHours(day_of_week=day_of_week)
+
         update_data = hours_in.model_dump(exclude_unset=True)
         for key, value in update_data.items():
             setattr(hours, key, value)
-        
+
         session.add(hours)
         await session.commit()
         await session.refresh(hours)
@@ -162,7 +167,30 @@ class StammdatenService:
     async def create_salon_closure(
         session: AsyncSession, closure_in: SalonClosureCreate
     ) -> SalonClosure:
-        closure = SalonClosure.model_validate(closure_in)
+        from datetime import datetime, timezone, time as time_type
+        from app.domains.booking.models import Appointment, AppointmentStatus
+
+        if not closure_in.force:
+            day_start = datetime.combine(closure_in.date, time_type.min).replace(tzinfo=timezone.utc)
+            day_end = datetime.combine(closure_in.date, time_type.max).replace(tzinfo=timezone.utc)
+            stmt = select(Appointment).where(
+                Appointment.status == AppointmentStatus.confirmed,
+                Appointment.starts_at >= day_start,
+                Appointment.starts_at <= day_end,
+            )
+            result = await session.execute(stmt)
+            conflicting = result.scalars().all()
+            if conflicting:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail={
+                        "code": "CLOSURE_CONFLICT_WARNING",
+                        "conflicting_appointment_count": len(conflicting),
+                        "requires_confirmation": True,
+                    },
+                )
+
+        closure = SalonClosure(date=closure_in.date, reason=closure_in.reason)
         session.add(closure)
         await session.commit()
         await session.refresh(closure)
@@ -241,4 +269,53 @@ class StammdatenService:
                 status_code=status.HTTP_404_NOT_FOUND, detail="Working exception not found"
             )
         await session.delete(exception)
+        await session.commit()
+
+    @staticmethod
+    async def list_day_overrides(
+        session: AsyncSession,
+        member_id: UUID,
+        from_date: Optional[date] = None,
+        to_date: Optional[date] = None
+    ) -> List[DayOverride]:
+        statement = select(DayOverride).where(DayOverride.team_member_id == member_id)
+        if from_date:
+            statement = statement.where(DayOverride.date >= from_date)
+        if to_date:
+            statement = statement.where(DayOverride.date <= to_date)
+        statement = statement.order_by(DayOverride.date)
+        results = await session.execute(statement)
+        return results.scalars().all()
+
+    @staticmethod
+    async def create_day_override(
+        session: AsyncSession, member_id: UUID, override_in: DayOverrideCreate
+    ) -> DayOverride:
+        # Check for duplicate date
+        statement = select(DayOverride).where(
+            DayOverride.team_member_id == member_id,
+            DayOverride.date == override_in.date
+        )
+        result = await session.execute(statement)
+        if result.scalar_one_or_none():
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=f"An override already exists for member {member_id} on {override_in.date}"
+            )
+
+        override = DayOverride.model_validate(override_in)
+        override.team_member_id = member_id
+        session.add(override)
+        await session.commit()
+        await session.refresh(override)
+        return override
+
+    @staticmethod
+    async def delete_day_override(session: AsyncSession, override_id: UUID) -> None:
+        override = await session.get(DayOverride, override_id)
+        if not override:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Day override not found"
+            )
+        await session.delete(override)
         await session.commit()
