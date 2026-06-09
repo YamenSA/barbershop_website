@@ -7,7 +7,6 @@ Create Date: 2026-06-09 15:40:00.000000
 """
 from alembic import op
 import sqlalchemy as sa
-import sqlmodel
 import os
 import bcrypt
 
@@ -25,9 +24,9 @@ def upgrade() -> None:
 
     # 2. Create admin_accounts table
     op.create_table('admin_accounts',
-    sa.Column('id', sqlmodel.sql.sqltypes.GUID(), nullable=False),
-    sa.Column('username', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
-    sa.Column('hashed_password', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+    sa.Column('id', sa.UUID(), nullable=False),
+    sa.Column('username', sa.String(), nullable=False),
+    sa.Column('hashed_password', sa.String(), nullable=False),
     sa.Column('created_at', sa.DateTime(), nullable=False),
     sa.Column('updated_at', sa.DateTime(), nullable=False),
     sa.PrimaryKeyConstraint('id'),
@@ -38,13 +37,13 @@ def upgrade() -> None:
 
     # 3. Create day_overrides table
     op.create_table('day_overrides',
-    sa.Column('id', sqlmodel.sql.sqltypes.GUID(), nullable=False),
-    sa.Column('team_member_id', sqlmodel.sql.sqltypes.GUID(), nullable=False),
+    sa.Column('id', sa.UUID(), nullable=False),
+    sa.Column('team_member_id', sa.UUID(), nullable=False),
     sa.Column('date', sa.Date(), nullable=False),
-    sa.Column('override_type', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+    sa.Column('override_type', sa.String(), nullable=False),
     sa.Column('custom_start_time', sa.Time(), nullable=True),
     sa.Column('custom_end_time', sa.Time(), nullable=True),
-    sa.Column('reason', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
+    sa.Column('reason', sa.String(), nullable=True),
     sa.Column('created_at', sa.DateTime(), nullable=False),
     sa.ForeignKeyConstraint(['team_member_id'], ['team_members.id'], ),
     sa.PrimaryKeyConstraint('id'),
@@ -70,8 +69,9 @@ def upgrade() -> None:
     op.create_index('ix_customers_phone', 'customers', ['phone'], unique=False)
 
     # 5. Seed AdminAccount
-    admin_user = os.getenv("ADMIN_USERNAME", "admin")
-    admin_pass = os.getenv("ADMIN_PASSWORD", "change_this_password")
+    from app.core.config import settings
+    admin_user = os.getenv("ADMIN_USERNAME") or settings.ADMIN_USERNAME
+    admin_pass = os.getenv("ADMIN_PASSWORD") or settings.ADMIN_PASSWORD
     hashed_pass = bcrypt.hashpw(admin_pass.encode(), bcrypt.gensalt()).decode()
     
     # Generate a UUID for the admin
@@ -81,7 +81,7 @@ def upgrade() -> None:
     op.execute(
         sa.text(
             "INSERT INTO admin_accounts (id, username, hashed_password, created_at, updated_at) "
-            "VALUES (:id, :username, :hashed_password, NOW(), NOW())"
+            "VALUES (CAST(:id AS uuid), :username, :hashed_password, NOW(), NOW())"
         ).bindparams(id=admin_id, username=admin_user, hashed_password=hashed_pass)
     )
 

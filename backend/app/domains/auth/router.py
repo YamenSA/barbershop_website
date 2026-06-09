@@ -50,8 +50,8 @@ async def login(
         key="session",
         value=token,
         httponly=True,
-        secure=True,  # Set to False if not using HTTPS in dev
-        samesite="strict",
+        secure=settings.COOKIE_SECURE,
+        samesite="lax",
         max_age=settings.SESSION_EXPIRE_HOURS * 3600,
     )
     return TokenResponse(username=admin.username)
