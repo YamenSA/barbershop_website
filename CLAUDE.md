@@ -64,6 +64,12 @@ The backend is built with FastAPI, SQLModel, and PostgreSQL. It requires Python 
    python scripts/run_retention.py
    ```
 
+6. **Notification Reminder Job**:
+   To manually run the reminder job that sends email notifications for upcoming appointments (24h lead time):
+   ```sh
+   python scripts/run_reminders.py
+   ```
+
 ### Architecture Overview
 
 - **Core**: Contains configuration (`app/core/config.py`), database session management (`app/core/database.py`), global error handlers, and base SQLModels.

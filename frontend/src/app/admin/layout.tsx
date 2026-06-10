@@ -75,7 +75,7 @@ export default function AdminLayout({
         </div>
       </header>
 
-      <main className="flex-1 py-10">
+      <main id="main-content" className="flex-1 py-10">
         <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
           {children}
         </div>

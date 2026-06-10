@@ -2,10 +2,8 @@ import asyncio
 from fastapi import APIRouter, Depends, HTTPException, Response, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
-from slowapi import Limiter
-from slowapi.util import get_remote_address
-
 from app.core.database import get_session
+from app.core.limiter import limiter
 from app.core.config import settings
 from app.domains.auth.models import AdminAccount
 from app.domains.auth.schemas import LoginRequest, TokenResponse, AdminOut
@@ -18,7 +16,6 @@ from app.domains.auth.service import (
 from app.domains.auth.dependencies import get_current_admin
 
 router = APIRouter(prefix="/auth", tags=["auth"])
-limiter = Limiter(key_func=get_remote_address)
 
 
 @router.post("/login", response_model=TokenResponse)

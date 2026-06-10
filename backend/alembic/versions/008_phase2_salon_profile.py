@@ -43,11 +43,11 @@ def upgrade() -> None:
         ).bindparams(
             id=profile_id,
             name="Azzam Barbershop",
-            street="Musterstraße 1",
-            postal_code="10115",
-            city="Berlin",
+            street="Sielower Ch 38",
+            postal_code="03044",
+            city="Cottbus",
             country="DE",
-            phone="+49 30 1234567",
+            phone="+49 355 1234567",
         )
     )
 

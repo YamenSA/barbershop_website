@@ -28,7 +28,7 @@ export const ueberUns: UeberUnsContent = {
     {
       heading: 'Unsere Geschichte',
       body:
-        'Azzam Barbershop entstand aus der Überzeugung, dass Berlin einen Barbershop ' +
+        'Azzam Barbershop entstand aus der Überzeugung, dass Cottbus einen Barbershop ' +
         'braucht, in dem Handwerk und Stil gleichrangig sind. Was als kleines ' +
         'Atelier begann, ist heute ein Ort, an dem Stammkunden zurückkehren — ' +
         'nicht nur für den Schnitt, sondern für das Erlebnis.',

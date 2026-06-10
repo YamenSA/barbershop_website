@@ -28,9 +28,9 @@ Web-App: Backend unter `backend/app/...`, Tests unter `backend/tests/...`, Front
 
 **Purpose**: Abhängigkeiten und Konfiguration für die neuen Public-/Notification-Funktionen.
 
-- [ ] T001 [P] `sendgrid` als Abhängigkeit in `backend/pyproject.toml` ergänzen (dependencies)
-- [ ] T002 [P] Neue Settings in `backend/app/core/config.py` ergänzen (`SENDGRID_API_KEY`, `EMAIL_FROM`, `PUBLIC_BASE_URL`, `BOOKING_MIN_LEAD_HOURS=2`, `BOOKING_MAX_HORIZON_DAYS=60`, `REMINDER_LEAD_HOURS=24`, `REMINDER_SCAN_INTERVAL_HOURS=1` (nur Cron-Kadenz/Doku, nicht korrektheitsrelevant — s. T024), `CANCELLATION_CUTOFF_HOURS=24`, `RATE_LIMIT_BOOKING_PER_MINUTE=10`) und `backend/.env.example` anlegen/aktualisieren
-- [ ] T003 [P] Verzeichnisse anlegen: `frontend/src/app/(public)/termin/` und `frontend/src/components/public/booking/` (Platzhalter), `backend/app/domains/notifications/` (Domänen-Paket mit `__init__.py`)
+- [x] T001 [P] `sendgrid` als Abhängigkeit in `backend/pyproject.toml` ergänzen (dependencies)
+- [x] T002 [P] Neue Settings in `backend/app/core/config.py` ergänzen (`SENDGRID_API_KEY`, `EMAIL_FROM`, `PUBLIC_BASE_URL`, `BOOKING_MIN_LEAD_HOURS=2`, `BOOKING_MAX_HORIZON_DAYS=60`, `REMINDER_LEAD_HOURS=24`, `REMINDER_SCAN_INTERVAL_HOURS=1` (nur Cron-Kadenz/Doku, nicht korrektheitsrelevant — s. T024), `CANCELLATION_CUTOFF_HOURS=24`, `RATE_LIMIT_BOOKING_PER_MINUTE=10`) und `backend/.env.example` anlegen/aktualisieren
+- [x] T003 [P] Verzeichnisse anlegen: `frontend/src/app/(public)/termin/` und `frontend/src/components/public/booking/` (Platzhalter), `backend/app/domains/notifications/` (Domänen-Paket mit `__init__.py`)
 
 ---
 
@@ -40,20 +40,20 @@ Web-App: Backend unter `backend/app/...`, Tests unter `backend/tests/...`, Front
 
 **⚠️ CRITICAL**: Keine User-Story-Arbeit beginnt, bevor diese Phase abgeschlossen ist.
 
-- [ ] T004 Alembic-Migration `backend/alembic/versions/009_phase3_booking_notifications.py` erstellen:
+- [x] T004 Alembic-Migration `backend/alembic/versions/009_phase3_booking_notifications.py` erstellen:
   (a) Spalten `cancellation_token` (unique index) und `origin` (enum, default `walk_in`, NOT NULL) auf `appointments`;
   (b) Tabelle `notification_logs` mit FK + Index auf `appointment_id`;
   (c) **D1-Fix**: bestehende Constraint `no_overlapping_confirmed_appointments` droppen und neu anlegen mit `tstzrange(starts_at, ends_at, '[)')` statt `tsrange(...)`. Dabei `team_member_id WITH =`, das partielle Prädikat `WHERE (status = 'confirmed')` und `'[)'` exakt erhalten; sicherstellen, dass `btree_gist` aktiv ist (Migration 001). `tstzrange` ist immutable/korrekt für die `timestamptz`-Spalten aus Migration 007;
   (d) **A1-Idempotenz**: partieller Unique-Index `uq_reminder_sent` auf `notification_logs (appointment_id)` WHERE `kind='reminder' AND status='sent'`.
   Vorbild: bestehende 005/008-Migrationen (Downgrade stellt den alten Zustand wieder her). **Vor Deploy gegen eine Kopie etwaiger Echtdaten laufen lassen** — scheitert (c) an bestehenden Überlappungen, ist das ein echter Doppelbuchungs-Fund (manuell bereinigen), kein Migrationsfehler.
-- [ ] T005 [P] `Appointment` um `cancellation_token` + `origin` und neues `AppointmentOrigin`-Enum (`online`, `walk_in`) erweitern in `backend/app/domains/booking/models.py`
-- [ ] T006 [P] `NotificationLog`-Model + Enums (`NotificationKind`, `NotificationChannel`, `NotificationStatus`) erstellen in `backend/app/domains/notifications/models.py`
-- [ ] T007 [P] SendGrid-Adapter mit Konsolen-Fallback (ohne API-Key) erstellen in `backend/app/domains/notifications/email.py`
-- [ ] T008 [P] Deutsche E-Mail-Templates (Bestätigung mit Termindetails + „Zahlung bar vor Ort" + Storno-Link aus `PUBLIC_BASE_URL`; Erinnerung) erstellen in `backend/app/domains/notifications/templates.py`
-- [ ] T009 `NotificationService`-Basis (Versand → `email.py`, Persistenz/Statuspflege in `notification_logs`, Idempotenz-Helfer `has_sent(appointment_id, kind)`) erstellen in `backend/app/domains/notifications/service.py` (depends on T006, T007, T008)
-- [ ] T010 Public-Router-Gerüst `backend/app/domains/booking/public_router.py` anlegen und in `backend/app/main.py` unter `/api/v1/public/booking` registrieren; slowapi-Limiter für Buchungs-/Storno-Endpoints verdrahten
-- [ ] T011 [P] TS-Typen ergänzen (`PublicAppointmentCreate`, `PublicAppointmentRead`, `PublicSlot`, `AvailabilityResponse`, `CancellationView`) in `frontend/src/lib/types.ts`
-- [ ] T012 [P] API-Client-Funktionen ergänzen (`getPublicAvailability`, `createPublicAppointment`, `getCancellation`, `cancelAppointment`) in `frontend/src/lib/api.ts`
+- [x] T005 [P] `Appointment` um `cancellation_token` + `origin` und neues `AppointmentOrigin`-Enum (`online`, `walk_in`) erweitern in `backend/app/domains/booking/models.py`
+- [x] T006 [P] `NotificationLog`-Model + Enums (`NotificationKind`, `NotificationChannel`, `NotificationStatus`) erstellen in `backend/app/domains/notifications/models.py`
+- [x] T007 [P] SendGrid-Adapter mit Konsolen-Fallback (ohne API-Key) erstellen in `backend/app/domains/notifications/email.py`
+- [x] T008 [P] Deutsche E-Mail-Templates (Bestätigung mit Termindetails + „Zahlung bar vor Ort" + Storno-Link aus `PUBLIC_BASE_URL`; Erinnerung) erstellen in `backend/app/domains/notifications/templates.py`
+- [x] T009 `NotificationService`-Basis (Versand → `email.py`, Persistenz/Statuspflege in `notification_logs`, Idempotenz-Helfer `has_sent(appointment_id, kind)`) erstellen in `backend/app/domains/notifications/service.py` (depends on T006, T007, T008)
+- [x] T010 Public-Router-Gerüst `backend/app/domains/booking/public_router.py` anlegen und in `backend/app/main.py` unter `/api/v1/public/booking` registrieren; slowapi-Limiter für Buchungs-/Storno-Endpoints verdrahten
+- [x] T011 [P] TS-Typen ergänzen (`PublicAppointmentCreate`, `PublicAppointmentRead`, `PublicSlot`, `AvailabilityResponse`, `CancellationView`) in `frontend/src/lib/types.ts`
+- [x] T012 [P] API-Client-Funktionen ergänzen (`getPublicAvailability`, `createPublicAppointment`, `getCancellation`, `cancelAppointment`) in `frontend/src/lib/api.ts`
 
 **Checkpoint**: Modelle, Migration, Notification-Basis und Router-Gerüst stehen — Stories können beginnen.
 
@@ -67,19 +67,19 @@ Web-App: Backend unter `backend/app/...`, Tests unter `backend/tests/...`, Front
 
 ### Tests for User Story 1 ⚠️ (zuerst schreiben, müssen fehlschlagen)
 
-- [ ] T013 [US1] Integrationstest `backend/tests/integration/test_public_booking.py` (SQLite, App-Ebene): Happy-Path-Buchung + Slot danach nicht mehr verfügbar (US1 Sz. 1), Walk-in-Kollision blendet Slot aus (Sz. 2), Dauer-Überhang an Schließzeit (Sz. 5), App-seitiger Overlap-Vorabcheck → `409` (Sz. 4), Guardrails 2 h/60 Tage → `422`, Pflichtfeld/`privacy_acknowledged` fehlt → `422`
-- [ ] T013a [US1] **Postgres-verifizierter** Integritätstest `backend/tests/integration/test_booking_constraint_pg.py`: läuft gegen echtes Postgres (`DATABASE_URL` → `docker compose up -d db`), per pytest-Marker `@pytest.mark.postgres` von der SQLite-Suite getrennt. Prüft empirisch, dass die `tstzrange`-EXCLUDE-Constraint zwei überlappende `confirmed`-Termine desselben Stylisten abweist (`IntegrityError` → `409`) — SQLite kann GIST/EXCLUDE nicht abbilden, daher MUSS dieser Test gegen Postgres laufen. Garantie für FR-003/SC-002. **Gate: muss grün sein, bevor auf die Doppelbuchungs-Garantie vertraut wird.** (depends on T004)
+- [x] T013 [US1] Integrationstest `backend/tests/integration/test_public_booking.py` (SQLite, App-Ebene): Happy-Path-Buchung + Slot danach nicht mehr verfügbar (US1 Sz. 1), Walk-in-Kollision blendet Slot aus (Sz. 2), Dauer-Überhang an Schließzeit (Sz. 5), App-seitiger Overlap-Vorabcheck → `409` (Sz. 4), Guardrails 2 h/60 Tage → `422`, Pflichtfeld/`privacy_acknowledged` fehlt → `422`
+- [x] T013a [US1] **Postgres-verifizierter** Integritätstest `backend/tests/integration/test_booking_constraint_pg.py`: läuft gegen echtes Postgres (`DATABASE_URL` → `docker compose up -d db`), per pytest-Marker `@pytest.mark.postgres` von der SQLite-Suite getrennt. Prüft empirisch, dass die `tstzrange`-EXCLUDE-Constraint zwei überlappende `confirmed`-Termine desselben Stylisten abweist (`IntegrityError` → `409`) — SQLite kann GIST/EXCLUDE nicht abbilden, daher MUSS dieser Test gegen Postgres laufen. Garantie für FR-003/SC-002. **Gate: muss grün sein, bevor auf die Doppelbuchungs-Garantie vertraut wird.** (depends on T004)
 
 ### Implementation for User Story 1
 
-- [ ] T014 [P] [US1] Public-Schemas (`PublicAppointmentCreate` inkl. `customer`+`privacy_acknowledged`, `PublicAppointmentRead` inkl. `cancellation_token`+`payment_note`, `PublicSlot`, `AvailabilityResponse`) in `backend/app/domains/booking/schemas.py`
-- [ ] T015 [US1] `availability.py` erweitern: „beliebiger Stylist" (Mehr-Member-Auflösung, Slot→konkretes `team_member_id`) und serverseitige Ausblendung außerhalb `[now+2h, now+60d]` in `backend/app/domains/booking/availability.py`
-- [ ] T016 [US1] `create_public_appointment` in `backend/app/domains/booking/service.py`: Customer-Upsert per E-Mail (`last_active_at` setzen), Guardrails (2 h/60 Tage + 15-min-Raster), Any-Stylist-Auflösung auf konkretes Mitglied, `origin=online`, Token via `secrets.token_urlsafe(32)`, `IntegrityError` → `409 BOOKING_CONFLICT` (depends on T014, T015)
-- [ ] T017 [US1] `NotificationService.send_confirmation(appointment)` (Template rendern, versenden, `notification_logs` schreiben) in `backend/app/domains/notifications/service.py`
-- [ ] T018 [US1] Endpoints verdrahten: `GET /public/booking/availability` und `POST /public/booking/appointments` (rate-limitiert, Bestätigung via `BackgroundTasks`) in `backend/app/domains/booking/public_router.py` (depends on T016, T017)
-- [ ] T019 [P] [US1] Buchungs-UI-Komponenten (ServicePicker, StylistPicker inkl. „beliebiger Stylist", SlotPicker, ContactForm mit Datenschutz-Hinweis/Checkbox, Confirmation) in `frontend/src/components/public/booking/`
-- [ ] T020 [US1] Buchungs-Flow-Seite/Stepper (Dienstleistung→Stylist→Zeit→Kontakt→Bestätigung) in `frontend/src/app/(public)/termin/page.tsx` (depends on T019, T011, T012)
-- [ ] T021 [US1] Einstiegs-CTA „Termin buchen" auf Startseite und Dienstleistungs-Seite verlinken in `frontend/src/app/page.tsx` und `frontend/src/app/(public)/dienstleistungen/page.tsx`
+- [x] T014 [P] [US1] Public-Schemas (`PublicAppointmentCreate` inkl. `customer`+`privacy_acknowledged`, `PublicAppointmentRead` inkl. `cancellation_token`+`payment_note`, `PublicSlot`, `AvailabilityResponse`) in `backend/app/domains/booking/schemas.py`
+- [x] T015 [US1] `availability.py` erweitern: „beliebiger Stylist" (Mehr-Member-Auflösung, Slot→konkretes `team_member_id`) und serverseitige Ausblendung außerhalb `[now+2h, now+60d]` in `backend/app/domains/booking/availability.py`
+- [x] T016 [US1] `create_public_appointment` in `backend/app/domains/booking/service.py`: Customer-Upsert per E-Mail (`last_active_at` setzen), Guardrails (2 h/60 Tage + 15-min-Raster), Any-Stylist-Auflösung auf konkretes Mitglied, `origin=online`, Token via `secrets.token_urlsafe(32)`, `IntegrityError` → `409 BOOKING_CONFLICT` (depends on T014, T015)
+- [x] T017 [US1] `NotificationService.send_confirmation(appointment)` (Template rendern, versenden, `notification_logs` schreiben) in `backend/app/domains/notifications/service.py`
+- [x] T018 [US1] Endpoints verdrahten: `GET /public/booking/availability` und `POST /public/booking/appointments` (rate-limitiert, Bestätigung via `BackgroundTasks`) in `backend/app/domains/booking/public_router.py` (depends on T016, T017)
+- [x] T019 [P] [US1] Buchungs-UI-Komponenten (ServicePicker, StylistPicker inkl. „beliebiger Stylist", SlotPicker, ContactForm mit Datenschutz-Hinweis/Checkbox, Confirmation) in `frontend/src/components/public/booking/`
+- [x] T020 [US1] Buchungs-Flow-Seite/Stepper (Dienstleistung→Stylist→Zeit→Kontakt→Bestätigung) in `frontend/src/app/(public)/termin/page.tsx` (depends on T019, T011, T012)
+- [x] T021 [US1] Einstiegs-CTA „Termin buchen" auf Startseite und Dienstleistungs-Seite verlinken in `frontend/src/app/page.tsx` und `frontend/src/app/(public)/dienstleistungen/page.tsx`
 
 **Checkpoint**: US1 ist eigenständig lauffähig und testbar — MVP erreicht.
 
@@ -93,13 +93,13 @@ Web-App: Backend unter `backend/app/...`, Tests unter `backend/tests/...`, Front
 
 ### Tests for User Story 2 ⚠️
 
-- [ ] T022 [P] [US2] Unit-Test `backend/tests/unit/test_notifications.py`: Reminder-Auswahl im 24-h-Fenster, Idempotenz (kein Doppelversand bei mehreren Läufen), Überspringen stornierter Termine (US2 Sz. 2), Entfall bei Buchung < 24 h vorher (Sz. 3)
+- [x] T022 [P] [US2] Unit-Test `backend/tests/unit/test_notifications.py`: Reminder-Auswahl im 24-h-Fenster, Idempotenz (kein Doppelversand bei mehreren Läufen), Überspringen stornierter Termine (US2 Sz. 2), Entfall bei Buchung < 24 h vorher (Sz. 3)
 
 ### Implementation for User Story 2
 
-- [ ] T023 [US2] `NotificationService.send_reminder(appointment)` (Reminder-Template, Versand, Log) in `backend/app/domains/notifications/service.py`
-- [ ] T024 [US2] `run_reminder_job(session)` in `backend/app/domains/notifications/reminders.py`: **alle** bestätigten, noch nicht erinnerten Termine mit Start in `(now, now+REMINDER_LEAD_HOURS]` selektieren (keine untere `−Δ`-Grenze — sonst erhielten knapp gebuchte Termine nie eine Erinnerung; ein verpasster Cron-Lauf heilt sich beim nächsten selbst); stornierte ausschließen; optional Last-Minute-Marge `start > now + 30 min`. Doppelversand verhindert der Sent-Marker: (1) App-Check `has_sent(appointment_id, reminder)`, (2) DB-seitig der partielle Unique-Index `uq_reminder_sent` — `IntegrityError` beim Schreiben des `sent`-Logs wird als „bereits gesendet" geschluckt. `REMINDER_SCAN_INTERVAL_HOURS` ist nur die Cron-Kadenz und nicht korrektheitsrelevant. (depends on T023)
-- [ ] T025 [US2] CLI-Runner `backend/scripts/run_reminders.py` analog `backend/scripts/run_retention.py` (depends on T024)
+- [x] T023 [US2] `NotificationService.send_reminder(appointment)` (Reminder-Template, Versand, Log) in `backend/app/domains/notifications/service.py`
+- [x] T024 [US2] `run_reminder_job(session)` in `backend/app/domains/notifications/reminders.py`: **alle** bestätigten, noch nicht erinnerten Termine mit Start in `(now, now+REMINDER_LEAD_HOURS]` selektieren (keine untere `−Δ`-Grenze — sonst erhielten knapp gebuchte Termine nie eine Erinnerung; ein verpasster Cron-Lauf heilt sich beim nächsten selbst); stornierte ausschließen; optional Last-Minute-Marge `start > now + 30 min`. Doppelversand verhindert der Sent-Marker: (1) App-Check `has_sent(appointment_id, reminder)`, (2) DB-seitig der partielle Unique-Index `uq_reminder_sent` — `IntegrityError` beim Schreiben des `sent`-Logs wird als „bereits gesendet" geschluckt. `REMINDER_SCAN_INTERVAL_HOURS` ist nur die Cron-Kadenz und nicht korrektheitsrelevant. (depends on T023)
+- [x] T025 [US2] CLI-Runner `backend/scripts/run_reminders.py` analog `backend/scripts/run_retention.py` (depends on T024)
 
 **Checkpoint**: US1 und US2 funktionieren unabhängig.
 
@@ -113,15 +113,15 @@ Web-App: Backend unter `backend/app/...`, Tests unter `backend/tests/...`, Front
 
 ### Tests for User Story 3 ⚠️
 
-- [ ] T026 [P] [US3] Integrationstest `backend/tests/integration/test_public_cancellation.py`: Storno erfolgreich + Slot wieder verfügbar (Sz. 1), Frist überschritten → `410` (Sz. 2), erneuter Aufruf idempotent zeigt `cancelled` (Sz. 3), unbekannter Token → `404`
+- [x] T026 [P] [US3] Integrationstest `backend/tests/integration/test_public_cancellation.py`: Storno erfolgreich + Slot wieder verfügbar (Sz. 1), Frist überschritten → `410` (Sz. 2), erneuter Aufruf idempotent zeigt `cancelled` (Sz. 3), unbekannter Token → `404`
 
 ### Implementation for User Story 3
 
-- [ ] T027 [P] [US3] `CancellationView`-Schema (Termindetails, `cancellable`, `cancellation_deadline`) in `backend/app/domains/booking/schemas.py`
-- [ ] T028 [US3] `get_cancellation_view(token)` und `cancel_by_token(token)` in `backend/app/domains/booking/service.py`: Status-Guard (nur `confirmed`), 24-h-Cutoff, Token-Lookup; Fehler `404`/`409 ALREADY_CANCELLED`/`410 CANCELLATION_WINDOW_CLOSED`
-- [ ] T029 [US3] Endpoints `GET` + `POST /public/booking/cancel/{token}` (rate-limitiert) verdrahten in `backend/app/domains/booking/public_router.py` (depends on T027, T028)
-- [ ] T030 [P] [US3] Storno-Seite + CancelCard in `frontend/src/app/(public)/termin/stornieren/[token]/page.tsx` und `frontend/src/components/public/booking/`
-- [ ] T031 [US3] Sicherstellen, dass der Storno-Link in der Bestätigungs-E-Mail auf `/(public)/termin/stornieren/{token}` zeigt (Template aus T008 prüfen/justieren) (depends on T030)
+- [x] T027 [P] [US3] `CancellationView`-Schema (Termindetails, `cancellable`, `cancellation_deadline`) in `backend/app/domains/booking/schemas.py`
+- [x] T028 [US3] `get_cancellation_view(token)` und `cancel_by_token(token)` in `backend/app/domains/booking/service.py`: Status-Guard (nur `confirmed`), 24-h-Cutoff, Token-Lookup; Fehler `404`/`409 ALREADY_CANCELLED`/`410 CANCELLATION_WINDOW_CLOSED`
+- [x] T029 [US3] Endpoints `GET` + `POST /public/booking/cancel/{token}` (rate-limitiert) verdrahten in `backend/app/domains/booking/public_router.py` (depends on T027, T028)
+- [x] T030 [P] [US3] Storno-Seite + CancelCard in `frontend/src/app/(public)/termin/stornieren/[token]/page.tsx` und `frontend/src/components/public/booking/`
+- [x] T031 [US3] Sicherstellen, dass der Storno-Link in der Bestätigungs-E-Mail auf `/(public)/termin/stornieren/{token}` zeigt (Template aus T008 prüfen/justieren) (depends on T030)
 
 **Checkpoint**: Alle drei Stories sind unabhängig funktionsfähig.
 
@@ -131,12 +131,12 @@ Web-App: Backend unter `backend/app/...`, Tests unter `backend/tests/...`, Front
 
 **Purpose**: Querschnitt, Compliance, Doku, Qualität.
 
-- [ ] T032 [P] Datenschutzerklärung um „Online-Terminbuchung" und „SendGrid (E-Mail-Versand, AV-Vertrag)" ergänzen in `frontend/src/app/(public)/datenschutz/page.tsx`
-- [ ] T033 [P] Aktualisiertes OpenAPI-Schema nach `backend/openapi.json` exportieren
-- [ ] T034 [P] Implementierungs-Hinweise in `CLAUDE.md` ergänzen (Reminder-Job: `python scripts/run_reminders.py`)
-- [ ] T035 [P] Barrierefreiheit & Mobile-First-Durchgang am Buchungs-Flow (semantisches HTML, Tastatur, Kontraste, `prefers-reduced-motion`) gemäß `DESIGN.md`
-- [ ] T036 [P] Frontend-Fehler-/Rate-Limit-/Leerzustände der Buchungs- und Storno-Formulare härten (409 „Slot vergeben", 422, 410, 429)
-- [ ] T037 Quickstart-Validierung end-to-end gemäß `specs/004-smart-booking-engine/quickstart.md` durchführen. **Verpflichtend (FR-011/DSGVO):** verifizieren, dass eine Online-Buchung `Customer.last_active_at` setzt und dass `run_retention_job` einen abgelaufenen Online-Kunden erfasst und anonymisiert — z.B. via gezieltem Test in `backend/tests/unit/test_retention.py` (Online-Customer mit zurückdatiertem `last_active_at` → nach Lauf `anonymized_at` gesetzt).
+- [x] T032 [P] Datenschutzerklärung um „Online-Terminbuchung" und „SendGrid (E-Mail-Versand, AV-Vertrag)" ergänzen in `frontend/src/app/(public)/datenschutz/page.tsx`
+- [x] T033 [P] Aktualisiertes OpenAPI-Schema nach `backend/openapi.json` exportieren
+- [x] T034 [P] Implementierungs-Hinweise in `CLAUDE.md` ergänzen (Reminder-Job: `python scripts/run_reminders.py`)
+- [x] T035 [P] Barrierefreiheit & Mobile-First-Durchgang am Buchungs-Flow (semantisches HTML, Tastatur, Kontraste, `prefers-reduced-motion`) gemäß `DESIGN.md`
+- [x] T036 [P] Frontend-Fehler-/Rate-Limit-/Leerzustände der Buchungs- und Storno-Formulare härten (409 „Slot vergeben", 422, 410, 429)
+- [x] T037 Quickstart-Validierung end-to-end gemäß `specs/004-smart-booking-engine/quickstart.md` durchführen. **Verpflichtend (FR-011/DSGVO):** verifizieren, dass eine Online-Buchung `Customer.last_active_at` setzt und dass `run_retention_job` einen abgelaufenen Online-Kunden erfasst und anonymisiert — z.B. via gezieltem Test in `backend/tests/unit/test_retention.py` (Online-Customer mit zurückdatiertem `last_active_at` → nach Lauf `anonymized_at` gesetzt).
 
 ---
 

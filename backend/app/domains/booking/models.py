@@ -16,6 +16,11 @@ class AppointmentStatus(str, Enum):
     no_show = "no_show"
 
 
+class AppointmentOrigin(str, Enum):
+    online = "online"
+    walk_in = "walk_in"
+
+
 class Customer(UUIDModel, TimestampModel, table=True):
     __tablename__ = "customers"
 
@@ -49,5 +54,7 @@ class Appointment(UUIDModel, TimestampModel, table=True):
         default=AppointmentStatus.confirmed, nullable=False
     )
     notes: Optional[str] = Field(default=None)
+    cancellation_token: Optional[str] = Field(default=None, unique=True)
+    origin: AppointmentOrigin = Field(default=AppointmentOrigin.walk_in, nullable=False)
 
     customer: Optional[Customer] = Relationship()
