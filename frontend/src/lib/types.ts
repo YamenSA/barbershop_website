@@ -115,3 +115,48 @@ export interface DashboardResponse {
   appointments: AppointmentSummary[];
   working_today: WorkingMemberSummary[];
 }
+
+// --- Public Read Types (unauthenticated endpoints) ---
+
+export interface PublicServiceRead {
+  id: UUID;
+  name: string;
+  duration_minutes: number;
+  price_cents: number;
+  description?: string;
+}
+
+export interface PublicTeamMemberRead {
+  id: UUID;
+  name: string;
+  bio?: string;
+  photo_url?: string | null;
+  services: Array<{ id: UUID; name: string }>;
+}
+
+export interface PublicSalonHoursRead {
+  day_of_week: number;
+  is_open: boolean;
+  open_time?: string | null;
+  close_time?: string | null;
+}
+
+export interface SalonProfile {
+  name: string;
+  street: string;
+  postal_code: string;
+  city: string;
+  country: string;
+  phone: string;
+  email?: string | null;
+}
+
+export interface SalonProfileUpdate {
+  name?: string;
+  street?: string;
+  postal_code?: string;
+  city?: string;
+  country?: string;
+  phone?: string;
+  email?: string | null;
+}

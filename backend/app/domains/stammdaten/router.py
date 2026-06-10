@@ -15,6 +15,8 @@ from app.domains.stammdaten.schemas import (
     SalonClosureRead,
     SalonHoursRead,
     SalonHoursUpdate,
+    SalonProfileRead,
+    SalonProfileUpdate,
     ServiceAssignment,
     ServiceCreate,
     ServiceRead,
@@ -229,3 +231,17 @@ async def delete_day_override(
     override_id: UUID, session: AsyncSession = Depends(get_session)
 ):
     await StammdatenService.delete_day_override(session, override_id)
+
+
+# --- Salon Profile (admin) ---
+
+@router.get("/salon-profile", response_model=SalonProfileRead)
+async def get_salon_profile(session: AsyncSession = Depends(get_session)):
+    return await StammdatenService.get_salon_profile(session)
+
+
+@router.put("/salon-profile", response_model=SalonProfileRead)
+async def update_salon_profile(
+    profile_in: SalonProfileUpdate, session: AsyncSession = Depends(get_session)
+):
+    return await StammdatenService.update_salon_profile(session, profile_in)

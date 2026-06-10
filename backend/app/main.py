@@ -41,6 +41,9 @@ def create_app() -> FastAPI:
     from app.domains.booking.admin_router import router as admin_booking_router
     app.include_router(admin_booking_router, prefix="/api/v1")
 
+    from app.domains.stammdaten.public_router import router as public_router
+    app.include_router(public_router, prefix="/api/v1/public")
+
     return app
 
 
