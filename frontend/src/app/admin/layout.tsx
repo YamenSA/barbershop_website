@@ -11,6 +11,7 @@ const navItems = [
   { name: 'Team', href: '/admin/team' },
   { name: 'Öffnungszeiten', href: '/admin/hours' },
   { name: 'Arbeitsplan', href: '/admin/schedule' },
+  { name: 'Salon-Profil', href: '/admin/profile' },
 ];
 
 export default function AdminLayout({

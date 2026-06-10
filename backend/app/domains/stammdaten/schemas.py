@@ -160,3 +160,63 @@ class DayOverrideRead(DayOverrideBase):
     team_member_id: UUID
     created_at: datetime
     model_config = ConfigDict(from_attributes=True)
+
+
+# --- Salon Profile ---
+
+class SalonProfileBase(BaseModel):
+    name: str
+    street: str
+    postal_code: str
+    city: str
+    country: str = "DE"
+    phone: str
+    email: Optional[str] = None
+
+
+class SalonProfileRead(SalonProfileBase):
+    model_config = ConfigDict(from_attributes=True)
+
+
+class SalonProfileUpdate(BaseModel):
+    name: Optional[str] = None
+    street: Optional[str] = None
+    postal_code: Optional[str] = None
+    city: Optional[str] = None
+    country: Optional[str] = None
+    phone: Optional[str] = None
+    email: Optional[str] = None
+
+
+# --- Public Read Schemas ---
+
+class PublicSalonHoursRead(BaseModel):
+    day_of_week: int
+    is_open: bool
+    open_time: Optional[time] = None
+    close_time: Optional[time] = None
+    model_config = ConfigDict(from_attributes=True)
+
+
+class PublicServiceRead(BaseModel):
+    id: UUID
+    name: str
+    duration_minutes: int
+    price_cents: int
+    description: Optional[str] = None
+    model_config = ConfigDict(from_attributes=True)
+
+
+class PublicServiceRef(BaseModel):
+    id: UUID
+    name: str
+    model_config = ConfigDict(from_attributes=True)
+
+
+class PublicTeamMemberRead(BaseModel):
+    id: UUID
+    name: str
+    bio: Optional[str] = None
+    photo_url: Optional[str] = None
+    services: List[PublicServiceRef] = []
+    model_config = ConfigDict(from_attributes=True)

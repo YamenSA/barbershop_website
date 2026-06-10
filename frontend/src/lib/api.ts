@@ -5,6 +5,11 @@ import type {
   SalonClosure,
   Appointment,
   Customer,
+  PublicServiceRead,
+  PublicTeamMemberRead,
+  PublicSalonHoursRead,
+  SalonProfile,
+  SalonProfileUpdate,
 } from './types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
@@ -162,3 +167,37 @@ export const updateAppointmentStatus = (
 
 export const searchCustomers = (query: string) =>
   apiFetch<Customer[]>(`/customers?search=${encodeURIComponent(query)}`);
+
+// --- Public Read (server-side, unauthenticated, ISR revalidate=60) ---
+
+async function publicFetch<T>(endpoint: string): Promise<T> {
+  const url = `${API_BASE_URL}/public${endpoint}`;
+  const res = await fetch(url, { next: { revalidate: 60 } } as RequestInit);
+  if (!res.ok) {
+    throw new Error(`Public API ${endpoint} responded ${res.status}`);
+  }
+  return res.json();
+}
+
+export const getPublicSalonProfile = () =>
+  publicFetch<SalonProfile>('/salon-profile');
+
+export const getPublicSalonHours = () =>
+  publicFetch<PublicSalonHoursRead[]>('/salon-hours');
+
+export const getPublicServices = () =>
+  publicFetch<PublicServiceRead[]>('/services');
+
+export const getPublicTeamMembers = () =>
+  publicFetch<PublicTeamMemberRead[]>('/team');
+
+// --- Salon Profile (Admin) ---
+
+export const getAdminSalonProfile = () =>
+  apiFetch<SalonProfile>('/salon-profile');
+
+export const updateAdminSalonProfile = (data: SalonProfileUpdate) =>
+  apiFetch<SalonProfile>('/salon-profile', {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });

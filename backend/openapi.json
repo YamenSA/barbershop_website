@@ -1052,6 +1052,60 @@
         }
       }
     },
+    "/api/v1/salon-profile": {
+      "get": {
+        "summary": "Get Salon Profile",
+        "operationId": "get_salon_profile_api_v1_salon_profile_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SalonProfileRead"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "Update Salon Profile",
+        "operationId": "update_salon_profile_api_v1_salon_profile_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SalonProfileUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SalonProfileRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/availability": {
       "get": {
         "summary": "Get Availability",
@@ -1637,6 +1691,90 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/public/salon-profile": {
+      "get": {
+        "summary": "Get Public Salon Profile",
+        "operationId": "get_public_salon_profile_api_v1_public_salon_profile_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SalonProfileRead"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/public/salon-hours": {
+      "get": {
+        "summary": "Get Public Salon Hours",
+        "operationId": "get_public_salon_hours_api_v1_public_salon_hours_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PublicSalonHoursRead"
+                  },
+                  "type": "array",
+                  "title": "Response Get Public Salon Hours Api V1 Public Salon Hours Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/public/services": {
+      "get": {
+        "summary": "Get Public Services",
+        "operationId": "get_public_services_api_v1_public_services_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PublicServiceRead"
+                  },
+                  "type": "array",
+                  "title": "Response Get Public Services Api V1 Public Services Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/public/team": {
+      "get": {
+        "summary": "Get Public Team",
+        "operationId": "get_public_team_api_v1_public_team_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PublicTeamMemberRead"
+                  },
+                  "type": "array",
+                  "title": "Response Get Public Team Api V1 Public Team Get"
                 }
               }
             }
@@ -2230,6 +2368,156 @@
         ],
         "title": "LoginRequest"
       },
+      "PublicSalonHoursRead": {
+        "properties": {
+          "day_of_week": {
+            "type": "integer",
+            "title": "Day Of Week"
+          },
+          "is_open": {
+            "type": "boolean",
+            "title": "Is Open"
+          },
+          "open_time": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Open Time"
+          },
+          "close_time": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Close Time"
+          }
+        },
+        "type": "object",
+        "required": [
+          "day_of_week",
+          "is_open"
+        ],
+        "title": "PublicSalonHoursRead"
+      },
+      "PublicServiceRead": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "duration_minutes": {
+            "type": "integer",
+            "title": "Duration Minutes"
+          },
+          "price_cents": {
+            "type": "integer",
+            "title": "Price Cents"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "duration_minutes",
+          "price_cents"
+        ],
+        "title": "PublicServiceRead"
+      },
+      "PublicServiceRef": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name"
+        ],
+        "title": "PublicServiceRef"
+      },
+      "PublicTeamMemberRead": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "bio": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bio"
+          },
+          "photo_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Photo Url"
+          },
+          "services": {
+            "items": {
+              "$ref": "#/components/schemas/PublicServiceRef"
+            },
+            "type": "array",
+            "title": "Services",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name"
+        ],
+        "title": "PublicTeamMemberRead"
+      },
       "SalonClosureCreate": {
         "properties": {
           "date": {
@@ -2379,6 +2667,138 @@
         },
         "type": "object",
         "title": "SalonHoursUpdate"
+      },
+      "SalonProfileRead": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "street": {
+            "type": "string",
+            "title": "Street"
+          },
+          "postal_code": {
+            "type": "string",
+            "title": "Postal Code"
+          },
+          "city": {
+            "type": "string",
+            "title": "City"
+          },
+          "country": {
+            "type": "string",
+            "title": "Country",
+            "default": "DE"
+          },
+          "phone": {
+            "type": "string",
+            "title": "Phone"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "street",
+          "postal_code",
+          "city",
+          "phone"
+        ],
+        "title": "SalonProfileRead"
+      },
+      "SalonProfileUpdate": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "street": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Street"
+          },
+          "postal_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Postal Code"
+          },
+          "city": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "City"
+          },
+          "country": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Country"
+          },
+          "phone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phone"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          }
+        },
+        "type": "object",
+        "title": "SalonProfileUpdate"
       },
       "ServiceAssignment": {
         "properties": {

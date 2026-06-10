@@ -10,6 +10,7 @@ from app.domains.stammdaten.models import (
     DayOverride,
     SalonClosure,
     SalonHours,
+    SalonProfile,
     Service,
     TeamMember,
     TeamMemberServiceLink,
@@ -20,6 +21,7 @@ from app.domains.stammdaten.schemas import (
     DayOverrideCreate,
     SalonClosureCreate,
     SalonHoursUpdate,
+    SalonProfileUpdate,
     ServiceCreate,
     ServiceUpdate,
     TeamMemberCreate,
@@ -319,3 +321,70 @@ class StammdatenService:
             )
         await session.delete(override)
         await session.commit()
+
+    # --- Salon Profile ---
+
+    @staticmethod
+    async def get_salon_profile(session: AsyncSession) -> SalonProfile:
+        result = await session.execute(select(SalonProfile))
+        profile = result.scalar_one_or_none()
+        if not profile:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Salon profile not found"
+            )
+        return profile
+
+    @staticmethod
+    async def update_salon_profile(
+        session: AsyncSession, profile_in: SalonProfileUpdate
+    ) -> SalonProfile:
+        profile = await StammdatenService.get_salon_profile(session)
+        update_data = profile_in.model_dump(exclude_unset=True)
+        for key, value in update_data.items():
+            setattr(profile, key, value)
+        session.add(profile)
+        await session.commit()
+        await session.refresh(profile)
+        return profile
+
+    @staticmethod
+    async def get_public_salon_hours(session: AsyncSession) -> List[SalonHours]:
+        statement = select(SalonHours).order_by(SalonHours.day_of_week)
+        results = await session.execute(statement)
+        return results.scalars().all()
+
+    @staticmethod
+    async def get_active_services_public(session: AsyncSession) -> List[Service]:
+        statement = select(Service).where(Service.is_active == True).order_by(Service.name)
+        results = await session.execute(statement)
+        return results.scalars().all()
+
+    @staticmethod
+    async def get_active_team_public(session: AsyncSession) -> List[dict]:
+        member_stmt = (
+            select(TeamMember)
+            .where(TeamMember.is_active == True)
+            .order_by(TeamMember.name)
+        )
+        member_results = await session.execute(member_stmt)
+        members = member_results.scalars().all()
+
+        out = []
+        for member in members:
+            svc_stmt = (
+                select(Service)
+                .join(TeamMemberServiceLink, Service.id == TeamMemberServiceLink.service_id)
+                .where(TeamMemberServiceLink.team_member_id == member.id)
+                .where(Service.is_active == True)
+                .order_by(Service.name)
+            )
+            svc_results = await session.execute(svc_stmt)
+            active_services = svc_results.scalars().all()
+            out.append({
+                "id": member.id,
+                "name": member.name,
+                "bio": member.bio,
+                "photo_url": member.photo_url,
+                "services": [{"id": s.id, "name": s.name} for s in active_services],
+            })
+        return out

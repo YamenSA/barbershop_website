@@ -84,6 +84,18 @@ class WorkingException(UUIDModel, TimestampModel, table=True):
     member: TeamMember = Relationship()
 
 
+class SalonProfile(UUIDModel, TimestampModel, table=True):
+    __tablename__ = "salon_profile"
+
+    name: str = Field(nullable=False)
+    street: str = Field(nullable=False)
+    postal_code: str = Field(nullable=False)
+    city: str = Field(nullable=False)
+    country: str = Field(default="DE", nullable=False)
+    phone: str = Field(nullable=False)
+    email: Optional[str] = Field(default=None)
+
+
 class DayOverride(UUIDModel, table=True):
     __tablename__ = "day_overrides"
 

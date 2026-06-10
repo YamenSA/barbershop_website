@@ -1,7 +1,7 @@
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan
-at `specs/002-admin/plan.md`.
+at `specs/004-smart-booking-engine/plan.md`.
 <!-- SPECKIT END -->
 
 ## Domänen-Glossar (DE → EN Code-Bezeichner)
