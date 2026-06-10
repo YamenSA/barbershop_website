@@ -7,7 +7,7 @@ import HeroVideo from '@/components/public/HeroVideo';
 export const metadata: Metadata = {
   title: { absolute: 'Azzam Barbershop' },
   description:
-    'Präzise Schnitte, professionelle Bartpflege und klassische Fades — Ihr Barbershop in Berlin.',
+    'Präzise Schnitte, professionelle Bartpflege und klassische Fades — Ihr Barbershop in Cottbus.',
 };
 
 export const revalidate = 60;

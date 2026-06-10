@@ -160,3 +160,52 @@ export interface SalonProfileUpdate {
   phone?: string;
   email?: string | null;
 }
+
+// --- Public Booking Types ---
+
+export interface PublicCustomerCreate {
+  name: string;
+  email: string;
+  phone?: string;
+}
+
+export interface PublicAppointmentCreate {
+  service_id: UUID;
+  team_member_id: UUID | null;
+  starts_at: string;
+  customer: PublicCustomerCreate;
+  privacy_acknowledged: boolean;
+}
+
+export interface PublicSlot {
+  starts_at: string;
+  ends_at: string;
+  team_member_id: UUID;
+  team_member_name: string;
+}
+
+export interface AvailabilityResponse {
+  date: string;
+  slots: PublicSlot[];
+}
+
+export interface PublicAppointmentRead {
+  id: UUID;
+  service_id: UUID;
+  team_member_id: UUID;
+  starts_at: string;
+  ends_at: string;
+  status: 'confirmed' | 'completed' | 'cancelled' | 'no_show';
+  cancellation_token: string;
+  payment_note: string;
+}
+
+export interface CancellationView {
+  id: UUID;
+  service_name: string;
+  team_member_name: string;
+  starts_at: string;
+  status: 'confirmed' | 'completed' | 'cancelled' | 'no_show';
+  cancellable: boolean;
+  cancellation_deadline?: string;
+}

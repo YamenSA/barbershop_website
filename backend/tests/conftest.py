@@ -11,6 +11,8 @@ from app.domains.auth.dependencies import get_current_admin
 from app.domains.auth.models import AdminAccount
 from app.main import app
 
+
+
 TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
 
 engine = create_async_engine(TEST_DATABASE_URL, echo=False, future=True)
@@ -45,6 +47,18 @@ async def client_fixture(session: AsyncSession, mock_admin: AdminAccount):
 
     app.dependency_overrides[get_session] = get_session_override
     app.dependency_overrides[get_current_admin] = get_admin_override
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        yield client
+    app.dependency_overrides.clear()
+
+
+@pytest.fixture(name="public_client")
+async def public_client_fixture(session: AsyncSession):
+    """Unauthenticated client for public endpoints — uses test in-memory session."""
+    def get_session_override():
+        return session
+
+    app.dependency_overrides[get_session] = get_session_override
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
         yield client
     app.dependency_overrides.clear()

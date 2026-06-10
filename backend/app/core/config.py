@@ -12,6 +12,17 @@ class Settings(BaseSettings):
     ADMIN_USERNAME: str
     ADMIN_PASSWORD: str
     RATE_LIMIT_LOGIN_PER_MINUTE: int = 20
+    # Phase 2 / Public booking settings
+    SENDGRID_API_KEY: str | None = None
+    EMAIL_FROM: str
+    PUBLIC_BASE_URL: str
+    BOOKING_MIN_LEAD_HOURS: int = 2
+    BOOKING_MAX_HORIZON_DAYS: int = 60
+    REMINDER_LEAD_HOURS: int = 24
+    REMINDER_SCAN_INTERVAL_HOURS: int = 1
+    CANCELLATION_CUTOFF_HOURS: int = 24
+    RATE_LIMIT_BOOKING_PER_MINUTE: int = 10
+
     # Set False for local HTTP development so the session cookie is stored
     # by the browser; MUST be True in production (HTTPS).
     COOKIE_SECURE: bool = False

@@ -10,6 +10,10 @@ import type {
   PublicSalonHoursRead,
   SalonProfile,
   SalonProfileUpdate,
+  PublicAppointmentCreate,
+  PublicAppointmentRead,
+  AvailabilityResponse,
+  CancellationView,
 } from './types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
@@ -190,6 +194,38 @@ export const getPublicServices = () =>
 
 export const getPublicTeamMembers = () =>
   publicFetch<PublicTeamMemberRead[]>('/team');
+
+// --- Public Booking ---
+
+export const getPublicAvailability = (params: {
+  service_id: string;
+  team_member_id?: string | null;
+  date: string;
+}): Promise<AvailabilityResponse> => {
+  const qs = new URLSearchParams();
+  qs.set('service_id', params.service_id);
+  if (params.team_member_id) qs.set('team_member_id', params.team_member_id);
+  qs.set('date', params.date);
+  return apiFetch<AvailabilityResponse>(`/public/booking/availability?${qs}`, {
+    credentials: 'omit',
+  });
+};
+
+export const createPublicAppointment = (data: PublicAppointmentCreate): Promise<PublicAppointmentRead> =>
+  apiFetch<PublicAppointmentRead>('/public/booking/appointments', {
+    method: 'POST',
+    body: JSON.stringify(data),
+    credentials: 'omit',
+  });
+
+export const getCancellation = (token: string): Promise<CancellationView> =>
+  apiFetch<CancellationView>(`/public/booking/cancel/${token}`, { credentials: 'omit' });
+
+export const cancelAppointment = (token: string): Promise<CancellationView> =>
+  apiFetch<CancellationView>(`/public/booking/cancel/${token}`, {
+    method: 'POST',
+    credentials: 'omit',
+  });
 
 // --- Salon Profile (Admin) ---
 

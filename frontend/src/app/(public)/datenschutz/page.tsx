@@ -148,11 +148,12 @@ export default function DatenschutzPage() {
             </h2>
             <p>
               Bei der Online-Terminbuchung erheben wir folgende Daten, die für die Durchführung
-              des Termins erforderlich sind:
+              und Bestätigung des Termins erforderlich sind:
             </p>
             <ul className="mt-3 space-y-1 list-disc list-inside">
               <li>Name</li>
-              <li>Telefonnummer</li>
+              <li>E-Mail-Adresse (für Buchungsbestätigung, Storno-Link und Erinnerung)</li>
+              <li>Telefonnummer (optional)</li>
               <li>Gewünschte Dienstleistung und Wunschtermin</li>
             </ul>
             <p className="mt-3">
@@ -167,10 +168,10 @@ export default function DatenschutzPage() {
 
             <div className="mt-4 space-y-4">
               <div>
-                <h3 className="font-semibold text-ink mb-2">Versand von Terminerinnerungen (E-Mail)</h3>
+                <h3 className="font-semibold text-ink mb-2">Versand von Termin-Mails (Bestätigung, Erinnerung)</h3>
                 <p>
-                  Terminerinnerungen per E-Mail werden über den Dienst{' '}
-                  <strong className="text-ink">Twilio SendGrid</strong> versandt (Twilio Inc.,
+                  Die Zustellung von Bestätigungs-E-Mails und Terminerinnerungen erfolgt über den Dienst{' '}
+                  <strong className="text-ink">Twilio SendGrid</strong> (Twilio Inc.,
                   375 Beale Street, Suite 300, San Francisco, CA 94105, USA).
                 </p>
                 <p className="mt-2">
@@ -185,18 +186,6 @@ export default function DatenschutzPage() {
                   >
                     twilio.com/en-us/legal/privacy
                   </a>
-                </p>
-                <p className="mt-2">
-                  Rechtsgrundlage ist Art. 6 Abs. 1 lit. b DSGVO.
-                </p>
-              </div>
-
-              <div>
-                <h3 className="font-semibold text-ink mb-2">Versand von SMS-Erinnerungen</h3>
-                <p>
-                  SMS-Terminerinnerungen werden ebenfalls über{' '}
-                  <strong className="text-ink">Twilio</strong> versandt. Dabei wird Ihre
-                  Telefonnummer an Twilio übermittelt (siehe oben).
                 </p>
                 <p className="mt-2">
                   Rechtsgrundlage ist Art. 6 Abs. 1 lit. b DSGVO.

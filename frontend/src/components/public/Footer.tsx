@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { getPublicSalonProfile, getPublicSalonHours } from '@/lib/api';
 import type { PublicSalonHoursRead, SalonProfile } from '@/lib/types';
 
-const DAY_NAMES = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
+const DAY_NAMES = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag'];
 
 function formatTime(t: string | null | undefined): string {
   if (!t) return '';

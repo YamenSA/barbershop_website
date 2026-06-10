@@ -24,9 +24,9 @@ def create_app() -> FastAPI:
 
     from slowapi import _rate_limit_exceeded_handler
     from slowapi.errors import RateLimitExceeded
-    from app.domains.auth.router import limiter as auth_limiter
+    from app.core.limiter import limiter
 
-    app.state.limiter = auth_limiter
+    app.state.limiter = limiter
     app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
     from app.domains.auth.router import router as auth_router
@@ -43,6 +43,9 @@ def create_app() -> FastAPI:
 
     from app.domains.stammdaten.public_router import router as public_router
     app.include_router(public_router, prefix="/api/v1/public")
+
+    from app.domains.booking.public_router import router as public_booking_router
+    app.include_router(public_booking_router, prefix="/api/v1/public")
 
     return app
 

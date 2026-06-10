@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import List, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
 from app.domains.booking.models import AppointmentStatus
 
@@ -86,3 +86,68 @@ class DashboardResponse(BaseModel):
     date: str
     appointments: List[AppointmentSummary]
     working_today: List[WorkingMemberSummary]
+
+
+# ---------------------------------------------------------------------------
+# Public Booking Schemas (US1)
+# ---------------------------------------------------------------------------
+
+
+class PublicCustomerCreate(BaseModel):
+    name: str = Field(min_length=1, max_length=100)
+    email: EmailStr
+    phone: Optional[str] = None
+
+
+class PublicAppointmentCreate(BaseModel):
+    service_id: UUID
+    team_member_id: Optional[UUID] = None  # None = any available stylist
+    starts_at: datetime
+    customer: PublicCustomerCreate
+    privacy_acknowledged: bool
+
+    @field_validator("privacy_acknowledged")
+    @classmethod
+    def must_be_acknowledged(cls, v: bool) -> bool:
+        if not v:
+            raise ValueError("Datenschutzerklärung muss akzeptiert werden")
+        return v
+
+
+class PublicSlot(BaseModel):
+    starts_at: datetime
+    ends_at: datetime
+    team_member_id: UUID
+    team_member_name: str
+
+
+class AvailabilityResponse(BaseModel):
+    date: str
+    slots: List[PublicSlot]
+
+
+class PublicAppointmentRead(BaseModel):
+    id: UUID
+    service_id: UUID
+    team_member_id: UUID
+    starts_at: datetime
+    ends_at: datetime
+    status: AppointmentStatus
+    cancellation_token: str
+    payment_note: str = "Zahlung bar vor Ort"
+    model_config = ConfigDict(from_attributes=True)
+
+
+# ---------------------------------------------------------------------------
+# Public Cancellation Schemas (US3)
+# ---------------------------------------------------------------------------
+
+
+class CancellationView(BaseModel):
+    id: UUID
+    service_name: str
+    team_member_name: str
+    starts_at: datetime
+    status: AppointmentStatus
+    cancellable: bool
+    cancellation_deadline: Optional[datetime] = None

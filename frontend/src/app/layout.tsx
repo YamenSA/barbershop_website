@@ -21,7 +21,7 @@ export const metadata: Metadata = {
     template: "%s | Azzam Barbershop",
     default: "Azzam Barbershop",
   },
-  description: "Präzise Schnitte, professionelle Bartpflege — Ihr Barbershop in Berlin.",
+  description: "Präzise Schnitte, professionelle Bartpflege — Ihr Barbershop in Cottbus.",
 };
 
 export default function RootLayout({
@@ -34,7 +34,12 @@ export default function RootLayout({
       lang="de"
       className={`${barlowCondensed.variable} ${inter.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <a href="#main-content" className="skip-link">
+          Zum Inhalt springen
+        </a>
+        {children}
+      </body>
     </html>
   );
 }

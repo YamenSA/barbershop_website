@@ -1,20 +1,24 @@
 import logging
+import secrets
 from datetime import datetime, timedelta, timezone
 from typing import List, Optional
 from uuid import UUID
 
 from fastapi import HTTPException, status
+from sqlalchemy.exc import IntegrityError
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 logger = logging.getLogger(__name__)
 
-from app.domains.booking.models import Appointment, Customer
+from app.core.config import settings
+from app.domains.booking.models import Appointment, AppointmentOrigin, AppointmentStatus, Customer
 from app.domains.booking.schemas import (
     AppointmentCreate,
     AppointmentStatusUpdate,
     AppointmentUpdate,
     CustomerCreate,
+    PublicAppointmentCreate,
 )
 from app.domains.stammdaten.models import Service
 
@@ -236,3 +240,160 @@ class BookingService:
             appointment.team_member_id,
         )
         return appointment
+
+
+# ---------------------------------------------------------------------------
+# Public booking (US1)
+# ---------------------------------------------------------------------------
+
+
+async def _upsert_customer(session: AsyncSession, data) -> Customer:
+    """Create or return existing customer by email; update last_active_at."""
+    stmt = select(Customer).where(Customer.email == data.email, Customer.anonymized_at == None)  # noqa: E711
+    result = await session.execute(stmt)
+    customer = result.scalar_one_or_none()
+    if customer:
+        customer.last_active_at = datetime.now(timezone.utc)
+        session.add(customer)
+    else:
+        customer = Customer(
+            name=data.name,
+            email=data.email,
+            phone=data.phone,
+        )
+        session.add(customer)
+    await session.flush()
+    return customer
+
+
+# ---------------------------------------------------------------------------
+# Public cancellation (US3)
+# ---------------------------------------------------------------------------
+
+
+async def _build_cancellation_view(
+    session: AsyncSession, appointment: Appointment
+) -> "CancellationView":
+    from app.domains.booking.schemas import CancellationView
+    from app.domains.stammdaten.models import Service, TeamMember
+
+    service = await session.get(Service, appointment.service_id)
+    team_member = await session.get(TeamMember, appointment.team_member_id)
+    now = datetime.now(timezone.utc)
+    deadline = appointment.starts_at - timedelta(hours=settings.CANCELLATION_CUTOFF_HOURS)
+    cancellable = (
+        appointment.status == AppointmentStatus.confirmed
+        and now < deadline
+    )
+    return CancellationView(
+        id=appointment.id,
+        service_name=service.name if service else "Unbekannt",
+        team_member_name=team_member.name if team_member else "Unbekannt",
+        starts_at=appointment.starts_at,
+        status=appointment.status,
+        cancellable=cancellable,
+        cancellation_deadline=deadline if appointment.status == AppointmentStatus.confirmed else None,
+    )
+
+
+async def get_cancellation_view(session: AsyncSession, token: str):
+    stmt = select(Appointment).where(Appointment.cancellation_token == token)
+    result = await session.execute(stmt)
+    appointment = result.scalar_one_or_none()
+    if not appointment:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="TOKEN_NOT_FOUND")
+    return await _build_cancellation_view(session, appointment)
+
+
+async def cancel_by_token(session: AsyncSession, token: str):
+    stmt = select(Appointment).where(Appointment.cancellation_token == token)
+    result = await session.execute(stmt)
+    appointment = result.scalar_one_or_none()
+    if not appointment:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="TOKEN_NOT_FOUND")
+
+    # Idempotent: already cancelled → return view
+    if appointment.status == AppointmentStatus.cancelled:
+        return await _build_cancellation_view(session, appointment)
+
+    # Deadline check
+    deadline = appointment.starts_at - timedelta(hours=settings.CANCELLATION_CUTOFF_HOURS)
+    if datetime.now(timezone.utc) >= deadline:
+        raise HTTPException(status_code=410, detail="CANCELLATION_WINDOW_CLOSED")
+
+    appointment.status = AppointmentStatus.cancelled
+    session.add(appointment)
+    await session.commit()
+    await session.refresh(appointment)
+    return await _build_cancellation_view(session, appointment)
+
+
+async def create_public_appointment(
+    session: AsyncSession,
+    data: PublicAppointmentCreate,
+) -> Appointment:
+    now = datetime.now(timezone.utc)
+
+    # Normalize to UTC
+    starts_at = (
+        data.starts_at.replace(tzinfo=timezone.utc)
+        if data.starts_at.tzinfo is None
+        else data.starts_at.astimezone(timezone.utc)
+    )
+
+    # Guardrails
+    if starts_at < now + timedelta(hours=settings.BOOKING_MIN_LEAD_HOURS):
+        raise HTTPException(status_code=422, detail="BOOKING_TOO_SOON")
+    if starts_at > now + timedelta(days=settings.BOOKING_MAX_HORIZON_DAYS):
+        raise HTTPException(status_code=422, detail="BOOKING_TOO_FAR")
+
+    # 15-minute grid
+    if starts_at.minute % 15 != 0 or starts_at.second != 0 or starts_at.microsecond != 0:
+        raise HTTPException(status_code=422, detail="INVALID_SLOT_TIME")
+
+    # Load service
+    service = await session.get(Service, data.service_id)
+    if not service or not service.is_active:
+        raise HTTPException(status_code=404, detail="Service not found")
+
+    ends_at = starts_at + timedelta(minutes=service.duration_minutes)
+
+    # Resolve team member
+    if data.team_member_id is None:
+        from app.domains.booking.availability import resolve_any_member
+        team_member_id = await resolve_any_member(session, data.service_id, starts_at, ends_at)
+        if team_member_id is None:
+            raise HTTPException(status_code=409, detail="BOOKING_CONFLICT")
+    else:
+        team_member_id = data.team_member_id
+
+    # App-level overlap check (DB EXCLUDE is the hard guarantee)
+    overlap_stmt = select(Appointment).where(
+        Appointment.team_member_id == team_member_id,
+        Appointment.status == AppointmentStatus.confirmed,
+        Appointment.starts_at < ends_at,
+        Appointment.ends_at > starts_at,
+    )
+    if (await session.execute(overlap_stmt)).first():
+        raise HTTPException(status_code=409, detail="BOOKING_CONFLICT")
+
+    # Customer upsert
+    customer = await _upsert_customer(session, data.customer)
+
+    appointment = Appointment(
+        team_member_id=team_member_id,
+        service_id=data.service_id,
+        customer_id=customer.id,
+        starts_at=starts_at,
+        ends_at=ends_at,
+        origin=AppointmentOrigin.online,
+        cancellation_token=secrets.token_urlsafe(32),
+    )
+    session.add(appointment)
+    try:
+        await session.commit()
+    except IntegrityError:
+        await session.rollback()
+        raise HTTPException(status_code=409, detail="BOOKING_CONFLICT")
+    await session.refresh(appointment)
+    return appointment
