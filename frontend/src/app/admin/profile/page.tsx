@@ -120,7 +120,7 @@ export default function ProfilePage() {
               placeholder={placeholder}
               value={form[name]}
               onChange={handleChange}
-              className="block w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              className="block w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-[var(--admin-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--admin-primary)]"
             />
           </div>
         ))}
@@ -139,7 +139,7 @@ export default function ProfilePage() {
         <button
           type="submit"
           disabled={saving}
-          className="rounded bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+          className="rounded bg-[var(--admin-primary)] px-4 py-2 text-sm font-medium text-white hover:bg-[var(--admin-primary-hover)] disabled:opacity-50"
         >
           {saving ? 'Speichern…' : 'Speichern'}
         </button>

@@ -119,7 +119,7 @@ export default function CalendarPage() {
           <select
             value={filterMemberId}
             onChange={(e) => handleFilterChange(e.target.value)}
-            className="rounded border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="rounded border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--admin-primary)]"
           >
             <option value="">Alle</option>
             {members.map((m) => (
@@ -129,7 +129,7 @@ export default function CalendarPage() {
           <DailyPlanExport />
           <button
             onClick={() => { setFormStartsAt(''); setShowForm(true); }}
-            className="rounded bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-700"
+            className="rounded bg-[var(--admin-primary)] px-3 py-1.5 text-sm font-medium text-white hover:bg-[var(--admin-primary-hover)]"
           >
             + Walk-in
           </button>

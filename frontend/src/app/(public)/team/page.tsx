@@ -5,9 +5,9 @@ import EmptyState from '@/components/public/EmptyState';
 import BookingCta from '@/components/public/BookingCta';
 
 export const metadata: Metadata = {
-  title: 'Unser Team',
+  title: 'Unser Team — Barbiere in Cottbus',
   description:
-    'Lernen Sie unser Team kennen — erfahrene Barbiere mit Leidenschaft für Präzision.',
+    'Lernen Sie das Friseur-Team des Azzam Barbershop in Cottbus kennen — erfahrene Barbiere mit Leidenschaft für Präzision, Fade und klassische Rasur.',
 };
 
 export const revalidate = 60;
@@ -25,7 +25,7 @@ export default async function TeamPage() {
           >
             Unser Team
           </h1>
-          <p className="text-ash text-lg leading-relaxed max-w-[55ch]">
+          <p className="text-secondary text-lg leading-relaxed max-w-[55ch]">
             Erfahrene Barbiere — jeder mit eigenem Stil, alle mit dem gleichen Anspruch
             an Präzision.
           </p>

@@ -3,7 +3,7 @@ import { ueberUns } from '@/content/ueber-uns';
 import BookingCta from '@/components/public/BookingCta';
 
 export const metadata: Metadata = {
-  title: 'Über uns',
+  title: 'Über uns | Azzam Barbershop Cottbus',
   description:
     'Lernen Sie Azzam Barbershop kennen — Handwerk, Geschichte und die Werte hinter jedem Schnitt.',
 };
@@ -21,7 +21,7 @@ export default function UeberUnsPage() {
           {ueberUns.headline}
         </h1>
 
-        <p className="text-ash text-lg leading-relaxed max-w-[65ch] mb-14">
+        <p className="text-secondary text-lg leading-relaxed max-w-[65ch] mb-14">
           {ueberUns.intro}
         </p>
 
@@ -31,7 +31,7 @@ export default function UeberUnsPage() {
               <h2 className="font-display font-bold text-xl tracking-[-0.02em] text-ink mb-3">
                 {section.heading}
               </h2>
-              <p className="text-ash leading-relaxed max-w-[65ch]">
+              <p className="text-secondary leading-relaxed max-w-[65ch]">
                 {section.body}
               </p>
             </article>
@@ -39,7 +39,7 @@ export default function UeberUnsPage() {
         </div>
 
         <div className="mt-16 pt-10 border-t border-[oklch(0.95_0.004_140/0.08)]">
-          <p className="text-ash mb-6 max-w-[55ch]">
+          <p className="text-secondary mb-6 max-w-[55ch]">
             Überzeugen Sie sich selbst — buchen Sie Ihren Termin und erleben Sie
             den Unterschied.
           </p>

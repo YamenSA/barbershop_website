@@ -8,40 +8,6 @@ export const metadata: Metadata = {
 
 export const revalidate = 3600;
 
-function Placeholder({ label }: { label: string }) {
-  return (
-    <span
-      className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-xs font-semibold"
-      style={{
-        background: 'oklch(0.88 0.12 55 / 0.12)',
-        color: 'oklch(0.88 0.12 55)',
-        border: '1px solid oklch(0.88 0.12 55 / 0.3)',
-      }}
-      aria-label={`Platzhalter: ${label}`}
-    >
-      ⚠ {label}
-    </span>
-  );
-}
-
-function PlaceholderBlock({ children }: { children: React.ReactNode }) {
-  return (
-    <div
-      className="rounded-[6px] p-4 text-sm leading-relaxed"
-      style={{
-        background: 'oklch(0.88 0.12 55 / 0.06)',
-        border: '1px solid oklch(0.88 0.12 55 / 0.25)',
-        color: 'oklch(0.88 0.12 55 / 0.85)',
-      }}
-    >
-      <p className="font-semibold mb-1 text-xs uppercase tracking-[0.08em]">
-        Betreiber einzutragen
-      </p>
-      {children}
-    </div>
-  );
-}
-
 export default function ImpressumPage() {
   return (
     <section className="px-4 sm:px-6 lg:px-8 py-16">
@@ -63,15 +29,13 @@ export default function ImpressumPage() {
             >
               Angaben gemäß § 5 DDG
             </h2>
-            <PlaceholderBlock>
-              <p>Bitte vollständige Anbieterkennung eintragen:</p>
-              <ul className="mt-2 space-y-1 list-disc list-inside">
-                <li>Vollständiger Name / Firma (bei GmbH: Rechtsform + Vertretungsberechtigte)</li>
-                <li>Straße und Hausnummer</li>
-                <li>PLZ und Ort</li>
-                <li>Land</li>
-              </ul>
-            </PlaceholderBlock>
+            <p>
+              Azzam Barbershop<br />
+              Inhaber: Usama Azzam<br />
+              Sielower Chaussee 38<br />
+              03044 Cottbus<br />
+              Deutschland
+            </p>
           </section>
 
           <section aria-labelledby="kontakt-heading">
@@ -81,28 +45,66 @@ export default function ImpressumPage() {
             >
               Kontakt
             </h2>
-            <PlaceholderBlock>
-              <ul className="space-y-1 list-disc list-inside">
-                <li>Telefon: [Telefonnummer eintragen]</li>
-                <li>E-Mail: [E-Mail-Adresse eintragen]</li>
-              </ul>
-            </PlaceholderBlock>
+            <ul className="space-y-1">
+              <li>
+                Telefon:{' '}
+                <a
+                  href="tel:+4917682200682"
+                  className="text-brass hover:text-ink transition-colors duration-[150ms]"
+                >
+                  +49 176 82200682
+                </a>
+              </li>
+              <li>
+                E-Mail:{' '}
+                <a
+                  href="mailto:Oazzam412@gmail.com"
+                  className="text-brass hover:text-ink transition-colors duration-[150ms]"
+                >
+                  Oazzam412@gmail.com
+                </a>
+              </li>
+            </ul>
           </section>
 
-          <section aria-labelledby="register-heading">
+          <section aria-labelledby="beruf-heading">
             <h2
-              id="register-heading"
+              id="beruf-heading"
               className="font-display font-bold text-lg text-ink mb-3 tracking-[-0.01em]"
             >
-              Unternehmensangaben <Placeholder label="wenn zutreffend" />
+              Berufsrechtliche Angaben
             </h2>
-            <PlaceholderBlock>
-              <ul className="space-y-1 list-disc list-inside">
-                <li>Handelsregister: Registergericht und Registernummer (falls eingetragen)</li>
-                <li>Umsatzsteuer-Identifikationsnummer gemäß § 27 a UStG (falls vorhanden)</li>
-                <li>Bei GmbH / UG: Angabe des Stammkapitals</li>
-              </ul>
-            </PlaceholderBlock>
+            <div className="space-y-4">
+              <div>
+                <h3 className="font-semibold text-ink mb-1">Berufsbezeichnung</h3>
+                <p>Friseur (verliehen in der Bundesrepublik Deutschland)</p>
+              </div>
+              <div>
+                <h3 className="font-semibold text-ink mb-1">Zuständige Kammer / Aufsichtsbehörde</h3>
+                <p>
+                  Handwerkskammer Cottbus<br />
+                  Altmarkt 17<br />
+                  03046 Cottbus<br />
+                  Deutschland
+                </p>
+              </div>
+              <div>
+                <h3 className="font-semibold text-ink mb-1">Berufsrechtliche Regelungen</h3>
+                <p>
+                  Es gelten die Handwerksordnung (HwO) sowie die ergänzenden
+                  Vorschriften. Die Regelungen sind einsehbar unter{' '}
+                  <a
+                    href="https://www.gesetze-im-internet.de/hwo/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-brass hover:text-ink transition-colors duration-[150ms]"
+                  >
+                    gesetze-im-internet.de/hwo
+                  </a>
+                  .
+                </p>
+              </div>
+            </div>
           </section>
 
           <section aria-labelledby="redaktion-heading">
@@ -112,12 +114,12 @@ export default function ImpressumPage() {
             >
               Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV
             </h2>
-            <PlaceholderBlock>
-              <ul className="space-y-1 list-disc list-inside">
-                <li>Vollständiger Name der verantwortlichen Person</li>
-                <li>Vollständige Anschrift (Straße, PLZ, Ort)</li>
-              </ul>
-            </PlaceholderBlock>
+            <p>
+              Usama Azzam<br />
+              Sielower Chaussee 38<br />
+              03044 Cottbus<br />
+              Deutschland
+            </p>
           </section>
 
           <section aria-labelledby="haftung-heading">

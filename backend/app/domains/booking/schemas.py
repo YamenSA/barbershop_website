@@ -134,7 +134,7 @@ class PublicAppointmentRead(BaseModel):
     ends_at: datetime
     status: AppointmentStatus
     cancellation_token: str
-    payment_note: str = "Zahlung bar vor Ort"
+    payment_note: str = "Zahlung vor Ort"
     model_config = ConfigDict(from_attributes=True)
 
 

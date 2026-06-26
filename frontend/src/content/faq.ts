@@ -41,9 +41,9 @@ export const faqs: FaqItem[] = [
     id: 'zahlung',
     question: 'Welche Zahlungsmethoden akzeptieren Sie?',
     answer:
-      'Wir akzeptieren Barzahlung und gängige Kartenzahlung (EC/Girocard sowie die ' +
-      'wichtigsten Kreditkarten). Bitte erfragen Sie aktuelle Zahlungsoptionen direkt ' +
-      'bei uns, da sich das Angebot ändern kann.',
+      'Die Zahlung erfolgt bequem vor Ort — wahlweise bar oder mit Karte (EC/Girocard ' +
+      'sowie die gängigen Kreditkarten wie Visa und Mastercard). Alle Preise sind ' +
+      'Endpreise inklusive Mehrwertsteuer.',
   },
   {
     id: 'bartpflege',
@@ -61,5 +61,30 @@ export const faqs: FaqItem[] = [
       'und sind in der Regel innerhalb von etwa einer Minute nach einer Änderung ' +
       'aktualisiert. Bei kurzfristigen Abweichungen (z. B. Feiertagen) empfehlen wir ' +
       'einen kurzen Anruf.',
+  },
+  {
+    id: 'terminpflicht',
+    question: 'Muss ich für jeden Besuch einen Termin buchen?',
+    answer:
+      'Für Herren bieten wir grundsätzlich auch Walk-in-Besuche an — je nach Tagesauslastung ' +
+      'kann es aber zu Wartezeiten kommen. Damen und Kinder bitten wir aus organisatorischen ' +
+      'Gründen, immer einen Termin zu vereinbaren. Eine Online-Buchung dauert nur wenige ' +
+      'Minuten und sichert Ihnen Ihren Wunschtermin.',
+  },
+  {
+    id: 'kartenzahlung',
+    question: 'Kann ich mit Karte bezahlen?',
+    answer:
+      'Ja. Die Zahlung erfolgt vor Ort — wahlweise mit Karte (EC-/Girocard sowie die ' +
+      'gängigen Kreditkarten wie Visa und Mastercard) oder bar.',
+  },
+  {
+    id: 'parkplatz',
+    question: 'Gibt es Parkmöglichkeiten in der Nähe?',
+    answer:
+      'In der Umgebung des Shops stehen öffentliche Parkplätze sowie ' +
+      'Kurzzeitparkzonen zur Verfügung. Wir empfehlen, etwas Puffer einzuplanen, ' +
+      'da die Verfügbarkeit zu Stoßzeiten schwanken kann. Alternativ ist unser ' +
+      'Standort auch gut mit öffentlichen Verkehrsmitteln erreichbar.',
   },
 ];

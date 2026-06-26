@@ -6,8 +6,15 @@
   --color-brass: oklch(0.88 0.12 55);
   --color-midnight: oklch(0.10 0.000 0);
   --color-slate: oklch(0.15 0.008 140);
-  --color-ink: oklch(0.95 0.004 140);
-  --color-ash: oklch(0.55 0.006 140);
+
+  /* Public text tiers — locked against the real Midnight-Black bg (oklch(0.10 0 0) ≈ #030303).
+     Ratios computed against that token (see DESIGN.md §2). */
+  --color-ink: #F5F5F5;        /* text-primary   — ~18.9:1 */
+  --color-secondary: #B8B8B8;  /* text-secondary — ~10.4:1 → Fließtext, Bios, Sublines */
+  --color-tertiary: #999999;   /* text-tertiary  — ~7.2:1  → Meta, Chips, "Mein Konto" (floor for small text) */
+  --color-ash: #999999;        /* alias of text-tertiary (legacy class name across the public site) */
+  /* Label on Malachite fills: use `text-midnight` (near-black, ~6.8:1).
+     White on Malachite only clears ~2.8:1 — see P1.6 / DESIGN.md button rule. */
 
   /* Semantic */
   --color-background: oklch(0.10 0.000 0);
@@ -33,6 +40,10 @@ body {
   background-color: oklch(0.10 0.000 0);
   color: oklch(0.95 0.004 140);
   font-family: var(--font-body), system-ui, sans-serif;
+  /* Never let the browser fake a missing weight by double-drawing glyphs.
+     That faux-bold smear is what made "trifft" (double-f) look doubled/blurry
+     in the Barlow Condensed ExtraBold headlines (P2.9). Real 700/800 are loaded. */
+  font-synthesis: none;
 }
 
 /* Typography wrapping — prevent orphans, balance headlines */
@@ -43,29 +54,35 @@ p, li {
   text-wrap: pretty;
 }
 
-/* Skip link — visually hidden until focused */
-.skip-link {
-  position: absolute;
-  left: -9999px;
-  top: 1rem;
-  z-index: 9999;
-  padding: 0.5rem 1.25rem;
-  background: oklch(0.65 0.19 140);
-  color: oklch(0.10 0.000 0);
-  font-weight: 600;
-  font-size: 0.875rem;
-  border-radius: 4px;
-  text-decoration: none;
-  white-space: nowrap;
-}
-.skip-link:focus {
-  left: 1rem;
-}
+
 
 /* Malachite focus ring on all interactive elements */
 :focus-visible {
   outline: none;
   box-shadow: 0 0 0 3px oklch(0.65 0.19 140 / 0.5);
+}
+
+/* ───────────────────────────────────────────────────────────────────────────
+   Admin: pinned LIGHT theme, independent of OS/browser color scheme.
+   The public site is dark-committed (body bg is near-black). The admin shell
+   must never inherit that — it sets color-scheme:light (fixes white-on-white
+   native form controls) and paints its OWN page background + text so nothing
+   leaks through from the dark public tokens. Every admin surface sets bg AND
+   text explicitly via these scoped tokens. Brand accent = green (no indigo).
+   WCAG: every text/bg pair below clears 4.5:1.
+   ─────────────────────────────────────────────────────────────────────────── */
+.admin-shell {
+  color-scheme: light;
+  --admin-page: #F6F6F4;          /* page background */
+  --admin-surface: #FFFFFF;       /* cards, inputs, tables, modals */
+  --admin-border: #E2E2DD;        /* hairlines */
+  --admin-border-strong: #D7D7D1; /* emphasized dividers */
+  --admin-text: #16161A;          /* primary text — ~16:1 on surface */
+  --admin-text-muted: #6B6B66;    /* secondary text — ~5.0:1 on surface */
+  --admin-primary: #15803D;       /* malachite-family green; white label ≈ 4.7:1 */
+  --admin-primary-hover: #116A32;
+  background-color: var(--admin-page);
+  color: var(--admin-text);
 }
 
 /* Reduced motion — quiet, equivalent experience */

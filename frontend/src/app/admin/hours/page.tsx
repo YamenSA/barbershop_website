@@ -183,7 +183,7 @@ export default function HoursPage() {
                       <button
                         onClick={() => saveDay(d)}
                         disabled={saving === d}
-                        className="rounded bg-indigo-600 px-3 py-1 text-xs font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+                        className="rounded bg-[var(--admin-primary)] px-3 py-1 text-xs font-medium text-white hover:bg-[var(--admin-primary-hover)] disabled:opacity-50"
                       >
                         {saving === d ? '…' : 'Speichern'}
                       </button>
@@ -224,7 +224,7 @@ export default function HoursPage() {
           <button
             type="submit"
             disabled={addingClosure}
-            className="rounded bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+            className="rounded bg-[var(--admin-primary)] px-4 py-2 text-sm font-medium text-white hover:bg-[var(--admin-primary-hover)] disabled:opacity-50"
           >
             {addingClosure ? 'Speichern…' : 'Hinzufügen'}
           </button>

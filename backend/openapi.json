@@ -16,7 +16,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/LoginRequest"
+                "$ref": "#/components/schemas/app__domains__auth__schemas__LoginRequest"
               }
             }
           },
@@ -1974,10 +1974,861 @@
           }
         }
       }
+    },
+    "/api/v1/account/register": {
+      "post": {
+        "tags": [
+          "customer-account"
+        ],
+        "summary": "Register",
+        "operationId": "register_api_v1_account_register_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenericMessageOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/account/verify/{token}": {
+      "post": {
+        "tags": [
+          "customer-account"
+        ],
+        "summary": "Verify Email",
+        "operationId": "verify_email_api_v1_account_verify__token__post",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerifiedOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/account/login": {
+      "post": {
+        "tags": [
+          "customer-account"
+        ],
+        "summary": "Login",
+        "operationId": "login_api_v1_account_login_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/app__domains__customer_account__schemas__LoginRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/account/logout": {
+      "post": {
+        "tags": [
+          "customer-account"
+        ],
+        "summary": "Logout",
+        "operationId": "logout_api_v1_account_logout_post",
+        "parameters": [
+          {
+            "name": "customer_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "title": "Customer Session"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenericMessageOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/account/me": {
+      "get": {
+        "tags": [
+          "customer-account"
+        ],
+        "summary": "Me",
+        "operationId": "me_api_v1_account_me_get",
+        "parameters": [
+          {
+            "name": "customer_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "title": "Customer Session"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/account/password/forgot": {
+      "post": {
+        "tags": [
+          "customer-account"
+        ],
+        "summary": "Forgot Password",
+        "operationId": "forgot_password_api_v1_account_password_forgot_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ForgotPasswordRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenericMessageOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/account/password/reset/{token}": {
+      "post": {
+        "tags": [
+          "customer-account"
+        ],
+        "summary": "Reset Password",
+        "operationId": "reset_password_api_v1_account_password_reset__token__post",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResetPasswordRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResetOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/account/appointments": {
+      "get": {
+        "tags": [
+          "customer-account"
+        ],
+        "summary": "List Appointments",
+        "operationId": "list_appointments_api_v1_account_appointments_get",
+        "parameters": [
+          {
+            "name": "customer_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "title": "Customer Session"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppointmentListOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/account/appointments/{appointment_id}/cancel": {
+      "post": {
+        "tags": [
+          "customer-account"
+        ],
+        "summary": "Cancel Appointment",
+        "operationId": "cancel_appointment_api_v1_account_appointments__appointment_id__cancel_post",
+        "parameters": [
+          {
+            "name": "appointment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Appointment Id"
+            }
+          },
+          {
+            "name": "customer_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "title": "Customer Session"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountAppointmentRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/account/appointments/{appointment_id}/reschedule": {
+      "post": {
+        "tags": [
+          "customer-account"
+        ],
+        "summary": "Reschedule Appointment",
+        "operationId": "reschedule_appointment_api_v1_account_appointments__appointment_id__reschedule_post",
+        "parameters": [
+          {
+            "name": "appointment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Appointment Id"
+            }
+          },
+          {
+            "name": "customer_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "title": "Customer Session"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RescheduleRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountAppointmentRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/account/profile": {
+      "patch": {
+        "tags": [
+          "customer-account"
+        ],
+        "summary": "Update Profile",
+        "operationId": "update_profile_api_v1_account_profile_patch",
+        "parameters": [
+          {
+            "name": "customer_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "title": "Customer Session"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProfileUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/account/export": {
+      "get": {
+        "tags": [
+          "customer-account"
+        ],
+        "summary": "Export Data",
+        "operationId": "export_data_api_v1_account_export_get",
+        "parameters": [
+          {
+            "name": "customer_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "title": "Customer Session"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/account/": {
+      "delete": {
+        "tags": [
+          "customer-account"
+        ],
+        "summary": "Delete Account",
+        "operationId": "delete_account_api_v1_account__delete",
+        "parameters": [
+          {
+            "name": "customer_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "title": "Customer Session"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/promotions": {
+      "get": {
+        "tags": [
+          "promotions-admin"
+        ],
+        "summary": "List Promotions",
+        "operationId": "list_promotions_api_v1_promotions_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PromotionRead"
+                  },
+                  "type": "array",
+                  "title": "Response List Promotions Api V1 Promotions Get"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "promotions-admin"
+        ],
+        "summary": "Create Promotion",
+        "operationId": "create_promotion_api_v1_promotions_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PromotionCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PromotionRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/promotions/{promotion_id}": {
+      "get": {
+        "tags": [
+          "promotions-admin"
+        ],
+        "summary": "Get Promotion",
+        "operationId": "get_promotion_api_v1_promotions__promotion_id__get",
+        "parameters": [
+          {
+            "name": "promotion_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Promotion Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PromotionRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "promotions-admin"
+        ],
+        "summary": "Update Promotion",
+        "operationId": "update_promotion_api_v1_promotions__promotion_id__put",
+        "parameters": [
+          {
+            "name": "promotion_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Promotion Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PromotionUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PromotionRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "promotions-admin"
+        ],
+        "summary": "Delete Promotion",
+        "operationId": "delete_promotion_api_v1_promotions__promotion_id__delete",
+        "parameters": [
+          {
+            "name": "promotion_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Promotion Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/public/promotions": {
+      "get": {
+        "tags": [
+          "promotions-public"
+        ],
+        "summary": "List Public Promotions",
+        "description": "Return only promotions that are currently visible:\nis_active AND starts_on <= today <= ends_on (today = Europe/Berlin, I2 guard).",
+        "operationId": "list_public_promotions_api_v1_public_promotions_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PublicPromotionRead"
+                  },
+                  "type": "array",
+                  "title": "Response List Public Promotions Api V1 Public Promotions Get"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
     "schemas": {
+      "AccountAppointmentRead": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "service_name": {
+            "type": "string",
+            "title": "Service Name"
+          },
+          "team_member_name": {
+            "type": "string",
+            "title": "Team Member Name"
+          },
+          "starts_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Starts At"
+          },
+          "ends_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Ends At"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "cancellable": {
+            "type": "boolean",
+            "title": "Cancellable"
+          },
+          "reschedulable": {
+            "type": "boolean",
+            "title": "Reschedulable"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "service_name",
+          "team_member_name",
+          "starts_at",
+          "ends_at",
+          "status",
+          "cancellable",
+          "reschedulable"
+        ],
+        "title": "AccountAppointmentRead"
+      },
       "AdminOut": {
         "properties": {
           "username": {
@@ -2066,6 +2917,30 @@
           "starts_at"
         ],
         "title": "AppointmentCreate"
+      },
+      "AppointmentListOut": {
+        "properties": {
+          "upcoming": {
+            "items": {
+              "$ref": "#/components/schemas/AccountAppointmentRead"
+            },
+            "type": "array",
+            "title": "Upcoming"
+          },
+          "past": {
+            "items": {
+              "$ref": "#/components/schemas/AccountAppointmentRead"
+            },
+            "type": "array",
+            "title": "Past"
+          }
+        },
+        "type": "object",
+        "required": [
+          "upcoming",
+          "past"
+        ],
+        "title": "AppointmentListOut"
       },
       "AppointmentRead": {
         "properties": {
@@ -2602,6 +3477,33 @@
         ],
         "title": "DayOverrideRead"
       },
+      "ForgotPasswordRequest": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "title": "Email"
+          }
+        },
+        "type": "object",
+        "required": [
+          "email"
+        ],
+        "title": "ForgotPasswordRequest"
+      },
+      "GenericMessageOut": {
+        "properties": {
+          "message": {
+            "type": "string",
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "message"
+        ],
+        "title": "GenericMessageOut"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -2615,23 +3517,230 @@
         "type": "object",
         "title": "HTTPValidationError"
       },
-      "LoginRequest": {
+      "MeOut": {
         "properties": {
-          "username": {
+          "id": {
             "type": "string",
-            "title": "Username"
+            "format": "uuid",
+            "title": "Id"
           },
-          "password": {
+          "name": {
             "type": "string",
-            "title": "Password"
+            "title": "Name"
+          },
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "phone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phone"
           }
         },
         "type": "object",
         "required": [
-          "username",
-          "password"
+          "id",
+          "name",
+          "email"
         ],
-        "title": "LoginRequest"
+        "title": "MeOut"
+      },
+      "ProfileUpdate": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "phone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phone"
+          }
+        },
+        "type": "object",
+        "title": "ProfileUpdate"
+      },
+      "PromotionCreate": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "starts_on": {
+            "type": "string",
+            "format": "date",
+            "title": "Starts On"
+          },
+          "ends_on": {
+            "type": "string",
+            "format": "date",
+            "title": "Ends On"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "title",
+          "description",
+          "starts_on",
+          "ends_on"
+        ],
+        "title": "PromotionCreate"
+      },
+      "PromotionRead": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "starts_on": {
+            "type": "string",
+            "format": "date",
+            "title": "Starts On"
+          },
+          "ends_on": {
+            "type": "string",
+            "format": "date",
+            "title": "Ends On"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active",
+            "default": true
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "effective_status": {
+            "type": "string",
+            "enum": [
+              "visible",
+              "scheduled",
+              "expired",
+              "hidden"
+            ],
+            "title": "Effective Status"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "title",
+          "description",
+          "starts_on",
+          "ends_on",
+          "id",
+          "effective_status",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "PromotionRead"
+      },
+      "PromotionUpdate": {
+        "properties": {
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "starts_on": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Starts On"
+          },
+          "ends_on": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ends On"
+          },
+          "is_active": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Active"
+          }
+        },
+        "type": "object",
+        "title": "PromotionUpdate"
       },
       "PublicAppointmentCreate": {
         "properties": {
@@ -2711,7 +3820,7 @@
           "payment_note": {
             "type": "string",
             "title": "Payment Note",
-            "default": "Zahlung bar vor Ort"
+            "default": "Zahlung vor Ort"
           }
         },
         "type": "object",
@@ -2757,6 +3866,42 @@
           "email"
         ],
         "title": "PublicCustomerCreate"
+      },
+      "PublicPromotionRead": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "starts_on": {
+            "type": "string",
+            "format": "date",
+            "title": "Starts On"
+          },
+          "ends_on": {
+            "type": "string",
+            "format": "date",
+            "title": "Ends On"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "description",
+          "starts_on",
+          "ends_on"
+        ],
+        "title": "PublicPromotionRead"
       },
       "PublicSalonHoursRead": {
         "properties": {
@@ -2829,6 +3974,14 @@
               }
             ],
             "title": "Description"
+          },
+          "target_group": {
+            "type": "string",
+            "title": "Target Group"
+          },
+          "service_kind": {
+            "type": "string",
+            "title": "Service Kind"
           }
         },
         "type": "object",
@@ -2836,7 +3989,9 @@
           "id",
           "name",
           "duration_minutes",
-          "price_cents"
+          "price_cents",
+          "target_group",
+          "service_kind"
         ],
         "title": "PublicServiceRead"
       },
@@ -2938,6 +4093,93 @@
           "name"
         ],
         "title": "PublicTeamMemberRead"
+      },
+      "RegisterRequest": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "title": "Email"
+          },
+          "phone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phone"
+          },
+          "password": {
+            "type": "string",
+            "title": "Password"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "email",
+          "password"
+        ],
+        "title": "RegisterRequest"
+      },
+      "RescheduleRequest": {
+        "properties": {
+          "starts_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Starts At"
+          },
+          "team_member_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Team Member Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "starts_at"
+        ],
+        "title": "RescheduleRequest"
+      },
+      "ResetOut": {
+        "properties": {
+          "reset": {
+            "type": "boolean",
+            "title": "Reset"
+          }
+        },
+        "type": "object",
+        "required": [
+          "reset"
+        ],
+        "title": "ResetOut"
+      },
+      "ResetPasswordRequest": {
+        "properties": {
+          "password": {
+            "type": "string",
+            "title": "Password"
+          }
+        },
+        "type": "object",
+        "required": [
+          "password"
+        ],
+        "title": "ResetPasswordRequest"
       },
       "SalonClosureCreate": {
         "properties": {
@@ -3267,15 +4509,34 @@
             "type": "boolean",
             "title": "Is Active",
             "default": true
+          },
+          "target_group": {
+            "$ref": "#/components/schemas/TargetGroup"
+          },
+          "service_kind": {
+            "$ref": "#/components/schemas/ServiceKind"
           }
         },
         "type": "object",
         "required": [
           "name",
           "duration_minutes",
-          "price_cents"
+          "price_cents",
+          "target_group",
+          "service_kind"
         ],
         "title": "ServiceCreate"
+      },
+      "ServiceKind": {
+        "type": "string",
+        "enum": [
+          "SCHNITT",
+          "BART",
+          "FARBE",
+          "STYLING",
+          "SONSTIGES"
+        ],
+        "title": "ServiceKind"
       },
       "ServiceRead": {
         "properties": {
@@ -3307,6 +4568,12 @@
             "title": "Is Active",
             "default": true
           },
+          "target_group": {
+            "$ref": "#/components/schemas/TargetGroup"
+          },
+          "service_kind": {
+            "$ref": "#/components/schemas/ServiceKind"
+          },
           "id": {
             "type": "string",
             "format": "uuid",
@@ -3318,6 +4585,8 @@
           "name",
           "duration_minutes",
           "price_cents",
+          "target_group",
+          "service_kind",
           "id"
         ],
         "title": "ServiceRead"
@@ -3378,6 +4647,26 @@
               }
             ],
             "title": "Is Active"
+          },
+          "target_group": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TargetGroup"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "service_kind": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ServiceKind"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "type": "object",
@@ -3402,6 +4691,15 @@
           "ends_at"
         ],
         "title": "SlotResult"
+      },
+      "TargetGroup": {
+        "type": "string",
+        "enum": [
+          "HERREN",
+          "DAMEN",
+          "KINDER"
+        ],
+        "title": "TargetGroup"
       },
       "TeamMemberCreate": {
         "properties": {
@@ -3600,6 +4898,19 @@
         ],
         "title": "ValidationError"
       },
+      "VerifiedOut": {
+        "properties": {
+          "verified": {
+            "type": "boolean",
+            "title": "Verified"
+          }
+        },
+        "type": "object",
+        "required": [
+          "verified"
+        ],
+        "title": "VerifiedOut"
+      },
       "WorkingExceptionCreate": {
         "properties": {
           "starts_at": {
@@ -3769,6 +5080,48 @@
           "end_time"
         ],
         "title": "WorkingMemberSummary"
+      },
+      "app__domains__auth__schemas__LoginRequest": {
+        "properties": {
+          "username": {
+            "type": "string",
+            "title": "Username"
+          },
+          "password": {
+            "type": "string",
+            "title": "Password"
+          }
+        },
+        "type": "object",
+        "required": [
+          "username",
+          "password"
+        ],
+        "title": "LoginRequest"
+      },
+      "app__domains__customer_account__schemas__LoginRequest": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "title": "Email"
+          },
+          "password": {
+            "type": "string",
+            "title": "Password"
+          },
+          "remember_me": {
+            "type": "boolean",
+            "title": "Remember Me",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "email",
+          "password"
+        ],
+        "title": "LoginRequest"
       }
     }
   }

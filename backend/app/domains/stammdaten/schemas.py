@@ -3,6 +3,7 @@ from typing import List, Optional
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
+from app.domains.stammdaten.models import TargetGroup, ServiceKind
 
 
 # --- Services ---
@@ -13,6 +14,9 @@ class ServiceBase(BaseModel):
     price_cents: int
     description: Optional[str] = None
     is_active: bool = True
+    target_group: TargetGroup
+    service_kind: ServiceKind
+    model_config = ConfigDict(from_attributes=True, use_enum_values=True)
 
 
 class ServiceCreate(ServiceBase):
@@ -25,6 +29,8 @@ class ServiceUpdate(BaseModel):
     price_cents: Optional[int] = None
     description: Optional[str] = None
     is_active: Optional[bool] = None
+    target_group: Optional[TargetGroup] = None
+    service_kind: Optional[ServiceKind] = None
 
 
 class ServiceRead(ServiceBase):
@@ -204,7 +210,9 @@ class PublicServiceRead(BaseModel):
     duration_minutes: int
     price_cents: int
     description: Optional[str] = None
-    model_config = ConfigDict(from_attributes=True)
+    target_group: str
+    service_kind: str
+    model_config = ConfigDict(from_attributes=True, use_enum_values=True)
 
 
 class PublicServiceRef(BaseModel):

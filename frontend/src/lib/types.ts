@@ -1,4 +1,6 @@
 export type UUID = string;
+export type TargetGroup = 'HERREN' | 'DAMEN' | 'KINDER';
+export type ServiceKind = 'SCHNITT' | 'BART' | 'FARBE' | 'STYLING' | 'SONSTIGES';
 
 export interface Service {
   id: UUID;
@@ -7,6 +9,8 @@ export interface Service {
   price_cents: number;
   description?: string;
   is_active: boolean;
+  target_group: TargetGroup;
+  service_kind: ServiceKind;
   created_at: string;
   updated_at: string;
 }
@@ -124,6 +128,8 @@ export interface PublicServiceRead {
   duration_minutes: number;
   price_cents: number;
   description?: string;
+  target_group: TargetGroup;
+  service_kind: ServiceKind;
 }
 
 export interface PublicTeamMemberRead {
@@ -208,4 +214,122 @@ export interface CancellationView {
   status: 'confirmed' | 'completed' | 'cancelled' | 'no_show';
   cancellable: boolean;
   cancellation_deadline?: string;
+}
+
+// --- Customer Account Types (Phase 5) ---
+
+export interface MeOut {
+  id: UUID;
+  name: string;
+  email: string;
+  phone?: string | null;
+}
+
+export interface AccountAppointmentRead {
+  id: UUID;
+  service_name: string;
+  team_member_name: string;
+  starts_at: string;
+  ends_at: string;
+  status: string;
+  cancellable: boolean;
+  reschedulable: boolean;
+}
+
+export interface AppointmentListOut {
+  upcoming: AccountAppointmentRead[];
+  past: AccountAppointmentRead[];
+}
+
+export interface RegisterRequest {
+  name: string;
+  email: string;
+  phone?: string | null;
+  password: string;
+}
+
+export interface LoginRequest {
+  email: string;
+  password: string;
+  remember_me?: boolean;
+}
+
+export interface RescheduleRequest {
+  starts_at: string;
+  team_member_id?: UUID | null;
+}
+
+export interface ProfileUpdate {
+  name?: string | null;
+  phone?: string | null;
+}
+
+// --- Marketing: Promotions (Phase 6 / US3) ---
+
+export type PromotionStatus = 'visible' | 'scheduled' | 'expired' | 'hidden';
+
+export interface Promotion {
+  id: UUID;
+  title: string;
+  description: string;
+  starts_on: string;
+  ends_on: string;
+  is_active: boolean;
+  effective_status: PromotionStatus;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PromotionCreate {
+  title: string;
+  description: string;
+  starts_on: string;
+  ends_on: string;
+  is_active?: boolean;
+}
+
+export interface PromotionUpdate {
+  title?: string;
+  description?: string;
+  starts_on?: string;
+  ends_on?: string;
+  is_active?: boolean;
+}
+
+export interface PublicPromotion {
+  id: UUID;
+  title: string;
+  description: string;
+  starts_on: string;
+  ends_on: string;
+}
+
+// --- Gallery (Phase 6 / US4) ---
+
+export interface GalleryItem {
+  id: string;
+  beforeSrc: string;
+  afterSrc: string;
+  alt: string;
+  /** Non-empty = consent documented; empty/missing = must NOT be published (SC-005 / FR-016) */
+  consentProofId: string;
+  publishedAt?: string;
+}
+
+// --- Reviews Snapshot (Phase 7 / US5) ---
+// G3: First-party text only; no live aggregate rating; no Google widget/script.
+
+export interface Review {
+  id: string;
+  author: string;
+  text: string;
+  /** ISO date string (YYYY-MM-DD) */
+  date: string;
+}
+
+export interface ReviewsSnapshot {
+  profileUrl: string;
+  writeReviewUrl: string;
+  notice: string;
+  reviews: Review[];
 }

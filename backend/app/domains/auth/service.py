@@ -43,6 +43,30 @@ def validate_session_token(token: str) -> str:
         )
 
 
+def create_customer_token(customer_id: str, remember: bool = False) -> str:
+    if remember:
+        expires_delta = dt.timedelta(days=settings.CUSTOMER_REMEMBER_EXPIRE_DAYS)
+    else:
+        expires_delta = dt.timedelta(hours=settings.CUSTOMER_SESSION_EXPIRE_HOURS)
+    expire = dt.datetime.now(dt.timezone.utc) + expires_delta
+    to_encode = {"sub": str(customer_id), "typ": "customer", "exp": expire}
+    return jwt.encode(to_encode, settings.JWT_SECRET_KEY, algorithm=ALGORITHM)
+
+
+def validate_customer_token(token: str) -> str:
+    """Returns customer_id (UUID string) or raises 401."""
+    try:
+        payload = jwt.decode(token, settings.JWT_SECRET_KEY, algorithms=[ALGORITHM])
+        if payload.get("typ") != "customer":
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="NOT_AUTHENTICATED")
+        customer_id: str = payload.get("sub")
+        if not customer_id:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="NOT_AUTHENTICATED")
+        return customer_id
+    except JWTError:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="NOT_AUTHENTICATED")
+
+
 def record_failed_attempt(ip: str):
     count = failed_attempts_cache.get(ip, 0)
     failed_attempts_cache[ip] = count + 1

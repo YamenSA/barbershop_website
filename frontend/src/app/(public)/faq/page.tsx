@@ -3,7 +3,7 @@ import { faqs } from '@/content/faq';
 import BookingCta from '@/components/public/BookingCta';
 
 export const metadata: Metadata = {
-  title: 'Häufige Fragen (FAQ)',
+  title: 'FAQ — Häufige Fragen | Ihr Barbershop in Cottbus',
   description:
     'Antworten auf die häufigsten Fragen zu Terminen, Preisen, Zahlungsmethoden und unserem Angebot.',
 };

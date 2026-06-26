@@ -112,7 +112,7 @@ export default function TeamPage() {
           </label>
           <button
             onClick={startCreate}
-            className="rounded bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+            className="rounded bg-[var(--admin-primary)] px-4 py-2 text-sm font-medium text-white hover:bg-[var(--admin-primary-hover)]"
           >
             + Neu
           </button>
@@ -179,7 +179,7 @@ export default function TeamPage() {
             <button
               type="submit"
               disabled={saving}
-              className="rounded bg-indigo-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+              className="rounded bg-[var(--admin-primary)] px-4 py-1.5 text-sm font-medium text-white hover:bg-[var(--admin-primary-hover)] disabled:opacity-50"
             >
               {saving ? 'Speichern…' : 'Speichern'}
             </button>
@@ -233,7 +233,7 @@ export default function TeamPage() {
                   <div className="flex justify-end gap-2">
                     <button
                       onClick={() => startEdit(m)}
-                      className="text-sm text-indigo-600 hover:text-indigo-800"
+                      className="text-sm text-[var(--admin-primary)] hover:text-[var(--admin-primary-hover)]"
                     >
                       Bearbeiten
                     </button>
