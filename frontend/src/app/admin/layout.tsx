@@ -22,9 +22,14 @@ export default function AdminLayout({
   const pathname = usePathname();
   const router = useRouter();
 
-  // Don't show shell on login page
+  // Don't show shell on login page — but still pin the light theme so the
+  // login form never inherits the dark public body (white-on-white bug).
   if (pathname === '/admin/login') {
-    return <>{children}</>;
+    return (
+      <div className="admin-shell min-h-screen flex items-center justify-center">
+        {children}
+      </div>
+    );
   }
 
   const handleLogout = async () => {
@@ -39,23 +44,23 @@ export default function AdminLayout({
   };
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <header className="bg-white shadow">
+    <div className="admin-shell flex min-h-screen flex-col">
+      <header className="bg-[var(--admin-surface)] border-b border-[var(--admin-border)]">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 justify-between items-center">
             <div className="flex">
               <div className="flex flex-shrink-0 items-center">
-                <span className="text-xl font-bold text-gray-900">BarberAdmin</span>
+                <span className="text-xl font-bold text-[var(--admin-text)]">BarberAdmin</span>
               </div>
               <nav className="ml-6 flex space-x-8">
                 {navItems.map((item) => (
                   <Link
                     key={item.name}
                     href={item.href}
-                    className={`inline-flex items-center border-b-2 px-1 pt-1 text-sm font-medium ${
+                    className={`inline-flex items-center border-b-2 px-1 pt-1 text-sm font-medium transition-colors ${
                       pathname === item.href
-                        ? 'border-indigo-500 text-gray-900'
-                        : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                        ? 'border-[var(--admin-primary)] text-[var(--admin-text)]'
+                        : 'border-transparent text-[var(--admin-text-muted)] hover:border-[var(--admin-border-strong)] hover:text-[var(--admin-text)]'
                     }`}
                   >
                     {item.name}
@@ -66,7 +71,7 @@ export default function AdminLayout({
             <div className="flex items-center">
               <button
                 onClick={handleLogout}
-                className="ml-4 text-sm font-medium text-gray-500 hover:text-gray-700"
+                className="ml-4 text-sm font-medium text-[var(--admin-text-muted)] hover:text-[var(--admin-text)]"
               >
                 Abmelden
               </button>
@@ -76,7 +81,7 @@ export default function AdminLayout({
       </header>
 
       <main id="main-content" className="flex-1 py-10">
-        <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           {children}
         </div>
       </main>

@@ -6,12 +6,16 @@ import { useState } from 'react';
 import BookingCta from './BookingCta';
 
 const NAV_LINKS = [
+  { href: '/', label: 'Startseite' },
   { href: '/dienstleistungen', label: 'Dienstleistungen' },
   { href: '/team', label: 'Team' },
+  { href: '/galerie', label: 'Galerie' },
   { href: '/ueber-uns', label: 'Über uns' },
   { href: '/kontakt', label: 'Kontakt' },
   { href: '/faq', label: 'FAQ' },
 ];
+
+const ACCOUNT_LINK = { href: '/konto/login', label: 'Mein Konto' };
 
 export default function Nav() {
   const pathname = usePathname();
@@ -50,8 +54,34 @@ export default function Nav() {
             ))}
           </nav>
 
-          {/* Desktop CTA */}
-          <div className="hidden md:block">
+          {/* Desktop account + CTA */}
+          <div className="hidden md:flex items-center gap-3.5">
+            <Link
+              href={ACCOUNT_LINK.href}
+              className={`inline-flex items-center gap-1.5 text-sm font-medium rounded transition-colors duration-[150ms] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brass/60 px-2 py-1 ${
+                pathname.startsWith('/konto')
+                  ? 'text-brass'
+                  : 'text-tertiary hover:text-brass'
+              }`}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="h-4 w-4"
+                aria-hidden="true"
+              >
+                <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+              </svg>
+              <span>{ACCOUNT_LINK.label}</span>
+            </Link>
             <BookingCta />
           </div>
 
@@ -141,8 +171,35 @@ export default function Nav() {
             ))}
           </nav>
 
-          {/* Sticky bottom CTA */}
-          <div className="px-4 pb-8 pt-4">
+          {/* Sticky bottom CTAs */}
+          <div className="px-4 pb-8 pt-4 flex flex-col gap-3">
+            <Link
+              href={ACCOUNT_LINK.href}
+              className={`flex items-center justify-center gap-1.5 py-3 font-display font-bold text-lg tracking-[-0.01em] border border-[oklch(0.95_0.004_140/0.15)] rounded-lg transition-colors duration-[150ms] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brass/60 ${
+                pathname.startsWith('/konto')
+                  ? 'text-brass border-brass/30'
+                  : 'text-tertiary hover:text-brass hover:border-brass/30'
+              }`}
+              onClick={() => setMenuOpen(false)}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="h-5 w-5"
+                aria-hidden="true"
+              >
+                <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+              </svg>
+              <span>{ACCOUNT_LINK.label}</span>
+            </Link>
             <BookingCta className="w-full justify-center" />
           </div>
         </div>

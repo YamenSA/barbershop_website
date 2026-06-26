@@ -22,7 +22,8 @@ async def get_public_salon_hours(session: AsyncSession = Depends(get_session)):
 
 @router.get("/services", response_model=List[PublicServiceRead])
 async def get_public_services(session: AsyncSession = Depends(get_session)):
-    return await StammdatenService.get_active_services_public(session)
+    services = await StammdatenService.get_active_services_public(session)
+    return [PublicServiceRead.model_validate(s) for s in services]
 
 
 @router.get("/team", response_model=List[PublicTeamMemberRead])

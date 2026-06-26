@@ -16,6 +16,9 @@ async def test_postgres_exclude_constraint_prevents_overlap(session: AsyncSessio
     the btree_gist extension and migration 009 applied.
     """
     # Setup
+    if session.bind.dialect.name == "sqlite":
+        pytest.skip("Postgres exclude constraint test skipped on SQLite")
+
     service = Service(name="S1", duration_minutes=30, price_cents=1000, is_active=True)
     member = TeamMember(name="M1", is_active=True)
     session.add_all([service, member])

@@ -243,6 +243,215 @@ class BookingService:
 
 
 # ---------------------------------------------------------------------------
+# Customer account self-service (Phase 5)
+# ---------------------------------------------------------------------------
+
+
+async def list_customer_appointments(session: AsyncSession, customer_id: UUID):
+    from app.domains.customer_account.schemas import AccountAppointmentRead, AppointmentListOut
+    from app.domains.stammdaten.models import Service, TeamMember
+
+    now = datetime.now(timezone.utc)
+    cutoff = timedelta(hours=settings.CANCELLATION_CUTOFF_HOURS)
+
+    stmt = select(Appointment).where(Appointment.customer_id == customer_id)
+    result = await session.execute(stmt)
+    appointments = result.scalars().all()
+
+    upcoming = []
+    past = []
+    for appt in appointments:
+        service = await session.get(Service, appt.service_id)
+        member = await session.get(TeamMember, appt.team_member_id)
+        starts = appt.starts_at if appt.starts_at.tzinfo else appt.starts_at.replace(tzinfo=timezone.utc)
+        cancellable = (
+            appt.status == AppointmentStatus.confirmed
+            and now < starts - cutoff
+        )
+        row = AccountAppointmentRead(
+            id=appt.id,
+            service_name=service.name if service else "Unbekannt",
+            team_member_name=member.name if member else "Unbekannt",
+            starts_at=starts,
+            ends_at=appt.ends_at,
+            status=appt.status.value,
+            cancellable=cancellable,
+            reschedulable=cancellable,
+        )
+        if starts >= now:
+            upcoming.append(row)
+        else:
+            past.append(row)
+
+    upcoming.sort(key=lambda a: a.starts_at)
+    past.sort(key=lambda a: a.starts_at, reverse=True)
+    return AppointmentListOut(upcoming=upcoming, past=past)
+
+
+async def _get_own_appointment(
+    session: AsyncSession, customer_id: UUID, appointment_id: UUID
+) -> Appointment:
+    appt = await session.get(Appointment, appointment_id)
+    if not appt or appt.customer_id != customer_id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="APPOINTMENT_NOT_FOUND")
+    return appt
+
+
+async def cancel_own_appointment(
+    session: AsyncSession, customer_id: UUID, appointment_id: UUID
+):
+    from app.domains.customer_account.schemas import AccountAppointmentRead
+    from app.domains.stammdaten.models import Service, TeamMember
+
+    appt = await _get_own_appointment(session, customer_id, appointment_id)
+
+    if appt.status != AppointmentStatus.confirmed:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="INVALID_STATUS")
+
+    starts = appt.starts_at if appt.starts_at.tzinfo else appt.starts_at.replace(tzinfo=timezone.utc)
+    deadline = starts - timedelta(hours=settings.CANCELLATION_CUTOFF_HOURS)
+    if datetime.now(timezone.utc) >= deadline:
+        raise HTTPException(status_code=status.HTTP_410_GONE, detail="CANCELLATION_WINDOW_CLOSED")
+
+    appt.status = AppointmentStatus.cancelled
+    session.add(appt)
+    await session.commit()
+    await session.refresh(appt)
+
+    service = await session.get(Service, appt.service_id)
+    member = await session.get(TeamMember, appt.team_member_id)
+    return AccountAppointmentRead(
+        id=appt.id,
+        service_name=service.name if service else "Unbekannt",
+        team_member_name=member.name if member else "Unbekannt",
+        starts_at=appt.starts_at,
+        ends_at=appt.ends_at,
+        status=appt.status.value,
+        cancellable=False,
+        reschedulable=False,
+    )
+
+
+async def reschedule_appointment(
+    session: AsyncSession,
+    customer_id: UUID,
+    appointment_id: UUID,
+    new_starts_at: datetime,
+    new_team_member_id: Optional[UUID],
+):
+    from app.domains.customer_account.schemas import AccountAppointmentRead
+    from app.domains.stammdaten.models import Service, TeamMember
+
+    appt = await _get_own_appointment(session, customer_id, appointment_id)
+
+    if appt.status != AppointmentStatus.confirmed:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="INVALID_STATUS")
+
+    appt_starts = appt.starts_at if appt.starts_at.tzinfo else appt.starts_at.replace(tzinfo=timezone.utc)
+    deadline = appt_starts - timedelta(hours=settings.CANCELLATION_CUTOFF_HOURS)
+    if datetime.now(timezone.utc) >= deadline:
+        raise HTTPException(status_code=status.HTTP_410_GONE, detail="CANCELLATION_WINDOW_CLOSED")
+
+    # Normalize new_starts_at to UTC
+    now = datetime.now(timezone.utc)
+    new_starts = (
+        new_starts_at.replace(tzinfo=timezone.utc)
+        if new_starts_at.tzinfo is None
+        else new_starts_at.astimezone(timezone.utc)
+    )
+
+    # Guardrails
+    if new_starts < now + timedelta(hours=settings.BOOKING_MIN_LEAD_HOURS):
+        raise HTTPException(status_code=422, detail="BOOKING_TOO_SOON")
+    if new_starts > now + timedelta(days=settings.BOOKING_MAX_HORIZON_DAYS):
+        raise HTTPException(status_code=422, detail="BOOKING_TOO_FAR")
+    if new_starts.minute % 15 != 0 or new_starts.second != 0 or new_starts.microsecond != 0:
+        raise HTTPException(status_code=422, detail="INVALID_SLOT_TIME")
+
+    service = await session.get(Service, appt.service_id)
+    if not service:
+        raise HTTPException(status_code=404, detail="Service not found")
+
+    new_ends = new_starts + timedelta(minutes=service.duration_minutes)
+    team_member_id = new_team_member_id or appt.team_member_id
+
+    # Check for overlap on new slot (excluding current appointment)
+    overlap_stmt = select(Appointment).where(
+        Appointment.team_member_id == team_member_id,
+        Appointment.status == AppointmentStatus.confirmed,
+        Appointment.id != appointment_id,
+        Appointment.starts_at < new_ends,
+        Appointment.ends_at > new_starts,
+    )
+    if (await session.execute(overlap_stmt)).first():
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="BOOKING_CONFLICT")
+
+    # Atomic: cancel old, create new
+    appt.status = AppointmentStatus.cancelled
+    session.add(appt)
+    await session.flush()
+
+    new_appt = Appointment(
+        team_member_id=team_member_id,
+        service_id=appt.service_id,
+        customer_id=customer_id,
+        starts_at=new_starts,
+        ends_at=new_ends,
+        origin=appt.origin,
+        cancellation_token=secrets.token_urlsafe(32),
+    )
+    session.add(new_appt)
+    try:
+        await session.commit()
+    except IntegrityError:
+        await session.rollback()
+        # Restore old appointment
+        appt.status = AppointmentStatus.confirmed
+        session.add(appt)
+        await session.commit()
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="BOOKING_CONFLICT")
+
+    await session.refresh(new_appt)
+
+    # Send reschedule confirmation email
+    try:
+        member = await session.get(TeamMember, new_appt.team_member_id)
+        from app.domains.notifications.service import send_account_email
+        from app.domains.notifications.templates import render_reschedule_confirmation
+        from app.domains.booking.models import Customer
+        customer = await session.get(Customer, customer_id)
+        if customer and member and service:
+            subject, body = render_reschedule_confirmation(
+                customer_name=customer.name,
+                service_name=service.name,
+                team_member_name=member.name,
+                starts_at=new_appt.starts_at,
+                cancellation_token=new_appt.cancellation_token,
+            )
+            await send_account_email(to_email=customer.email, subject=subject, html_body=body)
+    except Exception as exc:
+        logger.warning("Reschedule confirmation email failed: %s", exc)
+
+    now_after = datetime.now(timezone.utc)
+    new_starts = new_appt.starts_at if new_appt.starts_at.tzinfo else new_appt.starts_at.replace(tzinfo=timezone.utc)
+    cancellable = (
+        new_appt.status == AppointmentStatus.confirmed
+        and now_after < new_starts - timedelta(hours=settings.CANCELLATION_CUTOFF_HOURS)
+    )
+    member = await session.get(TeamMember, new_appt.team_member_id)
+    return AccountAppointmentRead(
+        id=new_appt.id,
+        service_name=service.name,
+        team_member_name=member.name if member else "Unbekannt",
+        starts_at=new_appt.starts_at,
+        ends_at=new_appt.ends_at,
+        status=new_appt.status.value,
+        cancellable=cancellable,
+        reschedulable=cancellable,
+    )
+
+
+# ---------------------------------------------------------------------------
 # Public booking (US1)
 # ---------------------------------------------------------------------------
 

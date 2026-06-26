@@ -8,7 +8,16 @@ from app.domains.booking.models import Customer, Appointment, AppointmentStatus
 async def test_quickstart_scenario_full_flow(client: AsyncClient, session):
     # 1. Setup Data (S5 CRUD)
     # Service
-    resp = await client.post("/api/v1/services", json={"name": "Herrenschnitt", "duration_minutes": 45, "price_cents": 2500})
+    resp = await client.post(
+        "/api/v1/services",
+        json={
+            "name": "Herrenschnitt",
+            "duration_minutes": 45,
+            "price_cents": 2500,
+            "target_group": "HERREN",
+            "service_kind": "SCHNITT",
+        },
+    )
     assert resp.status_code == 201
     service_id = resp.json()["id"]
 

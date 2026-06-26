@@ -14,6 +14,17 @@ import type {
   PublicAppointmentRead,
   AvailabilityResponse,
   CancellationView,
+  MeOut,
+  AppointmentListOut,
+  AccountAppointmentRead,
+  RegisterRequest,
+  LoginRequest,
+  RescheduleRequest,
+  ProfileUpdate,
+  Promotion,
+  PromotionCreate,
+  PromotionUpdate,
+  PublicPromotion,
 } from './types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
@@ -237,3 +248,76 @@ export const updateAdminSalonProfile = (data: SalonProfileUpdate) =>
     method: 'PUT',
     body: JSON.stringify(data),
   });
+
+// --- Customer Account (Phase 5) ---
+
+export const accountRegister = (data: RegisterRequest): Promise<{ message: string }> =>
+  apiFetch('/account/register', { method: 'POST', body: JSON.stringify(data) });
+
+export const accountVerify = (token: string): Promise<{ verified: boolean }> =>
+  apiFetch(`/account/verify/${token}`, { method: 'POST' });
+
+export const accountLogin = (data: LoginRequest): Promise<MeOut> =>
+  apiFetch('/account/login', { method: 'POST', body: JSON.stringify(data) });
+
+export const accountLogout = (): Promise<{ message: string }> =>
+  apiFetch('/account/logout', { method: 'POST' });
+
+export const accountMe = (): Promise<MeOut> =>
+  apiFetch('/account/me');
+
+export const accountForgotPassword = (email: string): Promise<{ message: string }> =>
+  apiFetch('/account/password/forgot', { method: 'POST', body: JSON.stringify({ email }) });
+
+export const accountResetPassword = (token: string, password: string): Promise<{ reset: boolean }> =>
+  apiFetch(`/account/password/reset/${token}`, { method: 'POST', body: JSON.stringify({ password }) });
+
+export const accountListAppointments = (): Promise<AppointmentListOut> =>
+  apiFetch('/account/appointments');
+
+export const accountCancelAppointment = (id: string): Promise<AccountAppointmentRead> =>
+  apiFetch(`/account/appointments/${id}/cancel`, { method: 'POST' });
+
+export const accountRescheduleAppointment = (
+  id: string,
+  data: RescheduleRequest,
+): Promise<AccountAppointmentRead> =>
+  apiFetch(`/account/appointments/${id}/reschedule`, { method: 'POST', body: JSON.stringify(data) });
+
+export const accountUpdateProfile = (data: ProfileUpdate): Promise<MeOut> =>
+  apiFetch('/account/profile', { method: 'PATCH', body: JSON.stringify(data) });
+
+export const accountExportData = async (): Promise<void> => {
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
+  const resp = await fetch(`${API_BASE_URL}/account/export`, { credentials: 'include' });
+  if (!resp.ok) throw new Error('Export failed');
+  const blob = await resp.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'meine-daten.json';
+  a.click();
+  URL.revokeObjectURL(url);
+};
+
+export const accountDeleteAccount = (): Promise<unknown> =>
+  apiFetch('/account/', { method: 'DELETE' });
+
+// --- Marketing: Promotions (Admin) ---
+
+export const getPromotions = () =>
+  apiFetch<Promotion[]>('/promotions');
+
+export const createPromotion = (data: PromotionCreate) =>
+  apiFetch<Promotion>('/promotions', { method: 'POST', body: JSON.stringify(data) });
+
+export const updatePromotion = (id: string, data: PromotionUpdate) =>
+  apiFetch<Promotion>(`/promotions/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+
+export const deletePromotion = (id: string) =>
+  apiFetch<void>(`/promotions/${id}`, { method: 'DELETE' });
+
+// --- Marketing: Promotions (Public) ---
+
+export const getPublicPromotions = () =>
+  publicFetch<PublicPromotion[]>('/promotions');

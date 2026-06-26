@@ -67,6 +67,14 @@ async def _send_and_log(
         logger.debug("Duplicate notification log for %s/%s, ignored", appointment_id, kind)
 
 
+async def send_account_email(*, to_email: str, subject: str, html_body: str) -> None:
+    """Send transactional account email (verification, reset, reschedule). No NotificationLog dependency."""
+    try:
+        send_email(EmailMessage(to=to_email, subject=subject, html_body=html_body))
+    except Exception as exc:
+        logger.error("Failed to send account email to %s: %s", to_email, exc)
+
+
 async def send_confirmation(session: AsyncSession, appointment) -> None:
     """Render and send the booking confirmation email, then persist the log."""
     from app.domains.booking.models import Customer

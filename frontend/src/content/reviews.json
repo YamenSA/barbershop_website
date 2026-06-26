@@ -1,0 +1,25 @@
+{
+  "profileUrl": "https://maps.google.com/?cid=12345678901234567890",
+  "writeReviewUrl": "https://search.google.com/local/writereview?placeid=ChIJ81T_XXXXX",
+  "notice": "Kuratierte Kundenstimmen — kein Live-Widget, keine automatische Gesamtbewertung. Texte werden nach Rückmeldung entfernt.",
+  "reviews": [
+    {
+      "id": "r001",
+      "author": "Marco T.",
+      "text": "Bester Barbershop in Cottbus! Die Fades sind unglaublich sauber geschnitten und der Laden hat eine tolle Atmosphäre. Komme immer wieder gern.",
+      "date": "2026-04-15"
+    },
+    {
+      "id": "r002",
+      "author": "Sven K.",
+      "text": "Sehr professionell und freundlich. Mein Haarschnitt sitzt perfekt, und der Service war super schnell trotzdem ohne Abstriche bei der Qualität.",
+      "date": "2026-03-22"
+    },
+    {
+      "id": "r003",
+      "author": "Hamza A.",
+      "text": "Endlich ein Barbershop, der Bärte wirklich versteht! Konturschnitt und Styling sind top. Klare Empfehlung für alle, die Wert auf Details legen.",
+      "date": "2026-05-08"
+    }
+  ]
+}

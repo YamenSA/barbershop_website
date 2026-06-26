@@ -23,6 +23,13 @@ class Settings(BaseSettings):
     CANCELLATION_CUTOFF_HOURS: int = 24
     RATE_LIMIT_BOOKING_PER_MINUTE: int = 10
 
+    # Phase 5: Customer account settings
+    CUSTOMER_SESSION_EXPIRE_HOURS: int = 8
+    CUSTOMER_REMEMBER_EXPIRE_DAYS: int = 30
+    CUSTOMER_VERIFY_TOKEN_HOURS: int = 24
+    CUSTOMER_RESET_TOKEN_HOURS: int = 1
+    RATE_LIMIT_ACCOUNT_PER_MINUTE: int = 10
+
     # Set False for local HTTP development so the session cookie is stored
     # by the browser; MUST be True in production (HTTPS).
     COOKIE_SECURE: bool = False

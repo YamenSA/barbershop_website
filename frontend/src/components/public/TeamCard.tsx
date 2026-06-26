@@ -11,6 +11,9 @@ function getInitials(name: string): string {
     .toUpperCase();
 }
 
+// TODO(team-photos): Initials placeholder shown until real barber photos are
+// supplied. Replace by setting `photo_url` on each TeamMember (admin → Team),
+// then this fallback only renders for members without a photo.
 function AvatarPlaceholder({ name }: { name: string }) {
   return (
     <div
@@ -55,7 +58,7 @@ export default function TeamCard({
         </h3>
 
         {member.bio && (
-          <p className="text-ash text-sm leading-relaxed">{member.bio}</p>
+          <p className="text-secondary text-sm leading-relaxed">{member.bio}</p>
         )}
 
         {member.services.length > 0 && (

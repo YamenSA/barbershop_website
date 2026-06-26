@@ -34,6 +34,14 @@ from app.domains.stammdaten.schemas import (
 class StammdatenService:
     @staticmethod
     async def create_service(session: AsyncSession, service_in: ServiceCreate) -> Service:
+        if service_in.target_group is None:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="target_group cannot be null"
+            )
+        if service_in.service_kind is None:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="service_kind cannot be null"
+            )
         service = Service.model_validate(service_in)
         session.add(service)
         await session.commit()
@@ -63,6 +71,14 @@ class StammdatenService:
     ) -> Service:
         service = await StammdatenService.get_service(session, service_id)
         update_data = service_in.model_dump(exclude_unset=True)
+        if "target_group" in update_data and update_data["target_group"] is None:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="target_group cannot be null"
+            )
+        if "service_kind" in update_data and update_data["service_kind"] is None:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="service_kind cannot be null"
+            )
         for key, value in update_data.items():
             setattr(service, key, value)
         session.add(service)

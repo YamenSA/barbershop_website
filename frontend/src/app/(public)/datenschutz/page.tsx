@@ -49,15 +49,30 @@ export default function DatenschutzPage() {
             >
               1. Verantwortlicher
             </h2>
-            <PlaceholderBlock>
-              <p>Verantwortliche Person/Stelle gemäß DSGVO Art. 4 Nr. 7 eintragen:</p>
-              <ul className="mt-2 space-y-1 list-disc list-inside">
-                <li>Vollständiger Name / Firma</li>
-                <li>Vollständige Anschrift</li>
-                <li>E-Mail-Adresse</li>
-                <li>Telefonnummer</li>
-              </ul>
-            </PlaceholderBlock>
+            <p>Verantwortlich für die Datenverarbeitung auf dieser Website ist:</p>
+            <p className="mt-3">
+              Usama Azzam (Azzam Barbershop)<br />
+              Sielower Chaussee 38<br />
+              03044 Cottbus<br />
+              Deutschland
+            </p>
+            <p className="mt-3">
+              Telefon:{' '}
+              <a
+                href="tel:+4917682200682"
+                className="text-brass hover:text-ink transition-colors duration-[150ms]"
+              >
+                +49 176 82200682
+              </a>
+              <br />
+              E-Mail:{' '}
+              <a
+                href="mailto:Oazzam412@gmail.com"
+                className="text-brass hover:text-ink transition-colors duration-[150ms]"
+              >
+                Oazzam412@gmail.com
+              </a>
+            </p>
           </section>
 
           {/* 2. Allgemeine Hinweise */}
@@ -194,30 +209,75 @@ export default function DatenschutzPage() {
             </div>
           </section>
 
-          {/* 6. Speicherdauer */}
+          {/* 6. Kundenkonto */}
+          <section aria-labelledby="konto-heading">
+            <h2
+              id="konto-heading"
+              className="font-display font-bold text-lg text-ink mb-3 tracking-[-0.01em]"
+            >
+              6. Kundenkonto (Self-Service-Portal)
+            </h2>
+            <p>
+              Sie können freiwillig ein persönliches Kundenkonto anlegen. Die Registrierung
+              erfordert eine Bestätigung Ihrer E-Mail-Adresse (Double-Opt-in). Im Rahmen des
+              Kundenkontos verarbeiten wir folgende Daten:
+            </p>
+            <ul className="mt-3 space-y-1 list-disc list-inside">
+              <li>Name, E-Mail-Adresse, Telefonnummer (optional)</li>
+              <li>Sitzungstoken (HttpOnly-Cookie <code>customer_session</code>, max. 30 Tage)</li>
+              <li>Verschlüsseltes Passwort (bcrypt, nicht rücklesbar)</li>
+              <li>Terminhistorie (vergangene und kommende Buchungen)</li>
+            </ul>
+            <p className="mt-3">
+              Rechtsgrundlage ist Art. 6 Abs. 1 lit. b DSGVO (Vertragserfüllung bzw.
+              vorvertragliche Maßnahmen) und Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse
+              am sicheren Betrieb des Portals).
+            </p>
+            <p className="mt-3">
+              Sie können Ihr Konto jederzeit unter <strong>/konto/datenschutz</strong> löschen.
+              Dabei werden kommende Termine storniert und vergangene Buchungsdaten anonymisiert.
+              Sie können außerdem jederzeit eine maschinenlesbare Kopie Ihrer Daten
+              (Art. 20 DSGVO) aus dem Portal herunterladen.
+            </p>
+          </section>
+
+          {/* 7. Speicherdauer */}
           <section aria-labelledby="speicher-heading">
             <h2
               id="speicher-heading"
               className="font-display font-bold text-lg text-ink mb-3 tracking-[-0.01em]"
             >
-              6. Speicherdauer
+              7. Speicherdauer
             </h2>
             <p>
               Personenbezogene Daten werden nur so lange gespeichert, wie es für den jeweiligen
-              Zweck erforderlich ist. Termindaten inaktiver Kundendaten werden nach{' '}
-              <PlaceholderBlock>
-                <p>Aufbewahrungsfrist gemäß betrieblicher Entscheidung eintragen (z. B. 24 Monate nach letztem Termin) und prüfen, ob handels- oder steuerrechtliche Aufbewahrungspflichten (6–10 Jahre) gelten.</p>
-              </PlaceholderBlock>
+              Zweck erforderlich ist. Im Einzelnen gelten folgende Fristen:
+            </p>
+            <ul className="mt-3 space-y-1 list-disc list-inside">
+              <li>
+                <strong className="text-ink">Termine ohne Kundenkonto (Gastbuchungen):</strong>{' '}
+                Name und Telefonnummer werden 12 Monate nach dem Termin automatisch anonymisiert.
+              </li>
+              <li>
+                <strong className="text-ink">Kundenkonten:</strong> Bei 24 Monaten ohne
+                Aktivität werden die Kontodaten automatisch anonymisiert. Unabhängig davon
+                können Sie Ihr Konto jederzeit selbst löschen.
+              </li>
+            </ul>
+            <p className="mt-3">
+              Soweit gesetzliche Aufbewahrungspflichten (z. B. handels- oder steuerrechtlicher
+              Art) bestehen, werden die betroffenen Daten für die Dauer dieser Pflichten
+              gespeichert und erst nach deren Ablauf gelöscht.
             </p>
           </section>
 
-          {/* 7. Ihre Rechte */}
+          {/* 8. Ihre Rechte */}
           <section aria-labelledby="rechte-heading">
             <h2
               id="rechte-heading"
               className="font-display font-bold text-lg text-ink mb-3 tracking-[-0.01em]"
             >
-              7. Ihre Rechte
+              8. Ihre Rechte
             </h2>
             <p>Sie haben gegenüber uns folgende Rechte hinsichtlich Ihrer personenbezogenen Daten:</p>
             <ul className="mt-3 space-y-2 list-disc list-inside">
@@ -250,22 +310,121 @@ export default function DatenschutzPage() {
             </p>
           </section>
 
-          {/* 8. Beschwerderecht */}
+          {/* 9. Beschwerderecht */}
           <section aria-labelledby="beschwerde-heading">
             <h2
               id="beschwerde-heading"
               className="font-display font-bold text-lg text-ink mb-3 tracking-[-0.01em]"
             >
-              8. Beschwerderecht bei der Aufsichtsbehörde
+              9. Beschwerderecht bei der Aufsichtsbehörde
             </h2>
             <p>
               Sie haben das Recht, sich bei einer Datenschutz-Aufsichtsbehörde über die
               Verarbeitung Ihrer personenbezogenen Daten durch uns zu beschweren.
             </p>
-            <div className="mt-3">
-              <PlaceholderBlock>
-                <p>Zuständige Landesdatenschutzbehörde eintragen (richtet sich nach dem Bundesland des Betriebssitzes, z. B. Berliner Beauftragte für Datenschutz und Informationsfreiheit).</p>
-              </PlaceholderBlock>
+            <p className="mt-3">Die für uns zuständige Aufsichtsbehörde ist:</p>
+            <p className="mt-3">
+              Die Landesbeauftragte für den Datenschutz und für das Recht auf
+              Akteneinsicht Brandenburg (LDA Brandenburg)<br />
+              Stahnsdorfer Damm 77<br />
+              14532 Kleinmachnow<br />
+              Deutschland<br />
+              <a
+                href="https://www.lda.brandenburg.de"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-brass hover:text-ink transition-colors duration-[150ms]"
+              >
+                www.lda.brandenburg.de
+              </a>
+            </p>
+          </section>
+
+          {/* 10. Drittanbieter-Dienste und externe Links */}
+          <section aria-labelledby="drittanbieter-heading">
+            <h2
+              id="drittanbieter-heading"
+              className="font-display font-bold text-lg text-ink mb-3 tracking-[-0.01em]"
+            >
+              10. Drittanbieter-Dienste und externe Links
+            </h2>
+            <p>
+              Wir binden auf unserer Website verschiedene externe Dienste und Links ein, um Ihnen
+              die Kontaktaufnahme zu erleichtern, unseren Standort zu zeigen und unsere Social-Media-Kanäle
+              zugänglich zu machen.
+            </p>
+
+            <div className="mt-4 space-y-6">
+              <div>
+                <h3 className="font-semibold text-ink mb-2">Google Maps</h3>
+                <p>
+                  Auf dieser Website nutzen wir das Angebot von Google Maps (Google Ireland Limited, Gordon House, Barrow Street, Dublin 4, Irland).
+                  Damit können wir Ihnen eine interaktive Karte direkt auf der Website anzeigen.
+                </p>
+                <p className="mt-2">
+                  <strong>Zweistufige Lösung (Click-to-Load):</strong> Um Ihre Privatsphäre zu schützen, ist die Karte standardmäßig deaktiviert.
+                  Erst wenn Sie aktiv auf „Karte laden“ klicken (Einwilligung gemäß Art. 6 Abs. 1 lit. a DSGVO, § 25 Abs. 1 TTDSG),
+                  baut Ihr Browser eine direkte Verbindung zu den Servern von Google auf. Google erhält dadurch die Information, dass Sie die
+                  entsprechende Unterseite unserer Website aufgerufen haben, sowie Ihre IP-Adresse und ggf. weitere Browserdaten.
+                  Es können Cookies auf Ihrem Gerät gespeichert werden. Die Datenübertragung kann auch an Server der Google LLC in den USA erfolgen.
+                </p>
+                <p className="mt-2">
+                  <strong>Widerrufsrecht:</strong> Sie können Ihre Einwilligung jederzeit widerrufen, indem Sie auf die Schaltfläche „Karte deaktivieren“
+                  unterhalb der geladenen Karte klicken. Die Entscheidung wird clientseitig in Ihrem Browser (im LocalStorage unter dem Schlüssel{' '}
+                  <code>consent:maps</code>) gespeichert.
+                </p>
+              </div>
+
+              <div>
+                <h3 className="font-semibold text-ink mb-2">WhatsApp-Kontakt</h3>
+                <p>
+                  Sie können uns über den Instant-Messaging-Dienst WhatsApp kontaktieren. WhatsApp wird von der WhatsApp Ireland Limited (4 Grand Canal Square, Grand Canal Harbour, Dublin 2, Irland) betrieben.
+                </p>
+                <p className="mt-2">
+                  Die Kommunikation erfolgt über eine direkte Verlinkung auf unserer Website (reine Link-Schaltfläche). Es werden beim bloßen Besuch unserer Seite
+                  keine Daten an WhatsApp oder Meta übermittelt. Erst wenn Sie auf den Link klicken, werden Sie zu WhatsApp weitergeleitet.
+                  Bei der Kontaktaufnahme übermitteln Sie uns Ihre Telefonnummer sowie den Inhalt Ihrer Nachricht.
+                  Rechtsgrundlage ist Art. 6 Abs. 1 lit. b DSGVO (Vertragsanbahnung bzw. -erfüllung).
+                  Bitte beachten Sie, dass WhatsApp Daten in Drittländer (insbesondere in die USA) übertragen kann.
+                </p>
+              </div>
+
+              <div>
+                <h3 className="font-semibold text-ink mb-2">Google-Bewertungen (Statischer Snapshot)</h3>
+                <p>
+                  Wir zeigen auf unserer Website ausgewählte Google-Bewertungen an. Diese Bewertungen werden als statischer Text (Snapshot)
+                  direkt aus dem Quellcode unserer Website geladen.
+                </p>
+                <p className="mt-2">
+                  Es erfolgt beim Anzeigen dieser Bewertungen <strong>keine</strong> Verbindung zu den Google-Servern und es werden keine
+                  Skripte oder Cookies von Google geladen (einwilligungsfreie Darstellung).
+                  Wir verarbeiten dabei die Rezensenten-Namen und Bewertungstexte, die Sie bereits öffentlich auf Google publiziert haben.
+                  Sollten Sie eine von Ihnen verfasste Bewertung auf unserer Website entdecken und die Entfernung wünschen, können Sie uns dies
+                  jederzeit mitteilen (z.B. per E-Mail). Wir werden den Text dann umgehend aus unserem Repository löschen.
+                </p>
+              </div>
+
+              <div>
+                <h3 className="font-semibold text-ink mb-2">Social-Media-Links (Instagram, TikTok)</h3>
+                <p>
+                  Wir verlinken auf unserer Website auf unsere Profile bei Instagram und TikTok. Es handelt sich hierbei um einfache HTML-Links,
+                  nicht um eingebettete Feeds, Widgets oder Social-Plug-ins.
+                </p>
+                <p className="mt-2">
+                  Beim Besuch unserer Website werden keine Daten an diese Plattformen übermittelt. Erst wenn Sie die Links anklicken und zu den
+                  entsprechenden Plattformen weitergeleitet werden, erfassen diese Anbieter Ihre Daten (z. B. IP-Adresse, Cookies).
+                  Bitte informieren Sie sich in den Datenschutzerklärungen der jeweiligen Anbieter über deren Datenverarbeitung.
+                </p>
+              </div>
+
+              <div>
+                <h3 className="font-semibold text-ink mb-2">Hinweis zur Datenübermittlung in Drittstaaten</h3>
+                <p>
+                  Einige der oben genannten Anbieter (z. B. Google LLC, Twilio, Meta Platforms Inc.) haben ihren Hauptsitz in den USA.
+                  Die Übermittlung personenbezogener Daten in die USA erfolgt auf Grundlage des EU-US Data Privacy Frameworks (DPF)
+                  bzw. auf Basis von Standardvertragsklauseln der EU-Kommission.
+                </p>
+              </div>
             </div>
           </section>
 
@@ -274,3 +433,4 @@ export default function DatenschutzPage() {
     </section>
   );
 }
+

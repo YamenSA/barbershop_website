@@ -231,7 +231,7 @@ export default function SchedulePage() {
 
                 <button
                   type="submit"
-                  className="w-full bg-indigo-600 text-white py-2 rounded hover:bg-indigo-700"
+                  className="w-full bg-[var(--admin-primary)] text-white py-2 rounded hover:bg-[var(--admin-primary-hover)]"
                 >
                   Speichern
                 </button>

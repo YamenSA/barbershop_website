@@ -35,6 +35,10 @@ class Customer(UUIDModel, TimestampModel, table=True):
     anonymized_at: Optional[datetime] = Field(
         default=None, sa_type=DateTime(timezone=True)
     )
+    hashed_password: Optional[str] = Field(default=None)
+    email_verified_at: Optional[datetime] = Field(
+        default=None, sa_type=DateTime(timezone=True)
+    )
 
 
 class Appointment(UUIDModel, TimestampModel, table=True):

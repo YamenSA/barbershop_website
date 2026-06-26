@@ -1,0 +1,18 @@
+[
+  {
+    "id": "fade-herrenschnitt-001",
+    "beforeSrc": "/galerie/before-1.jpg",
+    "afterSrc": "/galerie/after-1.jpg",
+    "alt": "High-Fade Herrenhaarschnitt — Vorher und Nachher",
+    "consentProofId": "CP-2026-001",
+    "publishedAt": "2026-06-01"
+  },
+  {
+    "id": "bart-styling-002",
+    "beforeSrc": "/galerie/before-2.jpg",
+    "afterSrc": "/galerie/after-2.jpg",
+    "alt": "Bart-Styling und Konturschnitt — Vorher und Nachher",
+    "consentProofId": "CP-2026-002",
+    "publishedAt": "2026-06-05"
+  }
+]

@@ -8,6 +8,23 @@ from sqlmodel import Field, Relationship, SQLModel
 from app.core.base import TimestampModel, UUIDModel
 
 
+from enum import Enum
+
+
+class TargetGroup(str, Enum):
+    HERREN = "HERREN"
+    DAMEN = "DAMEN"
+    KINDER = "KINDER"
+
+
+class ServiceKind(str, Enum):
+    SCHNITT = "SCHNITT"
+    BART = "BART"
+    FARBE = "FARBE"
+    STYLING = "STYLING"
+    SONSTIGES = "SONSTIGES"
+
+
 class TeamMemberServiceLink(SQLModel, table=True):
     __tablename__ = "team_member_services"
 
@@ -27,6 +44,8 @@ class Service(UUIDModel, TimestampModel, table=True):
     price_cents: int = Field(nullable=False)
     description: Optional[str] = Field(default=None)
     is_active: bool = Field(default=True, nullable=False)
+    target_group: TargetGroup = Field(default=TargetGroup.HERREN, nullable=False)
+    service_kind: ServiceKind = Field(default=ServiceKind.SCHNITT, nullable=False)
 
     team_members: List["TeamMember"] = Relationship(
         back_populates="services", link_model=TeamMemberServiceLink, sa_relationship_kwargs={"lazy": "selectin"}

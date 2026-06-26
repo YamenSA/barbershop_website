@@ -2,9 +2,13 @@ import type { Metadata } from 'next';
 import { getPublicSalonProfile, getPublicSalonHours } from '@/lib/api';
 import type { SalonProfile, PublicSalonHoursRead } from '@/lib/types';
 import JsonLd from '@/components/public/JsonLd';
+import ContactActions from '@/components/public/ContactActions';
+import LocationMap from '@/components/public/LocationMap';
+import ReviewsSnapshot from '@/components/public/ReviewsSnapshot';
+import { loadReviews } from '@/lib/content';
 
 export const metadata: Metadata = {
-  title: 'Kontakt & Öffnungszeiten',
+  title: 'Kontakt, Anfahrt & Öffnungszeiten | Barbershop Cottbus',
   description:
     'Adresse, Telefon und Öffnungszeiten des Azzam Barbershop — wir freuen uns auf Ihren Besuch.',
 };
@@ -21,6 +25,7 @@ function formatTime(t: string | null | undefined): string {
 export default async function KontaktPage() {
   let profile: SalonProfile | null = null;
   let hours: PublicSalonHoursRead[] = [];
+  const reviewsSnapshot = loadReviews();
 
   try {
     [profile, hours] = await Promise.all([
@@ -45,6 +50,12 @@ export default async function KontaktPage() {
           >
             Kontakt
           </h1>
+
+          {profile && (
+            <div className="mb-16">
+              <ContactActions profile={profile} />
+            </div>
+          )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-20">
 
@@ -125,8 +136,31 @@ export default async function KontaktPage() {
             </div>
 
           </div>
+
+          {/* Map and Reviews Section */}
+          {profile && (
+            <div className="mt-16 pt-16 border-t border-white/[0.06] grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20">
+              <div className="space-y-6">
+                <div className="space-y-3">
+                  <h2 className="font-display font-extrabold text-2xl sm:text-3xl text-ink tracking-tight">
+                    Anfahrt & Standort
+                  </h2>
+                  <p className="text-ash text-sm leading-relaxed max-w-lg">
+                    Besuchen Sie uns in unserem Salon. Nutzen Sie die Karte, um Ihre Route zu planen.
+                  </p>
+                </div>
+                <LocationMap profile={profile} />
+              </div>
+
+              <div>
+                <ReviewsSnapshot data={reviewsSnapshot} />
+              </div>
+            </div>
+          )}
+
         </div>
       </section>
     </>
   );
 }
+
