@@ -53,7 +53,7 @@ export default function ConsentGate({
   const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${addressQuery}`;
 
   return (
-    <div className="relative w-full h-[350px] sm:h-[450px] rounded-card border border-white/[0.06] bg-slate overflow-hidden flex flex-col justify-center items-center p-6 text-center">
+    <div className="relative w-full h-[350px] sm:h-[450px] rounded-card border border-hairline bg-slate overflow-hidden flex flex-col justify-center items-center p-6 text-center">
       {/* Self-hosted background preview image with dark overlay */}
       <div className="absolute inset-0 z-0">
         <Image

@@ -13,6 +13,7 @@ type FormState = {
   name: string;
   duration_minutes: string;
   price_cents: string;
+  price_is_from: boolean;
   description: string;
   target_group: string;
   service_kind: string;
@@ -22,6 +23,7 @@ const emptyForm: FormState = {
   name: '',
   duration_minutes: '',
   price_cents: '',
+  price_is_from: false,
   description: '',
   target_group: 'HERREN',
   service_kind: 'SCHNITT',
@@ -46,6 +48,7 @@ function toForm(s: Service): FormState {
     name: s.name,
     duration_minutes: String(s.duration_minutes),
     price_cents: String(s.price_cents / 100),
+    price_is_from: s.price_is_from ?? false,
     description: s.description ?? '',
     target_group: s.target_group || 'HERREN',
     service_kind: s.service_kind || 'SCHNITT',
@@ -84,6 +87,7 @@ export default function ServicesPage() {
       name: form.name,
       duration_minutes: Number(form.duration_minutes),
       price_cents: Math.round(Number(form.price_cents) * 100),
+      price_is_from: form.price_is_from,
       description: form.description || undefined,
       target_group: form.target_group as TargetGroup,
       service_kind: form.service_kind as ServiceKind,
@@ -177,6 +181,17 @@ export default function ServicesPage() {
                 className="mt-1 w-full rounded border border-gray-300 px-2 py-1.5 text-sm"
               />
             </div>
+            <div className="flex items-center pt-5">
+              <label className="flex items-center gap-2 text-xs font-medium text-gray-600 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={form.price_is_from}
+                  onChange={(e) => setForm((f) => ({ ...f, price_is_from: e.target.checked }))}
+                  className="rounded"
+                />
+                Startpreis („ab") — exakter Preis vor Ort
+              </label>
+            </div>
             <div>
               <label className="block text-xs font-medium text-gray-600">Beschreibung</label>
               <input
@@ -233,7 +248,7 @@ export default function ServicesPage() {
         </form>
       )}
 
-      <div className="overflow-hidden rounded-lg border">
+      <div className="overflow-x-auto rounded-lg border">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
@@ -263,7 +278,7 @@ export default function ServicesPage() {
                 </td>
                 <td className="px-4 py-3 text-sm text-gray-600">{s.duration_minutes} min</td>
                 <td className="px-4 py-3 text-sm text-gray-600">
-                  {(s.price_cents / 100).toFixed(2)} €
+                  {s.price_is_from ? 'ab ' : ''}{(s.price_cents / 100).toFixed(2)} €
                 </td>
                 <td className="px-4 py-3 text-sm text-gray-500">{s.description ?? '—'}</td>
                 <td className="px-4 py-3">

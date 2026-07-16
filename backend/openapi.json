@@ -3964,6 +3964,11 @@
             "type": "integer",
             "title": "Price Cents"
           },
+          "price_is_from": {
+            "type": "boolean",
+            "title": "Price Is From",
+            "default": false
+          },
           "description": {
             "anyOf": [
               {
@@ -4494,6 +4499,11 @@
             "type": "integer",
             "title": "Price Cents"
           },
+          "price_is_from": {
+            "type": "boolean",
+            "title": "Price Is From",
+            "default": false
+          },
           "description": {
             "anyOf": [
               {
@@ -4551,6 +4561,11 @@
           "price_cents": {
             "type": "integer",
             "title": "Price Cents"
+          },
+          "price_is_from": {
+            "type": "boolean",
+            "title": "Price Is From",
+            "default": false
           },
           "description": {
             "anyOf": [
@@ -4625,6 +4640,17 @@
               }
             ],
             "title": "Price Cents"
+          },
+          "price_is_from": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price Is From"
           },
           "description": {
             "anyOf": [

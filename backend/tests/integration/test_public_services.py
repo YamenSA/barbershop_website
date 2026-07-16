@@ -45,3 +45,40 @@ async def test_public_services_include_target_group_and_service_kind(
     assert "service_kind" in data[0]
     assert data[0]["target_group"] == "HERREN"
     assert data[0]["service_kind"] == "SCHNITT"
+
+
+@pytest.mark.asyncio
+async def test_public_services_expose_price_is_from(
+    public_client: AsyncClient, session: AsyncSession
+):
+    # A starting-price service ("ab X €") and a fixed-price one.
+    session.add(
+        Service(
+            name="Blondierung",
+            duration_minutes=120,
+            price_cents=4500,
+            price_is_from=True,
+            is_active=True,
+            target_group="DAMEN",
+            service_kind="FARBE",
+        )
+    )
+    session.add(
+        Service(
+            name="Maschinenschnitt",
+            duration_minutes=20,
+            price_cents=1500,
+            is_active=True,
+            target_group="HERREN",
+            service_kind="SCHNITT",
+        )
+    )
+    await session.commit()
+
+    response = await public_client.get("/api/v1/public/services")
+    assert response.status_code == 200
+    by_name = {s["name"]: s for s in response.json()}
+
+    assert by_name["Blondierung"]["price_is_from"] is True
+    # Defaults to False when not set explicitly.
+    assert by_name["Maschinenschnitt"]["price_is_from"] is False

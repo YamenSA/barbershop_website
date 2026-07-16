@@ -38,28 +38,6 @@ export default async function DienstleistungenPage() {
           />
         ) : (
           <>
-            {/* Walk-in notice banner */}
-            <div className="mb-8 p-4 bg-slate border border-brass/20 rounded-[8px] max-w-3xl mx-auto flex items-center justify-center gap-2.5 text-center text-sm font-semibold text-ink">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="h-[18px] w-[18px] shrink-0 text-brass"
-                aria-hidden="true"
-              >
-                <circle cx="12" cy="12" r="10" />
-                <path d="M12 16v-4" />
-                <path d="M12 8h.01" />
-              </svg>
-              <span>Herren ohne Termin / Damen nur mit Termin</span>
-            </div>
-
             <PriceList services={services} />
 
             <div className="flex justify-center mt-12">

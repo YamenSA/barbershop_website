@@ -7,6 +7,8 @@ export interface Service {
   name: string;
   duration_minutes: number;
   price_cents: number;
+  /** True => price_cents is a starting price ("ab X €"). */
+  price_is_from: boolean;
   description?: string;
   is_active: boolean;
   target_group: TargetGroup;
@@ -127,6 +129,8 @@ export interface PublicServiceRead {
   name: string;
   duration_minutes: number;
   price_cents: number;
+  /** True => price_cents is a starting price ("ab X €"). */
+  price_is_from: boolean;
   description?: string;
   target_group: TargetGroup;
   service_kind: ServiceKind;

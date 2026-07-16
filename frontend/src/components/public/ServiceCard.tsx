@@ -15,7 +15,7 @@ function formatDuration(minutes: number): string {
 
 export default function ServiceCard({ service }: { service: PublicServiceRead }) {
   return (
-    <article className="bg-slate rounded-[8px] p-6 flex flex-col gap-4">
+    <article className="bg-slate rounded-[8px] p-6 flex flex-col gap-4 border border-hairline shadow-bevel">
       <div className="flex items-start justify-between gap-4">
         <h3 className="font-display font-bold text-xl leading-tight tracking-[-0.02em] text-ink">
           {service.name}

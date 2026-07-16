@@ -36,7 +36,7 @@ export default function TeamCard({
   priority?: boolean;
 }) {
   return (
-    <article className="bg-slate rounded-[8px] overflow-hidden flex flex-col">
+    <article className="bg-slate rounded-[8px] overflow-hidden flex flex-col border border-hairline shadow-bevel">
       <div className="relative aspect-[3/2]">
         {member.photo_url ? (
           <Image

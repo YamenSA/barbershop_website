@@ -31,7 +31,7 @@ export default function BeforeAfterGallery({ items }: BeforeAfterGalleryProps) {
       {items.map((item, idx) => (
         <li
           key={item.id}
-          className="rounded-[8px] border border-white/[0.06] bg-slate overflow-hidden"
+          className="rounded-[8px] border border-hairline bg-slate overflow-hidden shadow-bevel"
         >
           {/* Pair label */}
           <div className="px-5 py-3 border-b border-white/[0.06]">

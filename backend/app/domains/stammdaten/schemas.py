@@ -12,6 +12,7 @@ class ServiceBase(BaseModel):
     name: str
     duration_minutes: int
     price_cents: int
+    price_is_from: bool = False
     description: Optional[str] = None
     is_active: bool = True
     target_group: TargetGroup
@@ -27,6 +28,7 @@ class ServiceUpdate(BaseModel):
     name: Optional[str] = None
     duration_minutes: Optional[int] = None
     price_cents: Optional[int] = None
+    price_is_from: Optional[bool] = None
     description: Optional[str] = None
     is_active: Optional[bool] = None
     target_group: Optional[TargetGroup] = None
@@ -209,6 +211,7 @@ class PublicServiceRead(BaseModel):
     name: str
     duration_minutes: int
     price_cents: int
+    price_is_from: bool = False
     description: Optional[str] = None
     target_group: str
     service_kind: str
