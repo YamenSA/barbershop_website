@@ -26,7 +26,13 @@ export const metadata: Metadata = {
     'Präzise Schnitte, professionelle Bartpflege und klassische Fades — Ihr Barbershop in Cottbus. Online buchen, ohne Wartezeit.',
 };
 
-export const revalidate = 60;
+// Die Startseite rendert den async <Footer /> und ruft zusätzlich selbst
+// getPublicSalonProfile/-Hours (u.a.) auf. Beim statischen Prerender zur Build-Zeit
+// läuft das Backend nicht → der Fetch hängt bis zum Timeout und der Build bricht ab.
+// Sie liegt außerhalb (public), daher greift der Layout-Fix hier nicht.
+// force-dynamic rendert die Seite zur Laufzeit; das frühere `revalidate = 60` entfällt,
+// weil es bei dynamischem Per-Request-Rendering wirkungslos und widersprüchlich wäre.
+export const dynamic = 'force-dynamic';
 
 const DAY_NAMES = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag'];
 
