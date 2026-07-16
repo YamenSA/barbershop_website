@@ -9,6 +9,15 @@ build/
 .env
 .env*
 !.env.example
+
+# Secrets / keys — must never be committed. Better: keep these OUT of the
+# repo folder entirely (password manager or a protected dir outside the repo).
+*Key*.txt
+*key*.txt
+*.pem
+*.ppk
+id_rsa
+id_ed25519
 .DS_Store
 Thumbs.db
 *.tmp
