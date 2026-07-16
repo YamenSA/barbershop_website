@@ -26,15 +26,37 @@ services:
       - EMAIL_REPLY_TO=${EMAIL_REPLY_TO}
       - PUBLIC_BASE_URL=${PUBLIC_BASE_URL}
       - BREVO_API_KEY=${BREVO_API_KEY}
+      # Muster B / Same-Origin: Der Browser spricht das Backend NICHT mehr direkt an,
+      # sondern über den Same-Origin-Rewrite-Proxy des Frontends. CORS ist damit für den
+      # Browser faktisch nicht mehr im Spiel. CORS_ORIGINS trotzdem gesetzt lassen
+      # (schadet nicht, deckt Direktzugriffe/Tools ab).
       - CORS_ORIGINS=${CORS_ORIGINS}
       - COOKIE_SECURE=${COOKIE_SECURE}
       - RETENTION_GUEST_MONTHS=12
       - RETENTION_CUSTOMER_MONTHS=24
+    # Das Host-Port-Mapping wird vom Browser NICHT mehr benötigt (Traffic läuft
+    # Frontend-Proxy -> backend:8000 intern). Beibehalten nur, falls Coolify/ein Job
+    # das Backend direkt erreichen muss; sonst kann es entfallen. Intern hört das
+    # Backend weiterhin auf 8000.
     ports:
       - "8001:8000"
     depends_on:
       db:
         condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        # NEXT_PUBLIC_* wird zur Build-Zeit eingebacken -> relativ (/api/v1) fuer Same-Origin.
+        - NEXT_PUBLIC_API_URL=/api/v1
+    environment:
+      # Ziel des serverseitigen Rewrite-Proxys (interner Compose-Netz-Name, Port 8000).
+      - BACKEND_INTERNAL_URL=http://backend:8000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
 
 volumes:
   postgres_data:
