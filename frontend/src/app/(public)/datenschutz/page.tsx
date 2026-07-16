@@ -405,9 +405,9 @@ export default function DatenschutzPage() {
               </div>
 
               <div>
-                <h3 className="font-semibold text-ink mb-2">Social-Media-Links (Instagram, TikTok)</h3>
+                <h3 className="font-semibold text-ink mb-2">Social-Media-Links (Instagram)</h3>
                 <p>
-                  Wir verlinken auf unserer Website auf unsere Profile bei Instagram und TikTok. Es handelt sich hierbei um einfache HTML-Links,
+                  Wir verlinken auf unserer Website auf unser Profil bei Instagram. Es handelt sich hierbei um einen einfachen HTML-Link,
                   nicht um eingebettete Feeds, Widgets oder Social-Plug-ins.
                 </p>
                 <p className="mt-2">

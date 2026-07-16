@@ -36,6 +36,15 @@ class Settings(BaseSettings):
     # by the browser; MUST be True in production (HTTPS).
     COOKIE_SECURE: bool = False
 
+    # CORS: the browser sends the session cookie (credentials: 'include'), so
+    # the allowed origins MUST be listed explicitly — "*" is rejected by the
+    # browser together with credentials. Override in production via env
+    # (JSON list, e.g. CORS_ORIGINS='["https://salon.example"]').
+    CORS_ORIGINS: list[str] = [
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+    ]
+
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
 
