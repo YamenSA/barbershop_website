@@ -12,11 +12,11 @@ export interface SiteConfig {
 }
 
 export const siteConfig: SiteConfig = {
-  whatsappNumber: process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '491701234567',
-  instagramUrl: process.env.NEXT_PUBLIC_INSTAGRAM_URL || 'https://instagram.com/barbershop_cottbus',
-  tiktokUrl: process.env.NEXT_PUBLIC_TIKTOK_URL || 'https://tiktok.com/@barbershop_cottbus',
-  writeReviewUrl: process.env.NEXT_PUBLIC_WRITE_REVIEW_URL || 'https://search.google.com/local/writereview?placeid=ChIJ81T_XXXXX',
-  googleProfileUrl: process.env.NEXT_PUBLIC_GOOGLE_PROFILE_URL || 'https://maps.google.com/?cid=12345678901234567890',
+  whatsappNumber: process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '4917682200682',
+  instagramUrl: process.env.NEXT_PUBLIC_INSTAGRAM_URL || 'https://www.instagram.com/azzam_salon_barbershop/',
+  tiktokUrl: process.env.NEXT_PUBLIC_TIKTOK_URL || undefined,
+  writeReviewUrl: process.env.NEXT_PUBLIC_WRITE_REVIEW_URL || 'https://www.google.com/maps/place/Azzam+Barbershop/@51.783282,14.3146129,861m/data=!3m2!1e3!5s0x470874fd97d24d47:0x7bebd662eb689ca3!4m8!3m7!1s0x4708750037138a3d:0x93eac844e87e665a!8m2!3d51.783282!4d14.3171932!9m1!1b1!16s%2Fg%2F11vrkb7907',
+  googleProfileUrl: process.env.NEXT_PUBLIC_GOOGLE_PROFILE_URL || 'https://www.google.com/maps/place/Azzam+Barbershop/@51.783282,14.3146129,861m/data=!3m2!1e3!5s0x470874fd97d24d47:0x7bebd662eb689ca3!4m8!3m7!1s0x4708750037138a3d:0x93eac844e87e665a!8m2!3d51.783282!4d14.3171932!9m1!1b1!16s%2Fg%2F11vrkb7907',
   geo: {
     lat: parseFloat(process.env.NEXT_PUBLIC_GEO_LAT || '51.75631'),
     lng: parseFloat(process.env.NEXT_PUBLIC_GEO_LNG || '14.33286'),
