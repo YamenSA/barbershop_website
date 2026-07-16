@@ -37,7 +37,7 @@ Die Plattform unterliegt deutschem Recht und der DSGVO.
 - **Verschlüsselung:** Personenbezogene Daten werden verschlüsselt übertragen (TLS) und
   ruhend geschützt.
 - **Drittlandtransfer:** Keine personenbezogenen Daten an Drittländer ohne gültige Grundlage.
-  Externe Dienstleister (SendGrid, Twilio) erfordern einen AV-Vertrag.
+  Externe Dienstleister (Brevo, Twilio) erfordern einen AV-Vertrag.
 - **Betroffenenrechte:** Auskunft, Berichtigung, Löschung und Datenexport müssen technisch
   umsetzbar sein.
 
@@ -126,7 +126,7 @@ Verbindlich für alle Phasen. Abweichungen erfordern eine Änderung dieser Konst
   das bestehende lokale Kassensystem; die Plattform verarbeitet keine Zahlungsdaten. Eine
   spätere Anzahlungs-/No-Show-Schutz-Funktion würde einen Zahlungsanbieter erfordern und
   diese Konstitution ändern.
-- **E-Mail:** SendGrid. **SMS:** Twilio.
+- **E-Mail:** Brevo (EU, HTTP-API). **SMS:** Twilio.
 - **Performance-Budget:** Messbare Ziele statt Gefühl — Core Web Vitals: LCP < 2,5 s,
   INP < 200 ms, CLS < 0,1. Gilt besonders für die öffentliche Website. Schnelligkeit hat
   bei Konflikten Vorrang vor zusätzlichem visuellen Effekt.

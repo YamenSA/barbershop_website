@@ -186,20 +186,20 @@ export default function DatenschutzPage() {
                 <h3 className="font-semibold text-ink mb-2">Versand von Termin-Mails (Bestätigung, Erinnerung)</h3>
                 <p>
                   Die Zustellung von Bestätigungs-E-Mails und Terminerinnerungen erfolgt über den Dienst{' '}
-                  <strong className="text-ink">Twilio SendGrid</strong> (Twilio Inc.,
-                  375 Beale Street, Suite 300, San Francisco, CA 94105, USA).
+                  <strong className="text-ink">Brevo</strong> (Brevo GmbH, vormals
+                  Sendinblue GmbH, Köpenicker Straße 126, 10179 Berlin, Deutschland).
                 </p>
                 <p className="mt-2">
-                  Dabei wird Ihre E-Mail-Adresse an SendGrid übermittelt. Twilio ist nach dem
-                  EU-US Data Privacy Framework zertifiziert. Weitere Informationen finden Sie
-                  in der Datenschutzerklärung von Twilio:{' '}
+                  Dabei wird Ihre E-Mail-Adresse an Brevo übermittelt. Die Verarbeitung erfolgt
+                  auf Servern innerhalb der Europäischen Union. Weitere Informationen finden Sie
+                  in der Datenschutzerklärung von Brevo:{' '}
                   <a
-                    href="https://www.twilio.com/en-us/legal/privacy"
+                    href="https://www.brevo.com/de/legal/privacypolicy/"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-brass hover:text-ink transition-colors duration-[150ms]"
                   >
-                    twilio.com/en-us/legal/privacy
+                    brevo.com/de/legal/privacypolicy
                   </a>
                 </p>
                 <p className="mt-2">
@@ -405,9 +405,9 @@ export default function DatenschutzPage() {
               </div>
 
               <div>
-                <h3 className="font-semibold text-ink mb-2">Social-Media-Links (Instagram, TikTok)</h3>
+                <h3 className="font-semibold text-ink mb-2">Social-Media-Links (Instagram)</h3>
                 <p>
-                  Wir verlinken auf unserer Website auf unsere Profile bei Instagram und TikTok. Es handelt sich hierbei um einfache HTML-Links,
+                  Wir verlinken auf unserer Website auf unser Profil bei Instagram. Es handelt sich hierbei um einen einfachen HTML-Link,
                   nicht um eingebettete Feeds, Widgets oder Social-Plug-ins.
                 </p>
                 <p className="mt-2">
@@ -420,7 +420,7 @@ export default function DatenschutzPage() {
               <div>
                 <h3 className="font-semibold text-ink mb-2">Hinweis zur Datenübermittlung in Drittstaaten</h3>
                 <p>
-                  Einige der oben genannten Anbieter (z. B. Google LLC, Twilio, Meta Platforms Inc.) haben ihren Hauptsitz in den USA.
+                  Einige der oben genannten Anbieter (z. B. Google LLC, Meta Platforms Inc.) haben ihren Hauptsitz in den USA.
                   Die Übermittlung personenbezogener Daten in die USA erfolgt auf Grundlage des EU-US Data Privacy Frameworks (DPF)
                   bzw. auf Basis von Standardvertragsklauseln der EU-Kommission.
                 </p>
