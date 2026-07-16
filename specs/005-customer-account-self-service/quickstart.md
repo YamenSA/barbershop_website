@@ -6,7 +6,7 @@ Validierungsleitfaden für Phase 5. Referenziert [data-model.md](./data-model.md
 
 - Backend-Setup wie in `CLAUDE.md` (venv, `pip install -e ".[dev]"`, `.env`).
 - DB: `docker compose up -d db` und `alembic upgrade head` (führt Migration `011_customer_account` aus).
-- Server: `uvicorn app.main:app --reload`. Ohne `SENDGRID_API_KEY` werden Verifikations-/Reset-Mails in die Konsole geloggt (`[EMAIL CONSOLE]`) — Links von dort kopieren.
+- Server: `uvicorn app.main:app --reload`. Ohne `BREVO_API_KEY` werden Verifikations-/Reset-Mails in die Konsole geloggt (`[EMAIL CONSOLE]`) — Links von dort kopieren.
 - Frontend: `npm run dev` im `frontend/` (Route-Gruppe `(account)/konto`).
 
 ## Automatisierte Tests (Konstitution IX, test-zuerst)

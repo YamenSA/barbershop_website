@@ -13,8 +13,10 @@ class Settings(BaseSettings):
     ADMIN_PASSWORD: str
     RATE_LIMIT_LOGIN_PER_MINUTE: int = 20
     # Phase 2 / Public booking settings
-    SENDGRID_API_KEY: str | None = None
+    BREVO_API_KEY: str | None = None
     EMAIL_FROM: str
+    EMAIL_FROM_NAME: str = "Azzam Barbershop"
+    EMAIL_REPLY_TO: str
     PUBLIC_BASE_URL: str
     BOOKING_MIN_LEAD_HOURS: int = 2
     BOOKING_MAX_HORIZON_DAYS: int = 60

@@ -7,7 +7,7 @@ Validierungsleitfaden für den öffentlichen Buchungs-Flow. Setzt das in `CLAUDE
 ## Voraussetzungen
 
 - Backend-Setup (venv, `pip install -e ".[dev]"`) und DB-Container laufen — siehe `CLAUDE.md`.
-- Neue ENV-Werte in `backend/.env` (siehe [data-model.md](./data-model.md) → Konfiguration): `SENDGRID_API_KEY`, `EMAIL_FROM`, `PUBLIC_BASE_URL` sowie optional die Guardrail-/Rate-Limit-Settings (sonst greifen Defaults). Ohne `SENDGRID_API_KEY` läuft der E-Mail-Adapter im Konsolen-Fallback.
+- Neue ENV-Werte in `backend/.env` (siehe [data-model.md](./data-model.md) → Konfiguration): `BREVO_API_KEY`, `EMAIL_FROM`, `EMAIL_FROM_NAME`, `EMAIL_REPLY_TO`, `PUBLIC_BASE_URL` sowie optional die Guardrail-/Rate-Limit-Settings (sonst greifen Defaults). Ohne `BREVO_API_KEY` läuft der E-Mail-Adapter (Brevo, HTTP-API via httpx) im Konsolen-Fallback.
 - Migration anwenden: `alembic upgrade head` (bringt `009_phase3_booking_notifications`).
 - Seed-Stammdaten (Dienstleistungen, Team, Öffnungszeiten, Arbeitszeiten) aus Phase 1 vorhanden.
 

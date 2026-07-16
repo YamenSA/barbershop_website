@@ -6,7 +6,7 @@ import BookingCta from '@/components/public/BookingCta';
 export const metadata: Metadata = {
   title: 'Galerie — Vorher & Nachher | Azzam Barbershop Cottbus',
   description:
-    'Entdecken Sie echte Vorher/Nachher-Ergebnisse aus dem Azzam Barbershop in Cottbus — Haarschnitte, Fade, Bartpflege und Styling.',
+    'Vorher/Nachher-Beispiele aus dem Azzam Barbershop in Cottbus — Haarschnitte, Fade, Bartpflege und Styling. Die gezeigten Bilder sind KI-generierte Beispiele.',
 };
 
 export default function GaleriePage() {
@@ -23,8 +23,13 @@ export default function GaleriePage() {
         >
           Galerie
         </h1>
-        <p className="text-secondary text-lg leading-relaxed max-w-[55ch] mb-12">
-          Handwerkliche Ergebnisse — Vorher und Nachher aus unserem Salon in Cottbus.
+        <p className="text-secondary text-lg leading-relaxed max-w-[55ch] mb-3">
+          Beispielhafte Vorher/Nachher-Looks — sie zeigen, welche Schnitte, Fades und
+          Bartstylings im Azzam Barbershop in Cottbus möglich sind.
+        </p>
+        <p className="text-tertiary text-sm leading-relaxed max-w-[55ch] mb-12">
+          Hinweis: Die gezeigten Bilder sind KI-generierte Beispiele und stellen keine
+          realen Kundenfotos dar.
         </p>
 
         <BeforeAfterGallery items={items} />

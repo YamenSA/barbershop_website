@@ -1,9 +1,14 @@
 import logging
 from dataclasses import dataclass
 
+import httpx
+
 from app.core.config import settings
 
 logger = logging.getLogger(__name__)
+
+BREVO_API_URL = "https://api.brevo.com/v3/smtp/email"
+_TIMEOUT_SECONDS = 10.0
 
 
 @dataclass
@@ -14,7 +19,7 @@ class EmailMessage:
 
 
 def send_email(msg: EmailMessage) -> None:
-    if not settings.SENDGRID_API_KEY:
+    if not settings.BREVO_API_KEY:
         logger.info(
             "[EMAIL CONSOLE] To: %s | Subject: %s\n%s",
             msg.to,
@@ -23,16 +28,24 @@ def send_email(msg: EmailMessage) -> None:
         )
         return
 
-    from sendgrid import SendGridAPIClient
-    from sendgrid.helpers.mail import Mail
+    headers = {
+        "api-key": settings.BREVO_API_KEY,
+        "content-type": "application/json",
+        "accept": "application/json",
+    }
+    payload = {
+        "sender": {"email": settings.EMAIL_FROM, "name": settings.EMAIL_FROM_NAME},
+        "to": [{"email": msg.to}],
+        "replyTo": {"email": settings.EMAIL_REPLY_TO},
+        "subject": msg.subject,
+        "htmlContent": msg.html_body,
+    }
 
-    mail = Mail(
-        from_email=settings.EMAIL_FROM,
-        to_emails=msg.to,
-        subject=msg.subject,
-        html_content=msg.html_body,
-    )
-    sg = SendGridAPIClient(settings.SENDGRID_API_KEY)
-    response = sg.send(mail)
-    if response.status_code not in (200, 202):
-        raise RuntimeError(f"SendGrid responded {response.status_code}: {response.body}")
+    with httpx.Client(timeout=_TIMEOUT_SECONDS) as client:
+        response = client.post(BREVO_API_URL, headers=headers, json=payload)
+
+    # Brevo returns 201 Created on success.
+    if response.status_code != 201:
+        raise RuntimeError(
+            f"Brevo responded {response.status_code}: {response.text}"
+        )
