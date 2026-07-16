@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { accountRegister } from '@/lib/api';
+import PasswordInput from '@/components/PasswordInput';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -76,8 +77,8 @@ export default function RegisterPage() {
           </div>
           <div>
             <label className="block text-sm font-medium text-stone-700 mb-1">Passwort * (min. 10 Zeichen)</label>
-            <input
-              type="password"
+            <PasswordInput
+              autoComplete="new-password"
               required
               minLength={10}
               value={form.password}

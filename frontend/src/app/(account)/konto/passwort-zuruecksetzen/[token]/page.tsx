@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { use } from 'react';
 import { useRouter } from 'next/navigation';
 import { accountResetPassword } from '@/lib/api';
+import PasswordInput from '@/components/PasswordInput';
 
 export default function ResetPasswordPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = use(params);
@@ -39,8 +40,8 @@ export default function ResetPasswordPage({ params }: { params: Promise<{ token:
         )}
         <div>
           <label className="block text-sm font-medium text-stone-700 mb-1">Neues Passwort (min. 10 Zeichen)</label>
-          <input
-            type="password"
+          <PasswordInput
+            autoComplete="new-password"
             required
             minLength={10}
             value={password}

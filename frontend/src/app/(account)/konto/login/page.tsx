@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { accountLogin } from '@/lib/api';
+import { accountLogin, apiFetch, ApiError } from '@/lib/api';
+import PasswordInput from '@/components/PasswordInput';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -14,17 +15,36 @@ export default function LoginPage() {
     e.preventDefault();
     setLoading(true);
     setError('');
+
+    // 1. Kunden-Login versuchen
     try {
       await accountLogin(form);
       router.push('/konto/termine');
+      return;
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Anmeldung fehlgeschlagen.';
+      const msg = err instanceof Error ? err.message : '';
       if (msg === 'EMAIL_NOT_VERIFIED') {
         setError('Bitte bestätigen Sie zuerst Ihre E-Mail-Adresse.');
-      } else if (msg === 'INVALID_CREDENTIALS') {
-        setError('E-Mail oder Passwort falsch.');
+        setLoading(false);
+        return;
+      }
+      // INVALID_CREDENTIALS o. Ä. → es könnte ein Admin-Konto sein, weiter zu Schritt 2
+    }
+
+    // 2. Admin-Login mit derselben Eingabe versuchen
+    try {
+      await apiFetch('/auth/login', {
+        method: 'POST',
+        body: JSON.stringify({ username: form.email, password: form.password }),
+      });
+      router.push('/admin');
+      router.refresh();
+      return;
+    } catch (err: unknown) {
+      if (err instanceof ApiError && err.status === 401) {
+        setError('E-Mail/Benutzername oder Passwort ist falsch.');
       } else {
-        setError(msg);
+        setError(err instanceof Error ? err.message : 'Anmeldung fehlgeschlagen.');
       }
     } finally {
       setLoading(false);
@@ -39,9 +59,10 @@ export default function LoginPage() {
           <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-red-700 text-sm">{error}</div>
         )}
         <div>
-          <label className="block text-sm font-medium text-stone-700 mb-1">E-Mail</label>
+          <label className="block text-sm font-medium text-stone-700 mb-1">E-Mail oder Benutzername</label>
           <input
-            type="email"
+            type="text"
+            autoComplete="username"
             required
             value={form.email}
             onChange={(e) => setForm({ ...form, email: e.target.value })}
@@ -50,8 +71,8 @@ export default function LoginPage() {
         </div>
         <div>
           <label className="block text-sm font-medium text-stone-700 mb-1">Passwort</label>
-          <input
-            type="password"
+          <PasswordInput
+            autoComplete="current-password"
             required
             value={form.password}
             onChange={(e) => setForm({ ...form, password: e.target.value })}

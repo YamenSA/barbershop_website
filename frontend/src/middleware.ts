@@ -8,9 +8,9 @@ export function middleware(request: NextRequest) {
   if (pathname.startsWith('/admin') && pathname !== '/admin/login') {
     const sessionCookie = request.cookies.get('session')
 
-    // If no session cookie, redirect to login
+    // If no session cookie, redirect to the unified login ("Mein Konto")
     if (!sessionCookie) {
-      const loginUrl = new URL('/admin/login', request.url)
+      const loginUrl = new URL('/konto/login', request.url)
       return NextResponse.redirect(loginUrl)
     }
   }

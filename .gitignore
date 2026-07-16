@@ -18,6 +18,9 @@ build/
 *.ppk
 id_rsa
 id_ed25519
+# Local chat/transcript exports — never belong in the repo
+claude-chat.txt
+
 .DS_Store
 Thumbs.db
 *.tmp
