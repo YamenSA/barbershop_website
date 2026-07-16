@@ -88,7 +88,7 @@ export default function CancelCard({ view: initial, token }: Props) {
       </div>
 
       {/* Appointment details */}
-      <div className="bg-slate rounded-[var(--radius-card)] px-5 py-4 space-y-3 mb-6">
+      <div className="bg-slate rounded-[var(--radius-card)] px-5 py-4 space-y-3 mb-6 border border-hairline shadow-bevel">
         <div>
           <span className="text-ash text-xs">Dienstleistung</span>
           <p className="text-ink text-sm font-medium mt-0.5">{view.service_name}</p>
@@ -154,7 +154,7 @@ export default function CancelCard({ view: initial, token }: Props) {
               type="button"
               onClick={() => setConfirming(false)}
               disabled={submitting}
-              className="min-h-[44px] px-6 py-3 border border-slate text-ash text-sm font-medium rounded-[var(--radius-btn)] hover:border-ash hover:text-ink disabled:opacity-50 transition-colors duration-[var(--duration-fast)] focus-visible:outline-none focus-visible:shadow-[0_0_0_3px_oklch(0.65_0.19_140/0.5)]"
+              className="min-h-[44px] px-6 py-3 border border-hairline text-ash text-sm font-medium rounded-[var(--radius-btn)] hover:border-hairline-strong hover:text-ink disabled:opacity-50 transition-colors duration-[var(--duration-fast)] focus-visible:outline-none focus-visible:shadow-[0_0_0_3px_oklch(0.65_0.19_140/0.5)]"
             >
               Abbrechen
             </button>

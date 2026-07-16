@@ -12,7 +12,7 @@ interface Props {
 }
 
 const inputClass =
-  'w-full px-4 py-3 bg-slate text-ink text-sm rounded-[var(--radius-input)] border border-slate placeholder:text-ash focus-visible:outline-none focus-visible:border-malachite transition-colors duration-[var(--duration-fast)]';
+  'w-full px-4 py-3 bg-slate text-ink text-sm rounded-[var(--radius-input)] border border-hairline placeholder:text-ash focus-visible:outline-none focus-visible:border-malachite transition-colors duration-[var(--duration-fast)]';
 
 export default function ContactForm({ serviceId, slot, onSuccess }: Props) {
   const [name, setName] = useState('');
@@ -112,7 +112,7 @@ export default function ContactForm({ serviceId, slot, onSuccess }: Props) {
             <span
               aria-hidden
               className={`block w-5 h-5 rounded border transition-colors duration-[var(--duration-fast)] ${
-                privacy ? 'bg-malachite border-malachite' : 'bg-slate border-slate group-hover:border-ash'
+                privacy ? 'bg-malachite border-malachite' : 'bg-slate border-hairline group-hover:border-hairline-strong'
               }`}
             >
               {privacy && (

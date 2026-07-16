@@ -27,7 +27,7 @@ export default function Confirmation({ result }: Props) {
         <h2 className="font-display font-bold text-ink text-xl">Termin bestätigt</h2>
       </div>
 
-      <div className="bg-slate rounded-[var(--radius-card)] px-5 py-4 space-y-3 mb-6">
+      <div className="bg-slate rounded-[var(--radius-card)] px-5 py-4 space-y-3 mb-6 border border-hairline shadow-bevel">
         <div>
           <span className="text-ash text-xs">Datum &amp; Uhrzeit</span>
           <p className="text-ink text-sm font-medium mt-0.5">{formatDateTime(result.starts_at)}</p>
@@ -45,7 +45,7 @@ export default function Confirmation({ result }: Props) {
 
       <a
         href="/"
-        className="inline-flex items-center justify-center min-h-[44px] px-6 py-3 border border-slate text-ash text-sm rounded-[var(--radius-btn)] hover:border-ash hover:text-ink transition-colors duration-[var(--duration-fast)] focus-visible:outline-none focus-visible:shadow-[0_0_0_3px_oklch(0.65_0.19_140/0.5)]"
+        className="inline-flex items-center justify-center min-h-[44px] px-6 py-3 border border-hairline text-ash text-sm rounded-[var(--radius-btn)] hover:border-hairline-strong hover:text-ink transition-colors duration-[var(--duration-fast)] focus-visible:outline-none focus-visible:shadow-[0_0_0_3px_oklch(0.65_0.19_140/0.5)]"
       >
         Zurück zur Startseite
       </a>

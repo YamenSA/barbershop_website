@@ -42,6 +42,8 @@ class Service(UUIDModel, TimestampModel, table=True):
     name: str = Field(index=True, unique=True, nullable=False)
     duration_minutes: int = Field(nullable=False)
     price_cents: int = Field(nullable=False)
+    # True => price_cents is a starting price ("ab X €"), exact price is set on site.
+    price_is_from: bool = Field(default=False, nullable=False)
     description: Optional[str] = Field(default=None)
     is_active: bool = Field(default=True, nullable=False)
     target_group: TargetGroup = Field(default=TargetGroup.HERREN, nullable=False)

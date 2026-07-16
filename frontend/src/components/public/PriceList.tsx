@@ -1,115 +1,117 @@
 'use client';
 
 import { useState } from 'react';
-import type { PublicServiceRead, TargetGroup, ServiceKind } from '@/lib/types';
-
-const TARGET_GROUPS: { key: TargetGroup; label: string }[] = [
-  { key: 'HERREN', label: 'Herren' },
-  { key: 'DAMEN', label: 'Damen' },
-  { key: 'KINDER', label: 'Kinder' },
-];
-
-const SERVICE_KINDS: { key: ServiceKind; label: string }[] = [
-  { key: 'SCHNITT', label: 'Haarschnitte' },
-  { key: 'BART', label: 'Bartpflege' },
-  { key: 'FARBE', label: 'Farbe & Tönung' },
-  { key: 'STYLING', label: 'Styling' },
-  { key: 'SONSTIGES', label: 'Zusatzleistungen' },
-];
-
-function formatPrice(cents: number): string {
-  return `${(cents / 100).toFixed(2).replace('.', ',')} €`;
-}
-
-function formatDuration(minutes: number): string {
-  if (minutes >= 60) {
-    const h = Math.floor(minutes / 60);
-    const m = minutes % 60;
-    return m > 0 ? `${h} Std. ${m} Min.` : `${h} Std.`;
-  }
-  return `${minutes} Min.`;
-}
+import type { PublicServiceRead, TargetGroup } from '@/lib/types';
+import {
+  GroupIcon,
+  getAvailableGroups,
+  buildSections,
+  formatServicePrice,
+  formatServiceCount,
+} from './serviceGroups';
 
 interface PriceListProps {
   services: PublicServiceRead[];
 }
 
 export default function PriceList({ services }: PriceListProps) {
-  const [activeGroup, setActiveGroup] = useState<TargetGroup>('HERREN');
+  // Only show target groups that actually have services, so an unused group
+  // (e.g. Kinder) never renders as an empty, dead-end card.
+  const availableGroups = getAvailableGroups(services);
 
-  // Filter services by active group
-  const groupServices = services.filter((s) => s.target_group === activeGroup);
+  const [selectedGroup, setSelectedGroup] = useState<TargetGroup | null>(null);
+  // Fall back to the first available group until the user picks one (and if the
+  // current selection has no services after a data change).
+  const activeGroup =
+    selectedGroup && availableGroups.some((g) => g.key === selectedGroup)
+      ? selectedGroup
+      : availableGroups[0]?.key ?? 'HERREN';
 
-  // Group by known service kind…
-  const knownKinds = new Set<string>(SERVICE_KINDS.map((k) => k.key));
-  const groupedByKind: { key: string; label: string; items: PublicServiceRead[] }[] =
-    SERVICE_KINDS.map((kind) => ({
-      key: kind.key as string,
-      label: kind.label,
-      items: groupServices.filter((s) => s.service_kind === kind.key),
-    })).filter((g) => g.items.length > 0);
-
-  // …plus a safety bucket so a service with an unknown/new service_kind never
-  // silently disappears from a tab (would otherwise read as "empty category").
-  const uncategorized = groupServices.filter((s) => !knownKinds.has(s.service_kind));
-  if (uncategorized.length > 0) {
-    groupedByKind.push({ key: '__weitere__', label: 'Weitere Leistungen', items: uncategorized });
-  }
+  const sections = buildSections(services, activeGroup);
+  const panelId = 'services-panel';
 
   return (
-    <div className="w-full flex flex-col gap-8">
-      {/* Target Group Navigation Tabs */}
-      <div className="flex border-b border-white/5 gap-6 justify-center">
-        {TARGET_GROUPS.map((group) => {
-          const isActive = activeGroup === group.key;
-          return (
-            <button
-              key={group.key}
-              onClick={() => setActiveGroup(group.key)}
-              className={`pb-4 text-lg font-bold tracking-tight transition-all duration-150 ease-out active:scale-97 relative cursor-pointer ${
-                isActive ? 'text-malachite' : 'text-ash hover:text-ink'
-              }`}
-            >
-              {group.label}
-              {isActive && (
-                <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-malachite" />
-              )}
-            </button>
-          );
-        })}
+    <div className="w-full flex flex-col gap-10">
+      {/* Target-group chooser — the deliberate first choice of the page. */}
+      <div className="flex flex-col items-center gap-6">
+        <h2 className="font-display font-bold text-xl text-ink tracking-tight text-center">
+          Für wen ist der Termin?
+        </h2>
+        <div
+          role="group"
+          aria-label="Zielgruppe wählen"
+          className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 w-full max-w-3xl"
+        >
+          {availableGroups.map((group) => {
+            const isActive = activeGroup === group.key;
+            return (
+              <button
+                key={group.key}
+                type="button"
+                aria-pressed={isActive}
+                aria-controls={panelId}
+                onClick={() => setSelectedGroup(group.key)}
+                className={`group flex flex-col items-center text-center gap-2.5 rounded-[12px] px-4 py-6 border transition-all duration-150 ease-out cursor-pointer active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-malachite/60 ${
+                  isActive
+                    ? 'bg-malachite/10 border-malachite/60 shadow-glow'
+                    : 'bg-slate border-hairline shadow-bevel hover:border-hairline-strong hover:shadow-lift hover:-translate-y-0.5'
+                }`}
+              >
+                <span
+                  className={`transition-colors duration-150 ${
+                    isActive ? 'text-malachite' : 'text-ash group-hover:text-ink'
+                  }`}
+                >
+                  <GroupIcon group={group.key} />
+                </span>
+                <span
+                  className={`font-display font-bold text-lg leading-none tracking-tight transition-colors duration-150 ${
+                    isActive ? 'text-ink' : 'text-secondary group-hover:text-ink'
+                  }`}
+                >
+                  {group.label}
+                </span>
+                <span className="text-tertiary text-xs font-medium">
+                  {formatServiceCount(group.count)}
+                </span>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
-      {/* Services List */}
-      <div className="flex flex-col gap-8 max-w-3xl mx-auto w-full">
-        {groupedByKind.length === 0 ? (
+      {/* Services list for the active group. Re-keyed so the switch animates. */}
+      <div
+        id={panelId}
+        key={activeGroup}
+        className="animate-service-list flex flex-col gap-8 max-w-3xl mx-auto w-full"
+      >
+        {sections.length === 0 ? (
           <p className="text-ash text-center py-8">Keine Leistungen in dieser Kategorie gefunden.</p>
         ) : (
-          groupedByKind.map((group) => (
-            <section key={group.key} className="flex flex-col gap-4">
+          sections.map((section) => (
+            <section key={section.label} className="flex flex-col gap-4">
               <h3 className="font-display font-bold text-lg uppercase tracking-wider text-brass border-b border-white/5 pb-2">
-                {group.label}
+                {section.label}
               </h3>
               <div className="grid gap-3">
-                {group.items.map((service) => (
+                {section.items.map((service) => (
                   <article
                     key={service.id}
-                    className="bg-slate rounded-[8px] p-5 flex justify-between items-start gap-4 border border-white/[0.02] hover:border-white/5 transition-all duration-150 ease-out"
+                    className="bg-slate rounded-[8px] p-5 flex justify-between items-start gap-4 border border-hairline shadow-bevel hover:border-hairline-strong transition-all duration-150 ease-out"
                   >
                     <div className="flex flex-col gap-1.5">
                       <h4 className="font-bold text-ink text-base leading-snug">
                         {service.name}
                       </h4>
-                      <p className="text-ash text-xs font-medium">
-                        {formatDuration(service.duration_minutes)}
-                      </p>
                       {service.description && (
-                        <p className="text-ash text-sm leading-relaxed max-w-[60ch] mt-1">
+                        <p className="text-ash text-sm leading-relaxed max-w-[60ch]">
                           {service.description}
                         </p>
                       )}
                     </div>
                     <span className="shrink-0 px-3 py-1 rounded-[4px] text-sm font-semibold tabular-nums text-brass bg-brass/10 border border-brass/10">
-                      {formatPrice(service.price_cents)}
+                      {formatServicePrice(service.price_cents, service.price_is_from)}
                     </span>
                   </article>
                 ))}

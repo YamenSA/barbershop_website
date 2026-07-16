@@ -69,8 +69,8 @@ export default function ContactActions({ profile }: ContactActionsProps) {
             rel={act.external ? 'noopener noreferrer' : undefined}
             className={`flex flex-col justify-between p-6 rounded-[8px] border transition-all duration-150 ease-out active:scale-97 ${
               isMainCta
-                ? 'bg-slate border-malachite/20 hover:border-malachite/40 text-ink'
-                : 'bg-slate border-white/[0.02] hover:border-white/5 text-ink'
+                ? 'bg-slate border-malachite/20 shadow-bevel hover:border-malachite/40 hover:shadow-lift hover:-translate-y-0.5 text-ink'
+                : 'bg-slate border-hairline shadow-bevel hover:border-hairline-strong hover:shadow-lift hover:-translate-y-0.5 text-ink'
             }`}
           >
             <div className="mb-6">

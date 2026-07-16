@@ -136,7 +136,7 @@ export default function HoursPage() {
       {/* Weekly hours */}
       <section>
         <h2 className="text-lg font-semibold text-gray-800 mb-3">Wöchentliche Öffnungszeiten</h2>
-        <div className="overflow-hidden rounded-lg border">
+        <div className="overflow-x-auto rounded-lg border">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
@@ -233,7 +233,7 @@ export default function HoursPage() {
         {closures.length === 0 ? (
           <p className="text-sm text-gray-400">Keine Schließtage eingetragen.</p>
         ) : (
-          <div className="overflow-hidden rounded-lg border">
+          <div className="overflow-x-auto rounded-lg border">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>

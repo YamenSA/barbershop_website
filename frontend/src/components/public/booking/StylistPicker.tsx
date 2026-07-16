@@ -33,10 +33,10 @@ export default function StylistPicker({ members, serviceId, selected, onSelect }
                 <button
                   type="button"
                   onClick={() => onSelect(opt.id)}
-                  className={`w-full text-left px-5 py-4 rounded-[var(--radius-card)] border transition-colors duration-[var(--duration-fast)] focus-visible:outline-none focus-visible:shadow-[0_0_0_3px_oklch(0.65_0.19_140/0.5)] ${
+                  className={`w-full text-left px-5 py-4 rounded-[var(--radius-card)] border transition-all duration-[var(--duration-fast)] focus-visible:outline-none focus-visible:shadow-[0_0_0_3px_oklch(0.65_0.19_140/0.5)] ${
                     isSelected
-                      ? 'border-malachite bg-malachite/10'
-                      : 'border-slate hover:border-ash'
+                      ? 'border-malachite bg-malachite/10 shadow-glow'
+                      : 'border-hairline bg-slate shadow-bevel hover:border-hairline-strong hover:shadow-lift hover:-translate-y-0.5'
                   }`}
                 >
                   <span className="block font-semibold text-ink text-sm">{opt.name}</span>

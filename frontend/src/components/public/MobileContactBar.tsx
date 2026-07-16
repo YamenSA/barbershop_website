@@ -21,7 +21,7 @@ export default function MobileContactBar() {
   }, []);
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-slate border-t border-white/10 px-4 py-2 flex items-center justify-between gap-3 shadow-[0_-4px_12px_rgba(0,0,0,0.5)]">
+    <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-raised border-t border-hairline-strong px-4 py-2 flex items-center justify-between gap-3 shadow-[0_-8px_24px_-6px_oklch(0_0_0/0.6)]">
       {/* WhatsApp Button */}
       <a
         href={`https://wa.me/${siteConfig.whatsappNumber}`}

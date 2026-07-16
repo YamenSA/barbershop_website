@@ -24,7 +24,7 @@ export default function ReviewsSnapshot({ data }: ReviewsSnapshotProps) {
         {reviews.map((review) => (
           <div
             key={review.id}
-            className="flex flex-col justify-between p-6 rounded-card border border-white/[0.06] bg-slate/50 hover:bg-slate hover:border-white/[0.08] transition-all duration-[150ms] group"
+            className="flex flex-col justify-between p-6 rounded-card border border-hairline shadow-bevel bg-slate/50 hover:bg-slate hover:border-hairline-strong transition-all duration-[150ms] group"
           >
             <div className="space-y-4">
               {/* Star Rating (Static 5 Stars) */}
