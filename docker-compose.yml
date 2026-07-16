@@ -6,9 +6,7 @@ services:
     environment:
       - POSTGRES_DB=barbershop
       - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-    ports:
-      - "5432:5432"
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d barbershop"]
       interval: 5s
@@ -18,10 +16,18 @@ services:
   backend:
     build:
       context: ./backend
-    volumes:
-      - ./backend:/app
     environment:
-      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/barbershop
+      - DATABASE_URL=postgresql+asyncpg://postgres:${POSTGRES_PASSWORD}@db:5432/barbershop
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - ADMIN_USERNAME=${ADMIN_USERNAME}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      - EMAIL_FROM=${EMAIL_FROM}
+      - EMAIL_FROM_NAME=${EMAIL_FROM_NAME}
+      - EMAIL_REPLY_TO=${EMAIL_REPLY_TO}
+      - PUBLIC_BASE_URL=${PUBLIC_BASE_URL}
+      - BREVO_API_KEY=${BREVO_API_KEY}
+      - CORS_ORIGINS=${CORS_ORIGINS}
+      - COOKIE_SECURE=${COOKIE_SECURE}
       - RETENTION_GUEST_MONTHS=12
       - RETENTION_CUSTOMER_MONTHS=24
     ports:
