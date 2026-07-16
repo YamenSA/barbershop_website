@@ -5,8 +5,9 @@ description: Urban precision — online booking and salon showcase for a modern 
 colors:
   primary: "oklch(0.65 0.19 140)"
   accent: "oklch(0.88 0.12 55)"
-  bg: "oklch(0.10 0.000 0)"
-  surface: "oklch(0.15 0.008 140)"
+  bg: "oklch(0.12 0.000 0)"
+  surface: "oklch(0.175 0.010 140)"
+  raised: "oklch(0.22 0.012 140)"
   ink: "oklch(0.95 0.004 140)"
   muted: "oklch(0.55 0.006 140)"
 ---
@@ -38,23 +39,30 @@ A committed dark palette. The brand's energy lives in the green — not in backg
 ### Secondary
 - **Blade Brass** (`oklch(0.88 0.12 55)`): The warm counterpoint. Used sparingly on secondary tags, prices, or accent rules. Never competing with Malachite — it provides warmth where the green stays cool. Dark text on Brass fills (L 0.88 is pale enough for dark ink).
 
-### Neutral
-- **Midnight Marble** (`oklch(0.10 0.000 0)`): The primary body background. Pure near-black, no hue tint. Carries no warmth — warmth lives in the brand colors, not the surface.
-- **Shadowed Slate** (`oklch(0.15 0.008 140)`): Card and panel surfaces. Near-black with a ghost of the brand's green hue — just enough to feel intentional.
+### Neutral — the Elevation Ramp
+Depth on dark comes from *lighter* surfaces, not shadows. A three-step tonal ramp
+(same green hue, rising lightness) replaces the old two-tone flat scheme, so
+foreground surfaces read as clearly raised instead of melting into the base.
+- **Midnight Marble** (`oklch(0.12 0.000 0)`): The primary body background. Near-black, no hue tint (chroma 0) — carries no warmth, warmth lives in the brand colors. Lifted off pure black (`0.10 → 0.12`) so it no longer reads as harshly flat and leaves room for the surfaces above it.
+- **Shadowed Slate** (`oklch(0.175 0.010 140)`): Card and panel surfaces. A clear step above the base, with a ghost of the brand's green hue so the grey feels intentional, not dead.
+- **Raised Slate** (`oklch(0.22 0.012 140)`): The top elevation. Floating / temporarily-lifted surfaces only — dropdowns, dialogs, the mobile drawer/bottom bar. Not for static cards.
+- **Hairline** (`oklch(1 0 0 / 0.10)`, hover `/ 0.18`): The default 1px stroke that delineates cards, inputs and panels on dark without a shadow. Precise and architectural — it does the separation work that shadows do in light mode.
 ### Locked Text Tiers (Public)
 
-Three subordinate text tiers, **locked as tokens** against the real Midnight-Black
-background token `oklch(0.10 0 0)` (≈ `#030303`, relative luminance ≈ 0.001).
+Three subordinate text tiers, **locked as tokens** against the Midnight-Black
+background token `oklch(0.12 0 0)` (base lifted off pure black for elevation).
 Use these — never ad-hoc `text-gray-*` / `text-neutral-*` / opacity tricks.
 Ratios are computed against that background token:
 
 | Token | Tailwind class | Hex | Ratio vs bg | Use |
 |---|---|---|---|---|
-| **text-primary** | `text-ink` | `#F5F5F5` | **~18.9:1** | Headlines, primary body, key labels |
-| **text-secondary** | `text-secondary` | `#B8B8B8` | **~10.4:1** | Fließtext, Bios, Sublines |
-| **text-tertiary** | `text-tertiary` / `text-ash` | `#999999` | **~7.2:1** | Meta, captions, chips, "Mein Konto" link |
+| **text-primary** | `text-ink` | `#F5F5F5` | **~17:1** | Headlines, primary body, key labels |
+| **text-secondary** | `text-secondary` | `#B8B8B8` | **~9.5:1** | Fließtext, Bios, Sublines |
+| **text-tertiary** | `text-tertiary` / `text-ash` | `#999999` | **~6.6:1** | Meta, captions, chips, "Mein Konto" link |
 
-`#999999` is the **floor for small text** — do not go dimmer. `text-ash` is a legacy
+`#999999` is the **floor for small text** — do not go dimmer. On the raised
+`Shadowed Slate` card surface it still clears ~5:1 (AA for small text); on the
+`Raised Slate` tier keep small meta text at `text-secondary` or brighter. `text-ash` is a legacy
 alias of `text-tertiary` (same value), kept so existing markup upgrades automatically.
 
 **Text over imagery** (Hero subline over the video): the token alone is not enough —
@@ -88,11 +96,27 @@ near-black and clears AA against the real frame, not just the token.
 
 ## 4. Elevation
 
-This system is flat by default. Depth is conveyed through tonal layering — Midnight Marble vs. Shadowed Slate — rather than shadows. Surfaces at rest carry no box-shadow.
+Depth is conveyed through **tonal layering plus a hairline**, not drop shadows.
+Dark-mode depth is a lightness step: base → card → raised (see the Elevation Ramp
+in §2). Each rise in elevation is a rise in surface lightness, and a card is set
+off from the base by a 1px **Hairline** stroke rather than a shadow.
 
-Shadows appear only as a response to interaction state: a primary button receiving `:hover` or `:focus-visible` gains a focused glow (`0 0 0 3px oklch(0.65 0.19 140 / 0.5)`) to confirm it is the active target. Modal overlays use a scrim (`oklch(0 0 0 / 0.7)`) rather than a shadow on the modal itself.
+Three levels:
+- **Base** (`Midnight Marble`, L 0.12): the page canvas.
+- **Card** (`Shadowed Slate`, L 0.175 + hairline): panels, list items, price/service cards, form fields at rest. This is the default surface for foreground content.
+- **Raised** (`Raised Slate`, L 0.22 + soft ambient shadow): only elements that genuinely float above the page — dropdowns, dialogs, the mobile drawer / sticky bottom bar.
 
-**The Flat-At-Rest Rule.** No decorative drop shadows on static cards, images, or containers. Shadows are states, not decoration.
+Shadows are used deliberately, never as decoration on static content:
+- **Bevel** (`--shadow-bevel: inset 0 1px 0 0 oklch(1 0 0 / 0.05)`): a 1px light-from-above top edge — the **resting state of every card**. Paired with the bottom hairline it reads as a crisp bevel, giving separation without a drop shadow (still honours "flat at rest"; it is an inset edge, not a cast shadow).
+- **Lift** (`--shadow-lift: inset 0 1px 0 0 oklch(1 0 0 / 0.07), 0 10px 24px -10px oklch(0 0 0 / 0.6)`): bevel + soft drop, applied on **`:hover` of interactive cards** together with `-translate-y-0.5`. Motion + shadow confirm "clickable."
+- **Glow** (`--shadow-glow: 0 0 0 1px oklch(0.65 0.19 140 / 0.55), 0 0 22px -4px oklch(0.65 0.19 140 / 0.4)`): a malachite ring + halo for the **single selected / active element** (chosen slot, service, target group) and the primary CTA. Green = meaning; the glow makes the one committed choice unmistakable.
+- **Focus glow** on the active interactive target: `0 0 0 3px oklch(0.65 0.19 140 / 0.5)`.
+- **Soft ambient float** (`--shadow-float: 0 10px 30px -10px oklch(0 0 0 / 0.6)`) on Raised-tier floating surfaces only. Modal overlays also use a scrim (`oklch(0 0 0 / 0.7)`).
+
+**The Depth Rules.**
+- Static cards get their separation from the **tonal step + hairline**, never from a drop shadow. A drop shadow on a resting card, image, or container is still banned.
+- The soft ambient shadow is reserved for the **Raised tier** (things that actually float). If it isn't floating, it doesn't get `--shadow-float`.
+- Selection/active state is signalled by the **Malachite accent** (tinted fill + border), not by elevation alone — elevation is neutral depth, green is meaning.
 
 ## 5. Components
 
@@ -113,9 +137,9 @@ design needs a white label, use a *darker* green fill instead (admin uses
 
 ### Cards / Containers
 - **Corner Style:** 8px radius (medium) — softened but not rounded-everything.
-- **Background:** Shadowed Slate (`oklch(0.15 0.008 140)`).
-- **Shadow Strategy:** None at rest (flat). Focus-state glow if interactive.
-- **Border:** None by default. A `1px solid oklch(0.95 0.004 140 / 0.08)` hairline is permitted on panels that need visual separation from the body bg without a tonal ramp step.
+- **Background:** Shadowed Slate (`oklch(0.175 0.010 140)`) — the raised card tier of the Elevation Ramp.
+- **Border:** **Hairline by default** — `border-hairline` (`oklch(1 0 0 / 0.10)`), `border-hairline-strong` (`/ 0.18`) on hover. The tonal step *plus* the hairline is what makes a card read as foreground; don't ship resting cards with an invisible border.
+- **Shadow Strategy:** None at rest. Focus-state glow if interactive; `--shadow-float` only when the card is actually a floating (Raised-tier) surface.
 - **Internal Padding:** 24px (desktop), 16px (mobile).
 
 ### Inputs / Fields
