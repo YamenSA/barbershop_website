@@ -58,22 +58,6 @@ services:
       - "3000:3000"
     depends_on:
       - backend
-    # Der Coolify-Proxy (Traefik) läuft im externen Netz "coolify". Ohne Anbindung
-    # an dieses Netz kann Traefik den Container nicht erreichen: Der Dial in das
-    # isolierte Compose-Netz hängt (SYN wird gedroppt) → 0 Bytes bis zum
-    # Gateway-Timeout → "endloser Ladespinner" im Browser.
-    networks:
-      - default
-      - coolify
-    labels:
-      # Bei mehreren Netzen wählt der Traefik-Docker-Provider sonst ggf. die IP
-      # des internen Compose-Netzes. Explizit auf das Proxy-Netz pinnen.
-      - traefik.docker.network=coolify
 
 volumes:
   postgres_data:
-
-networks:
-  # Vorhandenes Proxy-Netz von Coolify — wird nicht von diesem Compose verwaltet.
-  coolify:
-    external: true
