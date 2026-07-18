@@ -27,7 +27,23 @@ import type {
   PublicPromotion,
 } from './types';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
+const PUBLIC_API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
+
+/**
+ * API-Basis-URL, kontextabhängig aufgelöst:
+ * - Browser: relativer Pfad (z. B. /api/v1) — läuft same-origin über den
+ *   Next.js-Rewrite-Proxy (next.config.ts) zum Backend.
+ * - Server (RSC/SSR): Node-fetch kann relative URLs nicht auflösen, und der
+ *   Rewrite greift nur für eingehende HTTP-Requests, nicht für fetch() im
+ *   selben Prozess. Daher wird hier BACKEND_INTERNAL_URL (Runtime-Env,
+ *   z. B. http://backend:8000) vorangestellt.
+ */
+function apiBase(): string {
+  if (typeof window !== 'undefined') return PUBLIC_API_BASE;
+  if (/^https?:\/\//.test(PUBLIC_API_BASE)) return PUBLIC_API_BASE;
+  const origin = (process.env.BACKEND_INTERNAL_URL || 'http://backend:8000').replace(/\/+$/, '');
+  return `${origin}${PUBLIC_API_BASE}`;
+}
 
 export class ApiError extends Error {
   constructor(
@@ -44,7 +60,7 @@ export async function apiFetch<T>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<T> {
-  const url = `${API_BASE_URL}${endpoint}`;
+  const url = `${apiBase()}${endpoint}`;
 
   const defaultOptions: RequestInit = {
     ...options,
@@ -183,11 +199,16 @@ export const updateAppointmentStatus = (
 export const searchCustomers = (query: string) =>
   apiFetch<Customer[]>(`/customers?search=${encodeURIComponent(query)}`);
 
-// --- Public Read (server-side, unauthenticated, ISR revalidate=60) ---
+// --- Public Read (server-side, unauthenticated, fetch-cache revalidate=60) ---
 
 async function publicFetch<T>(endpoint: string): Promise<T> {
-  const url = `${API_BASE_URL}/public${endpoint}`;
-  const res = await fetch(url, { next: { revalidate: 60 } } as RequestInit);
+  const url = `${apiBase()}/public${endpoint}`;
+  // Timeout: Ein hängendes Backend darf das SSR-Rendering nicht blockieren —
+  // die Aufrufer fangen den Fehler und rendern mit leeren Daten weiter.
+  const res = await fetch(url, {
+    next: { revalidate: 60 },
+    signal: AbortSignal.timeout(5000),
+  } as RequestInit);
   if (!res.ok) {
     throw new Error(`Public API ${endpoint} responded ${res.status}`);
   }
@@ -288,8 +309,7 @@ export const accountUpdateProfile = (data: ProfileUpdate): Promise<MeOut> =>
   apiFetch('/account/profile', { method: 'PATCH', body: JSON.stringify(data) });
 
 export const accountExportData = async (): Promise<void> => {
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
-  const resp = await fetch(`${API_BASE_URL}/account/export`, { credentials: 'include' });
+  const resp = await fetch(`${apiBase()}/account/export`, { credentials: 'include' });
   if (!resp.ok) throw new Error('Export failed');
   const blob = await resp.blob();
   const url = URL.createObjectURL(blob);
