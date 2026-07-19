@@ -34,12 +34,6 @@ services:
       - COOKIE_SECURE=${COOKIE_SECURE}
       - RETENTION_GUEST_MONTHS=12
       - RETENTION_CUSTOMER_MONTHS=24
-    # Das Host-Port-Mapping wird vom Browser NICHT mehr benötigt (Traffic läuft
-    # Frontend-Proxy -> backend:8000 intern). Beibehalten nur, falls Coolify/ein Job
-    # das Backend direkt erreichen muss; sonst kann es entfallen. Intern hört das
-    # Backend weiterhin auf 8000.
-    ports:
-      - "8001:8000"
     depends_on:
       db:
         condition: service_healthy
@@ -55,7 +49,7 @@ services:
       # (interner Compose-Netz-Name, Port 8000). Runtime-Env, nicht eingebacken.
       - BACKEND_INTERNAL_URL=http://backend:8000
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3000:3000"
     depends_on:
       - backend
 

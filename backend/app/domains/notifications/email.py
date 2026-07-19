@@ -20,6 +20,16 @@ class EmailMessage:
 
 def send_email(msg: EmailMessage) -> None:
     if not settings.BREVO_API_KEY:
+        if settings.COOKIE_SECURE:
+            # COOKIE_SECURE ist das vorhandene Produktions-Flag (nur in
+            # Produktion True). Ein fehlender BREVO_API_KEY darf dort nicht
+            # still verschluckt werden, da der Aufrufer sonst faelschlich
+            # NotificationStatus.sent setzt, ohne dass je eine Mail
+            # versendet wurde.
+            raise RuntimeError(
+                "BREVO_API_KEY ist nicht gesetzt, E-Mail-Versand in "
+                "Produktion nicht moeglich."
+            )
         logger.info(
             "[EMAIL CONSOLE] To: %s | Subject: %s\n%s",
             msg.to,
