@@ -61,6 +61,8 @@ export interface Appointment {
   service_id: UUID;
   customer_id?: UUID;
   customer_name?: string;
+  customer_email?: string;
+  customer_phone?: string;
   customer_anonymized_at?: string;
   guest_name?: string;
   guest_phone?: string;
@@ -97,6 +99,8 @@ export interface AppointmentSummary {
   service_id: UUID;
   customer_id?: UUID;
   customer_name?: string;
+  customer_email?: string;
+  customer_phone?: string;
   customer_anonymized_at?: string;
   guest_name?: string;
   guest_phone?: string;
