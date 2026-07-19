@@ -56,7 +56,7 @@ export default function DashboardPage() {
                       {fmtTime(a.starts_at)}
                     </span>
                     <span className="flex-1 text-gray-900">
-                      {a.guest_name ?? (a.customer_id ? 'Kunde' : '—')}
+                      {a.guest_name ?? a.customer_name ?? '—'}
                     </span>
                     <span className="text-gray-400 text-xs">
                       {a.team_member_id.slice(0, 8)}…

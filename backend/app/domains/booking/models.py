@@ -62,3 +62,7 @@ class Appointment(UUIDModel, TimestampModel, table=True):
     origin: AppointmentOrigin = Field(default=AppointmentOrigin.walk_in, nullable=False)
 
     customer: Optional[Customer] = Relationship()
+
+    @property
+    def customer_name(self) -> Optional[str]:
+        return self.customer.name if self.customer else None

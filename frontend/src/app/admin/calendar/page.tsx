@@ -76,7 +76,7 @@ export default function CalendarPage() {
 
   const events: EventInput[] = appointments.map((a) => ({
     id: a.id,
-    title: `${serviceNames[a.service_id] ?? '?'} – ${a.guest_name ?? memberNames[a.team_member_id] ?? ''}`,
+    title: `${serviceNames[a.service_id] ?? '?'} – ${a.guest_name ?? a.customer_name ?? 'Kunde'}`,
     start: a.starts_at,
     end: a.ends_at,
     backgroundColor: STATUS_COLORS[a.status],

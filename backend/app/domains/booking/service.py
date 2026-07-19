@@ -6,6 +6,7 @@ from uuid import UUID
 
 from fastapi import HTTPException, status
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import selectinload
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
@@ -108,6 +109,7 @@ class BookingService:
         session.add(appointment)
         await session.commit()
         await session.refresh(appointment)
+        await session.refresh(appointment, ["customer"])
         return appointment
 
     @staticmethod
@@ -157,7 +159,12 @@ class BookingService:
 
     @staticmethod
     async def get_appointment(session: AsyncSession, appointment_id: UUID) -> Appointment:
-        appointment = await session.get(Appointment, appointment_id)
+        statement = (
+            select(Appointment)
+            .options(selectinload(Appointment.customer))
+            .where(Appointment.id == appointment_id)
+        )
+        appointment = (await session.execute(statement)).scalar_one_or_none()
         if not appointment:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="Appointment not found"
@@ -173,6 +180,7 @@ class BookingService:
         session.add(appointment)
         await session.commit()
         await session.refresh(appointment)
+        await session.refresh(appointment, ["customer"])
         return appointment
 
     @staticmethod
@@ -183,7 +191,7 @@ class BookingService:
         to_date=None,
     ) -> List[Appointment]:
         from datetime import date as date_type, time as time_type
-        statement = select(Appointment)
+        statement = select(Appointment).options(selectinload(Appointment.customer))
         if team_member_id:
             statement = statement.where(Appointment.team_member_id == team_member_id)
         if from_date:
@@ -233,6 +241,7 @@ class BookingService:
         session.add(appointment)
         await session.commit()
         await session.refresh(appointment)
+        await session.refresh(appointment, ["customer"])
         logger.info(
             "AUDIT appointment_patched id=%s starts_at=%s team_member_id=%s",
             appointment.id,

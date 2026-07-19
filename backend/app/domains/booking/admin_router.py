@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, Query
 from fastapi.responses import StreamingResponse
 from fpdf import FPDF
 from fpdf.enums import XPos, YPos
+from sqlalchemy.orm import selectinload
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
@@ -94,6 +95,7 @@ async def get_dashboard(
 
     appt_stmt = (
         select(Appointment)
+        .options(selectinload(Appointment.customer))
         .where(
             Appointment.status == AppointmentStatus.confirmed,
             Appointment.starts_at >= from_dt,
@@ -124,6 +126,7 @@ async def daily_plan_pdf(
 
     appt_stmt = (
         select(Appointment)
+        .options(selectinload(Appointment.customer))
         .where(
             Appointment.starts_at >= from_dt,
             Appointment.starts_at < to_dt,
@@ -176,7 +179,7 @@ async def daily_plan_pdf(
         local_time = a.starts_at.strftime("%H:%M")
         service_name = svc_map.get(a.service_id, str(a.service_id))
         stylist = member_map.get(a.team_member_id, str(a.team_member_id))
-        customer = a.guest_name or (str(a.customer_id)[:8] if a.customer_id else "–")
+        customer = a.guest_name or a.customer_name or "–"
 
         row = [local_time, service_name, stylist, customer]
         if include_notes:

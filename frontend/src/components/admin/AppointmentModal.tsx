@@ -125,7 +125,7 @@ export default function AppointmentModal({
           <dt className="font-medium text-gray-500">Mitarbeiter</dt>
           <dd>{memberNames[appointment.team_member_id] ?? appointment.team_member_id}</dd>
           <dt className="font-medium text-gray-500">Kunde</dt>
-          <dd>{appointment.guest_name ?? appointment.customer_id ?? '—'}</dd>
+          <dd>{appointment.guest_name ?? appointment.customer_name ?? '—'}</dd>
           {appointment.guest_phone && (
             <>
               <dt className="font-medium text-gray-500">Telefon</dt>
