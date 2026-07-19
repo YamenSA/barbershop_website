@@ -125,13 +125,32 @@ export default function AppointmentModal({
           <dt className="font-medium text-gray-500">Mitarbeiter</dt>
           <dd>{memberNames[appointment.team_member_id] ?? appointment.team_member_id}</dd>
           <dt className="font-medium text-gray-500">Kunde</dt>
-          <dd>{appointment.guest_name ?? appointment.customer_name ?? '—'}</dd>
-          {appointment.guest_phone && (
-            <>
-              <dt className="font-medium text-gray-500">Telefon</dt>
-              <dd>{appointment.guest_phone}</dd>
-            </>
-          )}
+          <dd>
+            {appointment.customer_anonymized_at != null ? (
+              <span className="italic text-gray-400">Anonymisiert</span>
+            ) : appointment.customer_id ? (
+              <a 
+                href="/admin/customers" 
+                className="text-[var(--admin-primary)] hover:underline"
+                title="Zur Kundenliste"
+              >
+                {appointment.customer_name || '—'}
+              </a>
+            ) : (
+              appointment.guest_name ?? '—'
+            )}
+          </dd>
+          <dt className="font-medium text-gray-500">Telefon</dt>
+          <dd>
+            {appointment.customer_anonymized_at != null ? (
+              '–'
+            ) : (() => {
+              const phone = appointment.customer_id ? appointment.customer_phone : appointment.guest_phone;
+              return phone ? (
+                <a href={`tel:${phone}`} className="text-[var(--admin-primary)] hover:underline">{phone}</a>
+              ) : '–';
+            })()}
+          </dd>
         </dl>
 
         {/* Status */}

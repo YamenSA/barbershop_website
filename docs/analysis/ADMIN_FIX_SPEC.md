@@ -359,9 +359,24 @@ Phase 2c (P2 — nach Abnahme P1):
 **Befund:** Die Tabelle `customers` speichert das Löschdatum in `anonymized_at`, aber nicht die ID des auslösenden Admins. Es gibt kein übergreifendes Audit-Log.
 **Erwartetes Verhalten:** Jede Löschung muss revisionssicher die anfordernde Person protokollieren (`anonymized_by`).
 
-### M13: Fehlende Löschfrist für reine Gastbuchungen (ohne Kundenkonto) (P0)
-**Befund:** Gastbuchungen (Walk-in oder Online ohne verknüpften Account) werden in der `appointments`-Tabelle mit `guest_name` und `guest_phone` gespeichert. Da sie keinem Account angehören, greift die reguläre `delete_customer`-Anonymisierung nicht. Es existiert keine automatische Bereinigung (Retention-Logik) oder Löschfrist für diese Alt-Daten.
-**Einschätzung (P0):** Dies ist ein schwerwiegender DSGVO-Verstoß, da personenbezogene Daten unbefristet (ohne fachlichen Grund) gespeichert bleiben und manuell schwer aufzufinden/löschen sind. Ein Retention-Cronjob ist zwingend erforderlich.
+### M13: Retention-Logik für inaktive Kunden (Fokus: passwortlose Online-Bucher) (P0)
+
+**1. Bestandsaufnahme**
+Das System legt bei jeder öffentlichen Buchung im Hintergrund (ohne Kenntnis des Nutzers) einen `Customer`-Datensatz an (`hashed_password IS NULL`). Aktuell existiert in `backend/app/domains/booking/retention.py` ein Skript, das Kunden erst nach 24 Monaten anonymisiert – jedoch **wird dieses Skript nirgends automatisch aufgerufen** (weder via Cron noch als Startup-Task; es ist faktisch toter Code). Zudem ist es fehlerhaft, da es M10 (`delete_customer` inklusive Löschung der Gastdaten in `appointments`) umgeht. Es wird durch M13 komplett ersetzt und gelöscht.
+
+**2. Aufbewahrungsfrist**
+- Wir reduzieren die Aufbewahrungsfrist für **alle** Kunden (besonders relevant für die passwortlosen) auf **12 Monate Inaktivität** (`last_active_at`). Nach 12 Monaten ohne neue Buchung entfällt der Zweck der Datenspeicherung.
+
+**3. Bereinigungs-Mechanismus (Coolify-Fokus)**
+- Die bestehende Logik in `retention.py` wird refaktoriert: Sie muss zwingend die Funktion `BookingService.delete_customer` aufrufen, damit auch die assoziierten PII-Daten aus M10 in `appointments` gelöscht werden.
+- *API-Route via Coolify-Cron:* Wir bauen einen Endpunkt (`POST /api/v1/maintenance/retention`), der über ein statisches Token (`RETENTION_CRON_SECRET`) gesichert ist und den Job auslöst. Coolify ruft diesen täglich via Cron auf.
+- *Härtung:* Rate Limiting, Audit-Logging und ein Trockenlauf-Modus (`?dry_run=true`).
+
+**4. Akzeptanzkriterien**
+- **AK-M13.1:** Gegeben ein Kunde (mit oder ohne Passwort) war seit >12 Monaten inaktiv / Wenn der Retention-Cronjob läuft / Dann wird er via `delete_customer` anonymisiert (inkl. zugehöriger PII in `appointments`).
+- **AK-M13.2:** Gegeben ein Walk-In-Termin (ohne `customer_id`) liegt >12 Monate in der Vergangenheit / Wenn der Retention-Cronjob läuft / Dann werden `guest_name` und `guest_phone` auf `NULL` gesetzt und `notes` geleert.
+- **AK-M13.3:** Gegeben der Endpunkt wird mit `?dry_run=true` aufgerufen / Dann wird nichts verändert, aber die Anzahl der fälligen Kunden und Walk-Ins zurückgegeben.
+- **AK-M13.4:** Gegeben ein falsches Secret / Dann wird der Request abgelehnt (HTTP 401/403).
 
 ### M14: Admin-Tabellen überlaufen horizontal bei schmalen Viewports (P1)
 **Befund:** Bei schmalen Viewports (~700px) überlaufen die Admin-Tabellen (`/admin/customers`, `/admin/hours`, `/admin/services`, `/admin/team`) horizontal. Dies führt dazu, dass die rechte Aktionsspalte (insbesondere der "Löschen"-Button) abgeschnitten ist und ohne horizontales Scrollen nicht erreicht werden kann.

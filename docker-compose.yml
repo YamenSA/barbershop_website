@@ -35,7 +35,8 @@ services:
       - CORS_ORIGINS=${CORS_ORIGINS}
       - COOKIE_SECURE=${COOKIE_SECURE}
       - RETENTION_GUEST_MONTHS=12
-      - RETENTION_CUSTOMER_MONTHS=24
+      - RETENTION_CUSTOMER_MONTHS=12
+      - RETENTION_CRON_SECRET=dev-secret-change-in-prod
     depends_on:
       db:
         condition: service_healthy

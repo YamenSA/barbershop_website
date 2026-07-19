@@ -8,7 +8,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.domains.stammdaten.models import Service, TeamMember, SalonHours, WorkingHours
 from app.domains.booking.models import Appointment, AppointmentStatus, Customer
-from app.domains.booking.retention import run_retention_job
+from app.domains.maintenance.service import MaintenanceService
 
 @pytest.mark.asyncio
 async def test_availability_under_500ms(client: AsyncClient, session: AsyncSession):
@@ -107,7 +107,7 @@ async def test_retention_10k_records(session: AsyncSession):
     await session.commit()
 
     start_t = time.time()
-    result = await run_retention_job(session)
+    result = await MaintenanceService.run_retention(session, dry_run=False)
     duration_s = time.time() - start_t
 
     assert result.anonymized_guest_appointments == 1000

@@ -74,3 +74,7 @@ class Appointment(UUIDModel, TimestampModel, table=True):
     @property
     def customer_phone(self) -> Optional[str]:
         return self.customer.phone if self.customer else None
+
+    @property
+    def customer_anonymized_at(self) -> Optional[datetime]:
+        return self.customer.anonymized_at if self.customer else None

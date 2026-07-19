@@ -24,7 +24,7 @@ Es gibt derzeit folgende dokumentierte Befunde (siehe `docs/analysis/ADMIN_FIX_S
 - **M10:** DSGVO: PII in `appointments` (Gastdaten/Notes) wird bei Anonymisierung eines Kunden nicht mit gelöscht. **Entscheidung:** Das Feld `notes` wird immer zwingend geleert, da Freitext nicht sicher auf Personenbezug prüfbar ist (Namen, Orte). Diese Notizen dürfen später nicht als "Feature" gerettet werden.
 - **M11:** DSGVO: Fehlender Datenexport (Art. 15) für Admins.
 - **M12:** Security/Audit: Fehlendes `anonymized_by` und Audit-Log bei Löschungen.
-- **M13:** DSGVO: Fehlende Löschfrist für reine Gastbuchungen (ohne Kundenkonto).
+- **M13:** DSGVO: Retention-Logik für inaktive Kunden (Fokus: passwortlose Online-Bucher).
 - **M14:** Admin-Tabellen (`customers`, `hours`, `services`, `team`) überlaufen horizontal bei <700px und verdecken Aktionen.
 - **M15:** Admin-Kalender: Fehlende Kontaktdaten (Telefon) und Kundenlink im Termin-Modal.
 - **M16:** Admin-Kalender: Neues Datum & Uhrzeit im Termin-Modal unschön (leer) vorbelegt.

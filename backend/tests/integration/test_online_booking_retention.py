@@ -5,7 +5,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from httpx import AsyncClient
 
 from app.domains.booking.models import Customer
-from app.domains.booking.retention import run_retention_job
+from app.domains.maintenance.service import MaintenanceService
 from app.domains.stammdaten.models import Service, TeamMember
 
 @pytest.mark.asyncio
@@ -55,7 +55,7 @@ async def test_online_booking_updates_last_active_and_respects_retention(
     await session.commit()
     
     # 4. Run retention job
-    result = await run_retention_job(session)
+    result = await MaintenanceService.run_retention(session, dry_run=False)
     assert result.anonymized_customers >= 1
     
     # Verify anonymization

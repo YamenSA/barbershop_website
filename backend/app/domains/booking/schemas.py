@@ -52,6 +52,7 @@ class AppointmentRead(BaseModel):
     customer_name: Optional[str] = None
     customer_email: Optional[str] = None
     customer_phone: Optional[str] = None
+    customer_anonymized_at: Optional[datetime] = None
     guest_name: Optional[str] = None
     guest_phone: Optional[str] = None
     starts_at: datetime
@@ -77,6 +78,7 @@ class AppointmentSummary(BaseModel):
     service_id: UUID
     customer_id: Optional[UUID] = None
     customer_name: Optional[str] = None
+    customer_anonymized_at: Optional[datetime] = None
     guest_name: Optional[str] = None
     guest_phone: Optional[str] = None
     starts_at: datetime

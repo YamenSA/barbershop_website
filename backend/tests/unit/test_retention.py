@@ -1,13 +1,10 @@
 from datetime import datetime, timedelta, timezone
-from uuid import UUID
-
 import pytest
-from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.core.config import settings
 from app.domains.booking.models import Appointment, AppointmentStatus, Customer
-from app.domains.booking.retention import run_retention_job
+from app.domains.maintenance.service import MaintenanceService
 from app.domains.stammdaten.models import Service, TeamMember
 
 
@@ -48,7 +45,7 @@ async def test_guest_anonymization_after_12_months(session: AsyncSession):
     session.add(apt_recent)
     await session.commit()
 
-    result = await run_retention_job(session)
+    result = await MaintenanceService.run_retention(session, dry_run=False)
     assert result.anonymized_guest_appointments == 1
 
     await session.refresh(apt_old)
@@ -60,9 +57,9 @@ async def test_guest_anonymization_after_12_months(session: AsyncSession):
 
 
 @pytest.mark.asyncio
-async def test_customer_anonymization_after_24_months(session: AsyncSession):
-    # Customer inactive for 25 months
-    old_active = datetime.now(timezone.utc) - timedelta(days=750)
+async def test_customer_anonymization_after_12_months(session: AsyncSession):
+    # Customer inactive for 13 months
+    old_active = datetime.now(timezone.utc) - timedelta(days=400)
     c_old = Customer(
         name="Old Customer",
         email="old@example.com",
@@ -83,14 +80,16 @@ async def test_customer_anonymization_after_24_months(session: AsyncSession):
     session.add(c_recent)
     await session.commit()
 
-    result = await run_retention_job(session)
+    result = await MaintenanceService.run_retention(session, dry_run=False)
     assert result.anonymized_customers == 1
 
     await session.refresh(c_old)
     await session.refresh(c_recent)
 
     assert c_old.name == "[anonymisiert]"
-    assert c_old.email == "[anonymisiert]@[anonymisiert]"
+    assert c_old.email.startswith("[anonymisiert]")
+    assert c_old.phone == "[anonymisiert]"
     assert c_old.anonymized_at is not None
+    
     assert c_recent.name == "Recent Customer"
     assert c_recent.anonymized_at is None

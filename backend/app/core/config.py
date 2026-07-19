@@ -4,7 +4,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     DATABASE_URL: str
     RETENTION_GUEST_MONTHS: int = 12
-    RETENTION_CUSTOMER_MONTHS: int = 24
+    RETENTION_CUSTOMER_MONTHS: int = 12
+    RETENTION_CRON_SECRET: str
 
     # Phase 1: Admin & Auth
     JWT_SECRET_KEY: str
