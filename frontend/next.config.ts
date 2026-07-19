@@ -22,6 +22,11 @@ const nextConfig: NextConfig = {
   async rewrites() {
     return [
       {
+        // Block external access to maintenance endpoints
+        source: '/api/v1/maintenance/:path*',
+        destination: '/404',
+      },
+      {
         source: '/api/:path*',
         destination: `${process.env.BACKEND_INTERNAL_URL || 'http://backend:8000'}/api/:path*`,
       },

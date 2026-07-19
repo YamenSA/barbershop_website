@@ -105,3 +105,7 @@ Es gibt derzeit folgende dokumentierte Befunde (siehe `docs/analysis/ADMIN_FIX_S
 - **M15:** Admin-Kalender: Fehlende Kontaktdaten (Telefon) und Kundenlink im Termin-Modal.
 - **M16:** Admin-Kalender: Neues Datum & Uhrzeit im Termin-Modal unschön (leer) vorbelegt.
 - **M17:** Admin-Kalender: Inkonsistente Akzentfarbe (Violett in Modal und Events statt Malachite).
+
+## Deployment & Environment Variables
+
+**WICHTIG**: Die Umgebungsvariable `RETENTION_CRON_SECRET` ist **Pflicht**. Das Backend startet nicht (Pydantic ValidationError), wenn diese Variable fehlt. Dies schtzt den DSGVO-Lschendpunkt vor unautorisiertem Zugriff. Bei jedem neuen Server-Setup oder Coolify-Deploy MUSS diese Variable gesetzt werden.

@@ -264,3 +264,7 @@ A single skip link is the first focusable element in `app/layout.tsx`.
 - **Position:** **top-center** (`top-3 left-1/2 -translate-x-1/2`), deliberately *not*
   top-left — the sticky-header logo owns the top-left corner, and the skip link must
   never overlay it.
+
+## Deployment & Environment Variables
+
+**WICHTIG**: Die Umgebungsvariable `RETENTION_CRON_SECRET` ist **Pflicht**. Das Backend startet nicht (Pydantic ValidationError), wenn diese Variable fehlt. Dies schtzt den DSGVO-Lschendpunkt vor unautorisiertem Zugriff. Bei jedem neuen Server-Setup oder Coolify-Deploy MUSS diese Variable gesetzt werden.
