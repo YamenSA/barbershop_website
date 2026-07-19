@@ -268,3 +268,11 @@ A single skip link is the first focusable element in `app/layout.tsx`.
 ## Deployment & Environment Variables
 
 **WICHTIG**: Die Umgebungsvariable `RETENTION_CRON_SECRET` ist **Pflicht**. Das Backend startet nicht (Pydantic ValidationError), wenn diese Variable fehlt. Dies schtzt den DSGVO-Lschendpunkt vor unautorisiertem Zugriff. Bei jedem neuen Server-Setup oder Coolify-Deploy MUSS diese Variable gesetzt werden.
+
+### Coolify Scheduled Tasks (Cronjobs)
+Fr die tgliche Datenlschung muss in Coolify ein Scheduled Task angelegt werden:
+- **Container**: backend
+- **Command**: `python scripts/retention_cron.py --execute`
+- **Frequency**: e.g. `0 3 * * *` (Tglich um 03:00 Uhr)
+
+Das Skript schlgt fehl (Exit-Code != 0), wenn das Secret fehlt oder das Backend Fehler meldet.
