@@ -13,7 +13,7 @@ from app.domains.stammdaten.models import (
     Service,
     TeamMember,
     WorkingException,
-    WorkingHours,
+    WorkingDaySchedule, WorkingInterval,
 )
 
 
@@ -30,7 +30,7 @@ async def test_basic_slot_generation(session: AsyncSession):
 
     # Monday (0) 9:00 - 11:00 for testing brevity
     session.add(SalonHours(day_of_week=0, is_open=True, open_time=time(9, 0), close_time=time(18, 0)))
-    session.add(WorkingHours(team_member_id=member.id, day_of_week=0, start_time=time(9, 0), end_time=time(11, 0)))
+    sched = WorkingDaySchedule(team_member_id=member.id, day_of_week=0, is_working=True); session.add(sched); session.flush(); session.add(WorkingInterval(schedule_id=sched.id, start_time=time(9, 0), end_time=time(11, 0)))
     await session.commit()
 
     test_date = date(2026, 7, 13)  # A Monday
@@ -63,7 +63,7 @@ async def test_salon_closure_holiday(session: AsyncSession):
     session.add(service)
     session.add(member)
     session.add(SalonHours(day_of_week=2, is_open=True, open_time=time(9, 0), close_time=time(18, 0)))
-    session.add(WorkingHours(team_member_id=member.id, day_of_week=2, start_time=time(9, 0), end_time=time(18, 0)))
+    sched = WorkingDaySchedule(team_member_id=member.id, day_of_week=2, is_working=True); session.add(sched); session.flush(); session.add(WorkingInterval(schedule_id=sched.id, start_time=time(9, 0), end_time=time(18, 0)))
     
     test_date = date(2026, 7, 15)  # A Wednesday
     session.add(SalonClosure(date=test_date, reason="Public Holiday"))
@@ -80,7 +80,7 @@ async def test_working_exception_blocks_slots(session: AsyncSession):
     session.add(service)
     session.add(member)
     session.add(SalonHours(day_of_week=0, is_open=True, open_time=time(9, 0), close_time=time(18, 0)))
-    session.add(WorkingHours(team_member_id=member.id, day_of_week=0, start_time=time(9, 0), end_time=time(12, 0)))
+    sched0 = WorkingDaySchedule(team_member_id=member.id, day_of_week=0, is_working=True); session.add(sched0); session.flush(); session.add(WorkingInterval(schedule_id=sched0.id, start_time=time(9, 0), end_time=time(12, 0)))
     
     test_date = date(2026, 7, 13)
     # Lunch break 10:00 - 11:00
@@ -107,7 +107,7 @@ async def test_day_off_override_returns_no_slots(session: AsyncSession):
     session.add(service)
     session.add(member)
     session.add(SalonHours(day_of_week=0, is_open=True, open_time=time(9, 0), close_time=time(18, 0)))
-    session.add(WorkingHours(team_member_id=member.id, day_of_week=0, start_time=time(9, 0), end_time=time(18, 0)))
+    sched = WorkingDaySchedule(team_member_id=member.id, day_of_week=0, is_working=True); session.add(sched); session.flush(); session.add(WorkingInterval(schedule_id=sched.id, start_time=time(9, 0), end_time=time(18, 0)))
     
     test_date = date(2026, 7, 13) # Monday
     session.add(DayOverride(
@@ -130,7 +130,7 @@ async def test_extra_hours_override_uses_custom_times(session: AsyncSession):
     session.add(member)
     session.add(SalonHours(day_of_week=0, is_open=True, open_time=time(9, 0), close_time=time(18, 0)))
     # Regular hours 9-12
-    session.add(WorkingHours(team_member_id=member.id, day_of_week=0, start_time=time(9, 0), end_time=time(12, 0)))
+    sched0 = WorkingDaySchedule(team_member_id=member.id, day_of_week=0, is_working=True); session.add(sched0); session.flush(); session.add(WorkingInterval(schedule_id=sched0.id, start_time=time(9, 0), end_time=time(12, 0)))
     
     test_date = date(2026, 7, 13) # Monday
     # Override hours 14-16
@@ -158,8 +158,8 @@ async def test_override_does_not_affect_adjacent_days(session: AsyncSession):
     session.add(member)
     session.add(SalonHours(day_of_week=0, is_open=True, open_time=time(9, 0), close_time=time(18, 0)))
     session.add(SalonHours(day_of_week=1, is_open=True, open_time=time(9, 0), close_time=time(18, 0)))
-    session.add(WorkingHours(team_member_id=member.id, day_of_week=0, start_time=time(9, 0), end_time=time(12, 0)))
-    session.add(WorkingHours(team_member_id=member.id, day_of_week=1, start_time=time(9, 0), end_time=time(12, 0)))
+    sched0 = WorkingDaySchedule(team_member_id=member.id, day_of_week=0, is_working=True); session.add(sched0); session.flush(); session.add(WorkingInterval(schedule_id=sched0.id, start_time=time(9, 0), end_time=time(12, 0)))
+    sched1 = WorkingDaySchedule(team_member_id=member.id, day_of_week=1, is_working=True); session.add(sched1); session.flush(); session.add(WorkingInterval(schedule_id=sched1.id, start_time=time(9, 0), end_time=time(12, 0)))
     
     test_date = date(2026, 7, 13) # Monday
     next_day = date(2026, 7, 14) # Tuesday

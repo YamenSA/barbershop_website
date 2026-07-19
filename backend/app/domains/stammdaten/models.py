@@ -3,6 +3,7 @@ from typing import List, Optional
 from uuid import UUID
 
 from sqlalchemy import DateTime
+import sqlalchemy as sa
 from sqlmodel import Field, Relationship, SQLModel
 
 from app.core.base import TimestampModel, UUIDModel
@@ -92,6 +93,34 @@ class WorkingHours(UUIDModel, table=True):
     end_time: dt.time = Field(nullable=False)
 
     member: TeamMember = Relationship()
+
+
+class WorkingDaySchedule(UUIDModel, table=True):
+    __tablename__ = "working_day_schedules"
+    __table_args__ = (
+        sa.UniqueConstraint("team_member_id", "day_of_week", name="uq_working_day_schedule_member_day"),
+    )
+
+    team_member_id: UUID = Field(foreign_key="team_members.id", nullable=False)
+    day_of_week: int = Field(nullable=False)  # 0=Mon, 6=Sun
+    is_working: bool = Field(default=False, nullable=False)
+
+    member: TeamMember = Relationship()
+    intervals: List["WorkingInterval"] = Relationship(
+        back_populates="schedule",
+        sa_relationship_kwargs={"lazy": "selectin", "cascade": "all, delete-orphan", "order_by": "WorkingInterval.sort_order"},
+    )
+
+
+class WorkingInterval(UUIDModel, table=True):
+    __tablename__ = "working_intervals"
+
+    schedule_id: UUID = Field(foreign_key="working_day_schedules.id", nullable=False, ondelete="CASCADE")
+    start_time: dt.time = Field(nullable=False)
+    end_time: dt.time = Field(nullable=False)
+    sort_order: int = Field(default=0, nullable=False)
+
+    schedule: WorkingDaySchedule = Relationship(back_populates="intervals")
 
 
 class WorkingException(UUIDModel, TimestampModel, table=True):

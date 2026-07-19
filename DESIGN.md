@@ -221,6 +221,20 @@ Brand tie-in is the green accent (malachite family). Every admin text/bg pair cl
 WCAG ≥ 4.5:1. Primary buttons use a **white** label on `#15803D` (≈ 4.7:1) — the one
 place white-on-green is allowed, because the green is dark enough (cf. §5).
 
+### Theme Boundaries
+- **Public & Customer Area (`/`, `/konto/*`):** Dark-Theme-only (`oklch(0.12 0.000 0)` base).
+- **Admin Area (`/admin/*`):** Pinned LIGHT Theme (via `.admin-shell`).
+
+### Semantic Status Colors (Admin)
+For dynamic UI states (success, error, warning) the code uses native Tailwind colors to extend the light theme:
+- **Error / Destructive:** `text-red-600`, `bg-red-50`
+- **Success:** `text-green-700` or `#15803D`, `bg-green-50`
+- **Warning / Unsaved:** `text-amber-700`, `bg-gray-50` (or `bg-amber-50`)
+- **Status Pills:** `bg-malachite/10 text-malachite` (Active), `bg-brass/10 text-brass` (Scheduled). *Note: The code occasionally uses `bg-white/5 text-ash` for hidden/expired states, which stems from the dark theme.*
+
+### Navigation Guards (Admin)
+Due to Next.js App Router limitations, client-side route blocking requires intercepting `<a href>` clicks on the document level in conjunction with `beforeunload` for external navigation. Note that this guard does **not** catch programmatic navigation via `router.push()` or browser back/forward buttons.
+
 ## 9. Homepage Section Blueprint
 
 The homepage (`app/page.tsx`) renders its own `Nav` + `Footer` (it is outside the

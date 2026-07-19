@@ -28,6 +28,8 @@ from app.domains.stammdaten.schemas import (
     TeamMemberUpdate,
     WorkingExceptionCreate,
     WorkingHoursUpdate,
+    WorkingDayScheduleIn,
+    WorkingWeekScheduleIn,
 )
 
 
@@ -231,32 +233,78 @@ class StammdatenService:
         await session.commit()
 
     @staticmethod
-    async def update_working_hours(
-        session: AsyncSession, member_id: UUID, day_of_week: int, hours_in: WorkingHoursUpdate
-    ) -> WorkingHours:
-        statement = select(WorkingHours).where(
-            WorkingHours.team_member_id == member_id,
-            WorkingHours.day_of_week == day_of_week
+    async def get_working_day_schedules(
+        session: AsyncSession, member_id: UUID
+    ) -> List["WorkingDaySchedule"]:
+        """Alle 7 Tagespläne eines Mitarbeiters (ggf. leer für nicht konfigurierte Tage)."""
+        from app.domains.stammdaten.models import WorkingDaySchedule
+        statement = (
+            select(WorkingDaySchedule)
+            .where(WorkingDaySchedule.team_member_id == member_id)
+            .order_by(WorkingDaySchedule.day_of_week)
         )
         result = await session.execute(statement)
-        hours = result.scalar_one_or_none()
-        
-        if not hours:
-            hours = WorkingHours(
+        return result.scalars().all()
+
+    @staticmethod
+    async def update_working_day_schedule(
+        session: AsyncSession, member_id: UUID, day_of_week: int,
+        schedule_in: "WorkingDayScheduleIn"
+    ) -> "WorkingDaySchedule":
+        """Upsert: Setzt den Tagesplan für einen Mitarbeiter an einem Wochentag."""
+        from app.domains.stammdaten.models import WorkingDaySchedule, WorkingInterval
+
+        statement = select(WorkingDaySchedule).where(
+            WorkingDaySchedule.team_member_id == member_id,
+            WorkingDaySchedule.day_of_week == day_of_week,
+        )
+        result = await session.execute(statement)
+        schedule = result.scalar_one_or_none()
+
+        if not schedule:
+            schedule = WorkingDaySchedule(
                 team_member_id=member_id,
                 day_of_week=day_of_week,
-                start_time=hours_in.start_time,
-                end_time=hours_in.end_time
+                is_working=schedule_in.is_working,
             )
+            session.add(schedule)
+            await session.flush()  # need the ID for intervals
         else:
-            update_data = hours_in.model_dump(exclude_unset=True)
-            for key, value in update_data.items():
-                setattr(hours, key, value)
-        
-        session.add(hours)
+            schedule.is_working = schedule_in.is_working
+            # Remove old intervals
+            for old_interval in list(schedule.intervals):
+                await session.delete(old_interval)
+            await session.flush()
+
+        # Add new intervals
+        if schedule_in.is_working:
+            for i, iv in enumerate(sorted(schedule_in.intervals, key=lambda x: x.start_time)):
+                interval = WorkingInterval(
+                    schedule_id=schedule.id,
+                    start_time=iv.start_time,
+                    end_time=iv.end_time,
+                    sort_order=i,
+                )
+                session.add(interval)
+
         await session.commit()
-        await session.refresh(hours)
-        return hours
+        await session.refresh(schedule)
+        return schedule
+
+    @staticmethod
+    async def update_working_week_schedule(
+        session: AsyncSession, member_id: UUID,
+        week_in: "WorkingWeekScheduleIn"
+    ) -> List["WorkingDaySchedule"]:
+        """Bulk-Update: Setzt alle 7 Tagespläne auf einmal."""
+        from app.domains.stammdaten.schemas import WorkingDayScheduleIn
+        results = []
+        for day_index, day_schedule in enumerate(week_in.days):
+            result = await StammdatenService.update_working_day_schedule(
+                session, member_id, day_index, day_schedule
+            )
+            results.append(result)
+        return results
 
     @staticmethod
     async def create_working_exception(

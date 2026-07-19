@@ -20,6 +20,7 @@ from app.domains.stammdaten.models import (
     SalonClosure,
     SalonHours,
     TeamMember,
+    WorkingDaySchedule,
     WorkingHours,
     Service,
 )
@@ -56,15 +57,16 @@ async def _get_working_today(session: AsyncSession, target: date) -> List[Workin
             eff_start = override.custom_start_time
             eff_end = override.custom_end_time
         else:
-            wh_stmt = select(WorkingHours).where(
-                WorkingHours.team_member_id == member.id,
-                WorkingHours.day_of_week == weekday,
+            sched_stmt = select(WorkingDaySchedule).where(
+                WorkingDaySchedule.team_member_id == member.id,
+                WorkingDaySchedule.day_of_week == weekday,
             )
-            wh = (await session.execute(wh_stmt)).scalar_one_or_none()
-            if not wh:
+            schedule = (await session.execute(sched_stmt)).scalar_one_or_none()
+            if not schedule or not schedule.is_working or not schedule.intervals:
                 continue
-            eff_start = wh.start_time
-            eff_end = wh.end_time
+            # Combine all intervals into an effective range for the summary
+            eff_start = min(iv.start_time for iv in schedule.intervals)
+            eff_end = max(iv.end_time for iv in schedule.intervals)
 
         start = max(salon_hours.open_time, eff_start)
         end = min(salon_hours.close_time, eff_end)

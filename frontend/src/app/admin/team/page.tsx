@@ -10,7 +10,7 @@ import {
   updateTeamMember,
   assignServices,
 } from '@/lib/api';
-import type { Service, TeamMember, TargetGroup, WorkingHours } from '@/lib/types';
+import type { Service, TeamMember, TargetGroup, WorkingDayScheduleRead } from '@/lib/types';
 
 type FormState = { name: string; bio: string; photo_url: string; active: boolean };
 const emptyForm: FormState = { name: '', bio: '', photo_url: '', active: true };
@@ -45,8 +45,8 @@ export default function TeamPage() {
       const candidates = m.filter((mem) => mem.is_active && (mem.services?.length ?? 0) > 0);
       const flags = await Promise.all(
         candidates.map((mem) =>
-          apiFetch<WorkingHours[]>(`/team-members/${mem.id}/working-hours`)
-            .then((wh) => [mem.id, wh.length === 0] as const)
+          apiFetch<WorkingDayScheduleRead[]>(`/team-members/${mem.id}/working-schedules`)
+            .then((wh) => [mem.id, wh.every(day => !day.is_working)] as const)
             .catch(() => [mem.id, false] as const),
         ),
       );

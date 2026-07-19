@@ -88,7 +88,7 @@ async def test_cancel_success_returns_cancelled_status(
 async def test_slot_available_again_after_cancellation(
     public_client: AsyncClient, cancel_setup: dict, session: AsyncSession
 ):
-    from app.domains.stammdaten.models import SalonHours, TeamMemberServiceLink, WorkingHours
+    from app.domains.stammdaten.models import SalonHours, TeamMemberServiceLink, WorkingDaySchedule, WorkingInterval
     from datetime import time
 
     apt = cancel_setup["appointment"]
@@ -100,7 +100,10 @@ async def test_slot_available_again_after_cancellation(
     session.add(TeamMemberServiceLink(team_member_id=member.id, service_id=service.id))
     for dow in range(7):
         session.add(SalonHours(day_of_week=dow, is_open=True, open_time=time(8, 0), close_time=time(20, 0)))
-        session.add(WorkingHours(team_member_id=member.id, day_of_week=dow, start_time=time(8, 0), end_time=time(20, 0)))
+        sched = WorkingDaySchedule(team_member_id=member.id, day_of_week=dow, is_working=True)
+        session.add(sched)
+        await session.flush()
+        session.add(WorkingInterval(schedule_id=sched.id, start_time=time(8, 0), end_time=time(20, 0), sort_order=0))
     await session.commit()
 
     target_date = apt.starts_at.date().isoformat()

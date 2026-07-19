@@ -19,9 +19,15 @@ class CustomerCreate(CustomerBase):
 
 class CustomerRead(CustomerBase):
     id: UUID
+    created_at: datetime
     last_active_at: datetime
     anonymized_at: Optional[datetime] = None
     model_config = ConfigDict(from_attributes=True)
+
+
+class CustomerListOut(BaseModel):
+    items: List[CustomerRead]
+    total: int
 
 
 class AppointmentBase(BaseModel):
@@ -44,6 +50,8 @@ class AppointmentRead(BaseModel):
     service_id: UUID
     customer_id: Optional[UUID] = None
     customer_name: Optional[str] = None
+    customer_email: Optional[str] = None
+    customer_phone: Optional[str] = None
     guest_name: Optional[str] = None
     guest_phone: Optional[str] = None
     starts_at: datetime

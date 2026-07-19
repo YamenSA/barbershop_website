@@ -35,7 +35,7 @@ async def test_quickstart_scenario_full_flow(client: AsyncClient, session):
     await session.commit()
 
     # Working Hours
-    resp = await client.put(f"/api/v1/team-members/{member_id}/working-hours/0", json={"day_of_week": 0, "start_time": "10:00:00", "end_time": "16:00:00"})
+    resp = await client.put(f"/api/v1/team-members/{member_id}/working-schedules/0", json={"is_working": True, "intervals": [{"start_time": "10:00:00", "end_time": "16:00:00"}]})
     assert resp.status_code == 200
 
     # 2. Check Availability (S3)

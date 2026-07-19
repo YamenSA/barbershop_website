@@ -10,6 +10,7 @@ type IconName =
   | 'calendar'
   | 'services'
   | 'team'
+  | 'customers'
   | 'hours'
   | 'schedule'
   | 'profile';
@@ -17,6 +18,7 @@ type IconName =
 const navItems: { name: string; href: string; icon: IconName }[] = [
   { name: 'Dashboard', href: '/admin', icon: 'dashboard' },
   { name: 'Kalender', href: '/admin/calendar', icon: 'calendar' },
+  { name: 'Kunden', href: '/admin/customers', icon: 'customers' as IconName },
   { name: 'Dienstleistungen', href: '/admin/services', icon: 'services' },
   { name: 'Team', href: '/admin/team', icon: 'team' },
   { name: 'Öffnungszeiten', href: '/admin/hours', icon: 'hours' },
@@ -69,6 +71,15 @@ function Icon({ name }: { name: IconName }) {
           <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
           <circle cx="9" cy="7" r="4" />
           <path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+        </svg>
+      );
+    case 'customers':
+      return (
+        <svg {...common}>
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+          <circle cx="9" cy="7" r="4" />
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+          <path d="M16 3.13a4 4 0 0 1 0 7.75" />
         </svg>
       );
     case 'hours':

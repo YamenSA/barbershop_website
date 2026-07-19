@@ -44,14 +44,6 @@ export interface SalonClosure {
   updated_at: string;
 }
 
-export interface WorkingHours {
-  id: UUID;
-  team_member_id: UUID;
-  day_of_week: number;
-  start_time: string;
-  end_time: string;
-}
-
 export interface DayOverride {
   id: UUID;
   team_member_id: UUID;
@@ -338,4 +330,35 @@ export interface ReviewsSnapshot {
   writeReviewUrl: string;
   notice: string;
   reviews: Review[];
+}
+
+// --- Schedule Types (P0-2) ---
+
+export interface WorkingIntervalRead {
+  id: string;
+  start_time: string;
+  end_time: string;
+  sort_order: number;
+}
+
+export interface WorkingDayScheduleRead {
+  id: string;
+  team_member_id: string;
+  day_of_week: number;
+  is_working: boolean;
+  intervals: WorkingIntervalRead[];
+}
+
+export interface WorkingIntervalIn {
+  start_time: string;
+  end_time: string;
+}
+
+export interface WorkingDayScheduleIn {
+  is_working: boolean;
+  intervals: WorkingIntervalIn[];
+}
+
+export interface WorkingWeekScheduleIn {
+  days: WorkingDayScheduleIn[];
 }

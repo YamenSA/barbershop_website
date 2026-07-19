@@ -28,6 +28,9 @@ from app.domains.stammdaten.schemas import (
     WorkingExceptionRead,
     WorkingHoursRead,
     WorkingHoursUpdate,
+    WorkingDayScheduleIn,
+    WorkingDayScheduleRead,
+    WorkingWeekScheduleIn,
 )
 from app.domains.stammdaten.service import StammdatenService
 from app.domains.auth.dependencies import get_current_admin
@@ -152,6 +155,34 @@ async def delete_salon_closure(
     closure_id: UUID, session: AsyncSession = Depends(get_session)
 ):
     await StammdatenService.delete_salon_closure(session, closure_id)
+
+
+# --- Working Day Schedules (Intervall-basiert) ---
+
+@router.get("/team-members/{member_id}/working-schedules", response_model=List[WorkingDayScheduleRead])
+async def get_working_schedules(member_id: UUID, session: AsyncSession = Depends(get_session)):
+    return await StammdatenService.get_working_day_schedules(session, member_id)
+
+
+@router.put("/team-members/{member_id}/working-schedules/{day_of_week}", response_model=WorkingDayScheduleRead)
+async def update_working_schedule(
+    member_id: UUID,
+    day_of_week: int,
+    schedule_in: WorkingDayScheduleIn,
+    session: AsyncSession = Depends(get_session),
+):
+    if day_of_week < 0 or day_of_week > 6:
+        raise HTTPException(status_code=422, detail="Wochentag muss zwischen 0 (Montag) und 6 (Sonntag) liegen")
+    return await StammdatenService.update_working_day_schedule(session, member_id, day_of_week, schedule_in)
+
+
+@router.put("/team-members/{member_id}/working-schedules", response_model=List[WorkingDayScheduleRead])
+async def update_working_week(
+    member_id: UUID,
+    week_in: WorkingWeekScheduleIn,
+    session: AsyncSession = Depends(get_session),
+):
+    return await StammdatenService.update_working_week_schedule(session, member_id, week_in)
 
 
 # --- Working Hours & Exceptions ---

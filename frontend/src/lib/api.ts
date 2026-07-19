@@ -74,13 +74,15 @@ export async function apiFetch<T>(
   const response = await fetch(url, defaultOptions);
 
   if (!response.ok) {
-    let errorDetail = 'An error occurred';
+    let errorDetail = 'Ein Fehler ist aufgetreten';
     let errorData: unknown;
     try {
       errorData = await response.json();
-      errorDetail = (errorData as { detail?: string }).detail
-        ? String((errorData as { detail: string }).detail)
-        : errorDetail;
+      if (errorData && typeof (errorData as any).detail === 'string') {
+        errorDetail = (errorData as any).detail;
+      } else if (errorData && Array.isArray((errorData as any).detail)) {
+        errorDetail = (errorData as any).detail.map((d: any) => d.msg).join(', ') || errorDetail;
+      }
     } catch {
       // Not JSON
     }
@@ -152,11 +154,13 @@ export const deleteSalonClosure = (id: string) =>
 
 export const getAppointments = (params: {
   team_member_id?: string;
+  customer_id?: string;
   from_date?: string;
   to_date?: string;
 }) => {
   const qs = new URLSearchParams();
   if (params.team_member_id) qs.set('team_member_id', params.team_member_id);
+  if (params.customer_id) qs.set('customer_id', params.customer_id);
   if (params.from_date) qs.set('from_date', params.from_date);
   if (params.to_date) qs.set('to_date', params.to_date);
   return apiFetch<Appointment[]>(`/appointments?${qs}`);
@@ -194,10 +198,24 @@ export const updateAppointmentStatus = (
     body: JSON.stringify({ status }),
   });
 
-// --- Customers ---
+export interface CustomerListOut {
+  items: Customer[];
+  total: number;
+}
 
-export const searchCustomers = (query: string) =>
-  apiFetch<Customer[]>(`/customers?search=${encodeURIComponent(query)}`);
+export const getCustomers = (params: { search?: string; limit?: number; offset?: number; include_anonymized?: boolean }) => {
+  const qs = new URLSearchParams();
+  if (params.search) qs.set('search', params.search);
+  if (params.limit !== undefined) qs.set('limit', params.limit.toString());
+  if (params.offset !== undefined) qs.set('offset', params.offset.toString());
+  if (params.include_anonymized) qs.set('include_anonymized', 'true');
+  return apiFetch<CustomerListOut>(`/customers?${qs}`);
+};
+
+export const searchCustomers = async (query: string): Promise<Customer[]> => {
+  const res = await getCustomers({ search: query, limit: 10 });
+  return res.items;
+};
 
 // --- Public Read (server-side, unauthenticated, fetch-cache revalidate=60) ---
 

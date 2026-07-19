@@ -37,20 +37,37 @@ class BookingService:
 
     @staticmethod
     async def get_customers(
-        session: AsyncSession, search: Optional[str] = None
-    ) -> List[Customer]:
-        from sqlalchemy import or_, func
-        statement = select(Customer).where(Customer.anonymized_at == None)
+        session: AsyncSession,
+        search: Optional[str] = None,
+        limit: int = 50,
+        offset: int = 0,
+        include_anonymized: bool = False,
+    ) -> dict:
+        from sqlalchemy import or_, func, select
+        
+        statement = select(Customer)
+        if not include_anonymized:
+            statement = statement.where(Customer.anonymized_at == None)
+            
         if search:
             q = search.lower()
             statement = statement.where(
                 or_(
-                    func.lower(Customer.name).like(f"{q}%"),
-                    Customer.phone.like(f"{search}%"),
+                    func.lower(Customer.name).like(f"%{q}%"),
+                    Customer.phone.like(f"%{search}%"),
+                    func.lower(Customer.email).like(f"%{q}%"),
                 )
             )
+            
+        from sqlalchemy.sql import func as sql_func
+        count_stmt = select(sql_func.count()).select_from(statement.subquery())
+        total = await session.scalar(count_stmt)
+        
+        statement = statement.order_by(Customer.created_at.desc()).limit(limit).offset(offset)
         results = await session.execute(statement)
-        return results.scalars().all()
+        items = results.scalars().all()
+        
+        return {"items": items, "total": total or 0}
 
     @staticmethod
     async def get_customer(session: AsyncSession, customer_id: UUID) -> Customer:
@@ -70,6 +87,22 @@ class BookingService:
         customer.phone = "[anonymisiert]"
         customer.anonymized_at = datetime.now(timezone.utc)
         session.add(customer)
+        
+        # M10: Clear PII from all related appointments
+        from sqlalchemy import select
+        from app.domains.booking.models import Appointment
+        
+        statement = select(Appointment).where(Appointment.customer_id == customer_id)
+        result = await session.execute(statement)
+        appointments = result.scalars().all()
+        
+        for apt in appointments:
+            apt.guest_name = None
+            apt.guest_phone = None
+            if apt.notes is not None:
+                apt.notes = "[anonymisiert]"
+            session.add(apt)
+            
         await session.commit()
 
     @staticmethod
@@ -116,18 +149,18 @@ class BookingService:
     async def _check_working_schedule(
         session: AsyncSession, team_member_id: UUID, starts_at: datetime, ends_at: datetime, service: Service
     ) -> None:
-        from app.domains.stammdaten.models import SalonClosure, SalonHours, DayOverride, WorkingHours
+        from app.domains.stammdaten.models import SalonClosure, SalonHours, DayOverride, WorkingDaySchedule
         appt_date = starts_at.date()
         weekday = appt_date.weekday()
 
         closure_stmt = select(SalonClosure).where(SalonClosure.date == appt_date)
         if (await session.execute(closure_stmt)).first():
-            raise HTTPException(status_code=422, detail="Salon is closed on this date")
+            raise HTTPException(status_code=422, detail="Der Salon ist an diesem Tag geschlossen")
 
         salon_stmt = select(SalonHours).where(SalonHours.day_of_week == weekday)
         salon_hours = (await session.execute(salon_stmt)).scalar_one_or_none()
         if not salon_hours or not salon_hours.is_open:
-            raise HTTPException(status_code=422, detail="Salon is not open on this day")
+            raise HTTPException(status_code=422, detail="Der Salon hat an diesem Tag nicht geöffnet")
 
         override_stmt = select(DayOverride).where(
             DayOverride.team_member_id == team_member_id,
@@ -137,25 +170,33 @@ class BookingService:
 
         if day_override:
             if day_override.override_type == "day_off":
-                raise HTTPException(status_code=422, detail="Team member has day off")
+                raise HTTPException(status_code=422, detail="Mitarbeiter hat an diesem Tag frei")
             eff_start = day_override.custom_start_time
             eff_end = day_override.custom_end_time
+            window_start = datetime.combine(appt_date, max(salon_hours.open_time, eff_start), tzinfo=timezone.utc)
+            window_end = datetime.combine(appt_date, min(salon_hours.close_time, eff_end), tzinfo=timezone.utc)
+            if starts_at < window_start or ends_at > window_end:
+                raise HTTPException(status_code=422, detail="Termin liegt außerhalb der Arbeitszeiten")
         else:
-            wh_stmt = select(WorkingHours).where(
-                WorkingHours.team_member_id == team_member_id,
-                WorkingHours.day_of_week == weekday,
+            sched_stmt = select(WorkingDaySchedule).where(
+                WorkingDaySchedule.team_member_id == team_member_id,
+                WorkingDaySchedule.day_of_week == weekday,
             )
-            wh = (await session.execute(wh_stmt)).scalar_one_or_none()
-            if not wh:
-                raise HTTPException(status_code=422, detail="Team member does not work on this day")
-            eff_start = wh.start_time
-            eff_end = wh.end_time
-
-        window_start = datetime.combine(appt_date, max(salon_hours.open_time, eff_start), tzinfo=timezone.utc)
-        window_end = datetime.combine(appt_date, min(salon_hours.close_time, eff_end), tzinfo=timezone.utc)
-
-        if starts_at < window_start or ends_at > window_end:
-            raise HTTPException(status_code=422, detail="Appointment outside working hours")
+            schedule = (await session.execute(sched_stmt)).scalar_one_or_none()
+            if not schedule or not schedule.is_working or not schedule.intervals:
+                raise HTTPException(status_code=422, detail="Mitarbeiter arbeitet an diesem Tag nicht")
+            
+            appt_start_time = starts_at.time() if starts_at.tzinfo is None else starts_at.replace(tzinfo=None).time()
+            appt_end_time = ends_at.time() if ends_at.tzinfo is None else ends_at.replace(tzinfo=None).time()
+            fits = False
+            for iv in schedule.intervals:
+                eff_start = max(salon_hours.open_time, iv.start_time)
+                eff_end = min(salon_hours.close_time, iv.end_time)
+                if appt_start_time >= eff_start and appt_end_time <= eff_end:
+                    fits = True
+                    break
+            if not fits:
+                raise HTTPException(status_code=422, detail="Termin liegt außerhalb der Arbeitszeiten")
 
     @staticmethod
     async def get_appointment(session: AsyncSession, appointment_id: UUID) -> Appointment:
@@ -187,6 +228,7 @@ class BookingService:
     async def list_appointments(
         session: AsyncSession,
         team_member_id: Optional[UUID] = None,
+        customer_id: Optional[UUID] = None,
         from_date=None,
         to_date=None,
     ) -> List[Appointment]:
@@ -194,6 +236,8 @@ class BookingService:
         statement = select(Appointment).options(selectinload(Appointment.customer))
         if team_member_id:
             statement = statement.where(Appointment.team_member_id == team_member_id)
+        if customer_id:
+            statement = statement.where(Appointment.customer_id == customer_id)
         if from_date:
             from_dt = datetime.combine(from_date, time_type.min, tzinfo=timezone.utc)
             statement = statement.where(Appointment.starts_at >= from_dt)

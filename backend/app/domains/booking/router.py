@@ -14,6 +14,7 @@ from app.domains.booking.schemas import (
     AppointmentUpdate,
     CustomerCreate,
     CustomerRead,
+    CustomerListOut,
 )
 from app.domains.booking.service import BookingService
 from app.domains.auth.dependencies import get_current_admin
@@ -43,11 +44,12 @@ async def create_appointment(
 @router.get("/appointments", response_model=List[AppointmentRead])
 async def list_appointments(
     team_member_id: Optional[UUID] = None,
+    customer_id: Optional[UUID] = None,
     from_date: Optional[date] = None,
     to_date: Optional[date] = None,
     session: AsyncSession = Depends(get_session),
 ):
-    return await BookingService.list_appointments(session, team_member_id, from_date, to_date)
+    return await BookingService.list_appointments(session, team_member_id, customer_id, from_date, to_date)
 
 
 @router.get("/appointments/{appointment_id}", response_model=AppointmentRead)
@@ -86,12 +88,15 @@ async def create_customer(
     return await BookingService.create_customer(session, customer_in)
 
 
-@router.get("/customers", response_model=List[CustomerRead])
+@router.get("/customers", response_model=CustomerListOut)
 async def list_customers(
     search: Optional[str] = None,
+    limit: int = 50,
+    offset: int = 0,
+    include_anonymized: bool = False,
     session: AsyncSession = Depends(get_session),
 ):
-    return await BookingService.get_customers(session, search)
+    return await BookingService.get_customers(session, search, limit, offset, include_anonymized)
 
 
 @router.get("/customers/{customer_id}", response_model=CustomerRead)

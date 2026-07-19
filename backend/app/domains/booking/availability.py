@@ -14,6 +14,7 @@ from app.domains.stammdaten.models import (
     Service,
     TeamMember,
     TeamMemberServiceLink,
+    WorkingDaySchedule,
     WorkingException,
     WorkingHours,
 )
@@ -54,35 +55,43 @@ async def get_available_slots(
     override_result = await session.execute(override_stmt)
     day_override = override_result.scalar_one_or_none()
 
+    # 5. Determine working windows (list of (start_time, end_time) tuples)
+    working_windows = []
+    
     if day_override:
         if day_override.override_type == "day_off":
             return []
-        # extra_hours
-        working_start = day_override.custom_start_time
-        working_end = day_override.custom_end_time
+        # extra_hours: single window
+        w_start = max(salon_hours.open_time, day_override.custom_start_time)
+        w_end = min(salon_hours.close_time, day_override.custom_end_time)
+        if w_start < w_end:
+            working_windows.append((w_start, w_end))
     else:
-        # 5. Check regular working hours
-        working_stmt = select(WorkingHours).where(
-            WorkingHours.team_member_id == team_member_id,
-            WorkingHours.day_of_week == weekday,
+        # Load interval-based schedule
+        schedule_stmt = select(WorkingDaySchedule).where(
+            WorkingDaySchedule.team_member_id == team_member_id,
+            WorkingDaySchedule.day_of_week == weekday,
         )
-        working_result = await session.execute(working_stmt)
-        working_hours = working_result.scalar_one_or_none()
-        if not working_hours:
+        schedule_result = await session.execute(schedule_stmt)
+        schedule = schedule_result.scalar_one_or_none()
+        
+        if not schedule or not schedule.is_working:
             return []
-        working_start = working_hours.start_time
-        working_end = working_hours.end_time
-
-    # 6. Calculate base window (intersection of salon and working hours)
-    start_time = max(salon_hours.open_time, working_start)
-    end_time = min(salon_hours.close_time, working_end)
+        
+        for iv in schedule.intervals:
+            w_start = max(salon_hours.open_time, iv.start_time)
+            w_end = min(salon_hours.close_time, iv.end_time)
+            if w_start < w_end:
+                working_windows.append((w_start, w_end))
     
-    if start_time >= end_time:
+    if not working_windows:
         return []
 
-    # 6. Load exceptions
-    start_dt = datetime.combine(target_date, start_time, tzinfo=timezone.utc)
-    end_dt = datetime.combine(target_date, end_time, tzinfo=timezone.utc)
+    # 6. Load exceptions for the full day span
+    overall_start = min(w[0] for w in working_windows)
+    overall_end = max(w[1] for w in working_windows)
+    start_dt = datetime.combine(target_date, overall_start, tzinfo=timezone.utc)
+    end_dt = datetime.combine(target_date, overall_end, tzinfo=timezone.utc)
     
     exception_stmt = select(WorkingException).where(
         WorkingException.team_member_id == team_member_id,
@@ -103,36 +112,38 @@ async def get_available_slots(
     apt_result = await session.execute(apt_stmt)
     appointments = apt_result.scalars().all()
 
-    # 8. Slot generation
-    slots: List[SlotResult] = []
-    current_dt = start_dt
+    # 8. Generate slots for each working window
     duration = timedelta(minutes=service.duration_minutes)
-
-    while current_dt + duration <= end_dt:
-        slot_end = current_dt + duration
+    slots: List[SlotResult] = []
+    
+    for w_start, w_end in working_windows:
+        window_start_dt = datetime.combine(target_date, w_start, tzinfo=timezone.utc)
+        window_end_dt = datetime.combine(target_date, w_end, tzinfo=timezone.utc)
+        current_dt = window_start_dt
         
-        # Check if slot overlaps with any exception or appointment
-        is_blocked = False
-        for exc in exceptions:
-            exc_start = exc.starts_at.replace(tzinfo=timezone.utc) if exc.starts_at.tzinfo is None else exc.starts_at
-            exc_end = exc.ends_at.replace(tzinfo=timezone.utc) if exc.ends_at.tzinfo is None else exc.ends_at
-            if current_dt < exc_end and slot_end > exc_start:
-                is_blocked = True
-                break
-        
-        if not is_blocked:
-            for apt in appointments:
-                apt_start = apt.starts_at.replace(tzinfo=timezone.utc) if apt.starts_at.tzinfo is None else apt.starts_at
-                apt_end = apt.ends_at.replace(tzinfo=timezone.utc) if apt.ends_at.tzinfo is None else apt.ends_at
-                if current_dt < apt_end and slot_end > apt_start:
+        while current_dt + duration <= window_end_dt:
+            slot_end = current_dt + duration
+            
+            is_blocked = False
+            for exc in exceptions:
+                exc_start = exc.starts_at.replace(tzinfo=timezone.utc) if exc.starts_at.tzinfo is None else exc.starts_at
+                exc_end = exc.ends_at.replace(tzinfo=timezone.utc) if exc.ends_at.tzinfo is None else exc.ends_at
+                if current_dt < exc_end and slot_end > exc_start:
                     is_blocked = True
                     break
-        
-        if not is_blocked:
-            slots.append(SlotResult(starts_at=current_dt, ends_at=slot_end))
-        
-        # Standard increment
-        current_dt += timedelta(minutes=15)
+            
+            if not is_blocked:
+                for apt in appointments:
+                    apt_start = apt.starts_at.replace(tzinfo=timezone.utc) if apt.starts_at.tzinfo is None else apt.starts_at
+                    apt_end = apt.ends_at.replace(tzinfo=timezone.utc) if apt.ends_at.tzinfo is None else apt.ends_at
+                    if current_dt < apt_end and slot_end > apt_start:
+                        is_blocked = True
+                        break
+            
+            if not is_blocked:
+                slots.append(SlotResult(starts_at=current_dt, ends_at=slot_end))
+            
+            current_dt += timedelta(minutes=15)
 
     return slots
 

@@ -2,7 +2,7 @@ from datetime import date, datetime, time
 from typing import List, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 from app.domains.stammdaten.models import TargetGroup, ServiceKind
 
 
@@ -194,6 +194,65 @@ class SalonProfileUpdate(BaseModel):
     country: Optional[str] = None
     phone: Optional[str] = None
     email: Optional[str] = None
+
+
+# --- Working Day Schedule (Intervall-basiert) ---
+
+class WorkingIntervalIn(BaseModel):
+    start_time: time
+    end_time: time
+
+    @model_validator(mode='after')
+    def end_after_start(self) -> 'WorkingIntervalIn':
+        if self.end_time <= self.start_time:
+            raise ValueError('Endzeit muss nach der Startzeit liegen')
+        return self
+
+
+class WorkingIntervalRead(BaseModel):
+    id: UUID
+    start_time: time
+    end_time: time
+    sort_order: int
+    model_config = ConfigDict(from_attributes=True)
+
+
+class WorkingDayScheduleIn(BaseModel):
+    is_working: bool
+    intervals: List[WorkingIntervalIn] = []
+
+    @model_validator(mode='after')
+    def validate_intervals(self) -> 'WorkingDayScheduleIn':
+        if self.is_working and len(self.intervals) == 0:
+            raise ValueError('Mindestens ein Zeitintervall erforderlich wenn der Mitarbeiter arbeitet')
+        if not self.is_working and len(self.intervals) > 0:
+            raise ValueError('Keine Zeitintervalle erlaubt wenn der Mitarbeiter nicht arbeitet')
+        # Check for overlaps
+        sorted_intervals = sorted(self.intervals, key=lambda i: i.start_time)
+        for i in range(1, len(sorted_intervals)):
+            if sorted_intervals[i].start_time < sorted_intervals[i - 1].end_time:
+                raise ValueError('Zeitintervalle dürfen sich nicht überschneiden')
+        return self
+
+
+class WorkingDayScheduleRead(BaseModel):
+    id: UUID
+    team_member_id: UUID
+    day_of_week: int
+    is_working: bool
+    intervals: List[WorkingIntervalRead] = []
+    model_config = ConfigDict(from_attributes=True)
+
+
+class WorkingWeekScheduleIn(BaseModel):
+    """Bulk-Update: alle 7 Tage auf einmal."""
+    days: List[WorkingDayScheduleIn]
+
+    @model_validator(mode='after')
+    def exactly_seven_days(self) -> 'WorkingWeekScheduleIn':
+        if len(self.days) != 7:
+            raise ValueError('Genau 7 Tage (Mo-So) erforderlich')
+        return self
 
 
 # --- Public Read Schemas ---
