@@ -3,9 +3,15 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
 from app.core.exceptions import setup_exception_handlers
+from app.core.logging import setup_access_log_ip_truncation
 
 
 def create_app() -> FastAPI:
+    # M19: uvicorn's own logging.config.dictConfig() (Config.configure_logging)
+    # runs before this module is imported, so attaching the filter here is safe
+    # — it won't be wiped out by a later dictConfig call.
+    setup_access_log_ip_truncation()
+
     app = FastAPI(
         title="Barbershop API",
         version="0.1.0",

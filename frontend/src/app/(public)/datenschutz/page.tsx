@@ -121,7 +121,7 @@ export default function DatenschutzPage() {
               <li>Referrer-URL</li>
               <li>Hostname des zugreifenden Rechners</li>
               <li>Uhrzeit der Serveranfrage</li>
-              <li>IP-Adresse (vollständig, ohne automatische Löschung)</li>
+              <li>IP-Adresse (gekürzt: IPv4 letztes Oktett, IPv6 letzte 80 Bit entfernt); die Logs rotieren automatisch</li>
             </ul>
             <p className="mt-3">
               Diese Daten sind nicht bestimmten Personen zuordenbar. Eine Zusammenführung dieser

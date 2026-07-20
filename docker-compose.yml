@@ -40,6 +40,12 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    # M19: Logs sind sonst unbegrenzt (Docker-Default). 10 MB x 3 Dateien pro Container.
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   frontend:
     build:
@@ -55,6 +61,12 @@ services:
       - "127.0.0.1:3000:3000"
     depends_on:
       - backend
+    # M19: siehe backend — gleiche Begründung (unbegrenztes Docker-Default-Log).
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
 volumes:
   postgres_data:

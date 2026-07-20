@@ -28,7 +28,7 @@
 | M16 | **P1** | Admin-Kalender: Leeres Datum-Feld beim Bearbeiten unschön | ~0,5h | Niedrig |
 | M17 | **P1** | Admin-Kalender: Inkonsistente Akzentfarbe (Violett vs. Malachite) | ~1h | Niedrig |
 | M18 | **P0** | Security/DSGVO: PII in Klartext-Logs (SQL-Echo + eigene Log-Aufrufe) | ~1h | Niedrig |
-| M19 | **P1** | Security/DSGVO: Log-Rotation + IP-Kürzung im Zugriffslog | ~2-3h | Niedrig |
+| M19 | **P1** | Security/DSGVO: Log-Rotation + IP-Kürzung im Zugriffslog | ~2-3h | Niedrig — umgesetzt, wartet auf Deploy-Freigabe |
 
 ---
 
@@ -429,15 +429,56 @@ Geprüft und **unauffällig** (nur IDs/Zeitstempel, keine PII): `notifications/s
 
 ### M19: Log-Rotation + IP-Kürzung im Zugriffslog (P1)
 
-**Status:** Spezifiziert am 2026-07-20, **wartet auf Freigabe — keine Umsetzung ohne
-Freigabe.** Folgemaßnahme zum Rechtstexte-Abgleich (`docs/analysis/RECHTSTEXTE_ABGLEICH.md`,
+**Status:** Umgesetzt und getestet am 2026-07-20, **wartet auf Deploy-Freigabe.**
+Folgemaßnahme zum Rechtstexte-Abgleich (`docs/analysis/RECHTSTEXTE_ABGLEICH.md`,
 Kategorie 3): Die Datenschutzerklärung behauptete „IP-Adresse (anonymisiert bzw. nach
-kurzer Zeit gelöscht)" — das stimmte nicht mit dem Code überein. Als Sofortmaßnahme
-wurde der Text am 2026-07-20 auf die tatsächliche Faktenlage korrigiert („vollständig,
-ohne automatische Löschung", `frontend/src/app/(public)/datenschutz/page.tsx`). M19 ist
-die technische Gegenmaßnahme, die diese Aussage in der Sache verbessert; erst nach
-Abschluss von M19 darf der Text ein zweites Mal angepasst werden („gekürzt" statt
-„vollständig").
+kurzer Zeit gelöscht)" — das stimmte nicht mit dem Code überein. Verlauf: (1) Text
+zunächst auf „vollständig, ohne automatische Löschung" korrigiert (Sofortfix), (2) M19
+technisch umgesetzt, (3) Text ein zweites Mal auf „gekürzt … Logs rotieren automatisch"
+angepasst — Text und System stimmen jetzt überein, beides im selben Commit/Deploy.
+
+**Zwei Prüfungen vor der Umsetzung (Befund-Charakter, nicht nur Bestätigung):**
+
+1. **Läuft uvicorn mit `proxy-headers` hinter Traefik, und greift der Filter auch dort?**
+   Ja, `proxy_headers=True` ist uvicorns Default (`uvicorn/config.py:219`), aktiv ohne
+   explizites Flag. Aber: `forwarded_allow_ips` steht auf uvicorns Default `"127.0.0.1"`
+   (`uvicorn/config.py:356`) — nirgends im Repo überschrieben (kein `FORWARDED_ALLOW_IPS`,
+   kein `--forwarded-allow-ips`-Flag in `backend/entrypoint.sh`). `ProxyHeadersMiddleware`
+   übernimmt `X-Forwarded-For` nur, wenn der **direkte TCP-Peer** in `trusted_hosts` steht
+   (`uvicorn/middleware/proxy_headers.py`: `if client_host in self.trusted_hosts`). Der
+   Backend-Container hat laut `docker-compose.yml` **keinen** direkten Traefik-Zugang —
+   nur `frontend` hängt am externen `coolify`-Netz mit Traefik-Label (Commit `64359fb`);
+   der Backend-Host-Port wurde später aus DSGVO-Gründen sogar explizit entfernt
+   (Commit `68391bb`: „Backend und DB waren … ausschließlich intern erreichbar nötig,
+   exponierten aber Host-Ports direkt an Traefik/TLS vorbei"). Der Backend-Container wird
+   also ausschließlich vom `frontend`-Container über das interne Compose-Netz erreicht —
+   dessen interne Docker-IP ist nicht `127.0.0.1` und damit nicht in `trusted_hosts`.
+   **Folge:** `scope["client"]` bleibt der rohe TCP-Peer, unabhängig davon, was in
+   `X-Forwarded-For` steht — uvicorn loggt aktuell die **interne IP des
+   Frontend-Containers**, nicht die reale Besucher-IP. Der M19-Filter greift korrekt auf
+   das, was tatsächlich im Log-Record steht (per End-to-End-Test mit echtem uvicorn-Server
+   verifiziert, s. Akzeptanzkriterien) — kürzt im aktuellen Deployment also technisch eine
+   interne Infrastruktur-IP, nicht direkt eine reale Nutzer-IP. Das senkt das reale Risiko
+   zusätzlich, ist aber auch als eigener Befund festzuhalten: Das Backend-Zugriffslog
+   eignet sich in der aktuellen Topologie nicht zur Unterscheidung einzelner Besucher
+   (z. B. für Abuse-Erkennung) — falls das gewollt ist, müsste `FORWARDED_ALLOW_IPS` auf
+   die interne Frontend-Container-Adresse gesetzt werden (nicht Teil dieser Maßnahme).
+
+2. **Werden Client-IPs sonst noch irgendwo geloggt?** Backend-seitig geprüft und
+   **kein weiterer Fund**: `app/core/exceptions.py` loggt nichts (keine `logger`-Aufrufe);
+   `app/core/limiter.py` (slowapi, `key_func=get_remote_address`) hält die IP nur
+   in-memory für die Rate-Limit-Zählung, slowapis eigener Logger protokolliert laut
+   Quellcode nur Storage-/Fehlerzustände, nie die Client-IP selbst; `auth/service.py`
+   (`record_failed_attempt`/`compute_delay`, Login-Bruteforce-Bremse) hält die IP nur in
+   einem In-Memory-`TTLCache` (600s TTL), schreibt sie in keinen Logger. **Traefik-eigenes
+   Access-Log: nicht prüfbar von hier aus.** Traefik läuft als separater,
+   Coolify-verwalteter Container außerhalb dieses Repos — seine Konfiguration (ob
+   Access-Log aktiv ist, welches Format, welche Aufbewahrung) liegt nicht im Code und
+   kann nicht per Repo-Analyse verifiziert werden. **Das ist eine offene Lücke im
+   Gesamtbild**, unabhängig vom Ergebnis von M19: Selbst wenn Backend und Frontend
+   PII-arm loggen, könnte Traefik selbst unbegrenzt volle Besucher-IPs (die es ja direkt
+   sieht, TLS-Terminierung) loggen. Muss direkt in Coolify (Proxy-/Traefik-Einstellungen,
+   ggf. per SSH auf dem Server) geprüft werden — siehe offene Frage.
 
 **Befund:** uvicorn läuft mit Standard-Zugriffslog (volle Client-IP), gestartet ohne
 zusätzliche Logging-Konfiguration (`backend/entrypoint.sh`: `exec uvicorn app.main:app
@@ -458,36 +499,41 @@ akkumuliert dadurch unbegrenzt.
 3. Ein automatisierter Test belegt, dass nach der Änderung keine vollständige IP mehr
    im Log-Output auftaucht (z. B. Regex-Prüfung auf eine Test-Log-Zeile).
 
-**Vorgeschlagene Lösung (zur Freigabe, noch nicht umgesetzt):**
-- **Docker-Logging-Optionen:** In `docker-compose.yml` je einen `logging`-Block
-  (Treiber `json-file`, `options: max-size`, `max-file`) für die Services `backend`
-  und `frontend` ergänzen. Reine Compose-Konfiguration, kein Python-Code.
-- **IP-Kürzung:** Ein `logging.Filter`, der an den `uvicorn.access`-Logger gehängt wird
-  (z. B. in `backend/app/core/logging.py`, neu, eingebunden vor dem Start des Servers
-  bzw. via `--log-config` von uvicorn) und den Client-Host-Anteil im Log-Record vor der
-  Ausgabe kürzt (letztes Oktett/letzte 80 Bit auf `0`). Betrifft nur das Zugriffslog —
-  SQL-Echo (M18) und die Anwendungs-Logs bleiben unverändert (dort steht ohnehin keine
-  IP).
-- **Test:** Unit-/Integrationstest, der eine bekannte Test-IP durch den Filter schickt
-  und prüft, dass die Ausgabe die gekürzte, nicht die volle IP enthält.
-- **Reihenfolge:** Erst nach grünem Test und Freigabe deployen; danach zweite
-  Textanpassung in `datenschutz/page.tsx` §4 (durch die juristische Prüfung
-  freizugeben, hier nicht vorformuliert).
+**Umgesetzte Lösung:**
+- **Docker-Logging-Optionen:** `docker-compose.yml` — je ein `logging`-Block
+  (Treiber `json-file`, `max-size: "10m"`, `max-file: "3"`) für `backend` und
+  `frontend`. Mit `docker compose config` validiert.
+- **IP-Kürzung:** Neue Datei `backend/app/core/logging.py` —
+  `TruncateClientIPFilter` (ein `logging.Filter`) hängt sich an den
+  `uvicorn.access`-Logger und schreibt `record.args` um, bevor der Formatter die
+  Zeile rendert (IPv4 → `/24`-Netzadresse = letztes Oktett `0`, IPv6 →
+  `/48`-Netzadresse = letzte 80 Bit `0`, via `ipaddress`-Stdlib). Eingebunden in
+  `backend/app/main.py:create_app()`. Betrifft nur das Zugriffslog — SQL-Echo (M18)
+  und die Anwendungs-Logs bleiben unverändert (dort steht ohnehin keine IP).
+  Reassemblierung von IPv6 nutzt Standard-Klammer-Notation (`[addr]:port`), da
+  truncierte IPv6-Netzadressen oft auf `::` enden und ein naives `addr:port` sonst
+  einen mehrdeutigen dreifachen Doppelpunkt erzeugt hätte (im eigenen Test
+  aufgefallen und korrigiert).
+- **Test:** `backend/tests/unit/test_logging.py`, 6 Tests — Kürzung isoliert
+  (IPv4/IPv6), Filter-Verhalten auf `LogRecord`-Objekten, Regressionstest auf der
+  **gerenderten** Log-Zeile. Zusätzlich end-to-end mit echtem laufendem
+  uvicorn-Server verifiziert (echter Request, Log-Zeile zeigte `127.0.0.0:<port>`
+  statt `127.0.0.1:<port>`).
+- **Reihenfolge eingehalten:** Text zuerst auf Ist-Zustand korrigiert, dann M19
+  umgesetzt und getestet, danach zweite Textanpassung auf „gekürzt … rotieren
+  automatisch" — beides im selben Commit.
 
 ### Akzeptanzkriterien
-**AK-M19.1:** Gegeben die Docker-Logging-Optionen sind gesetzt / Wenn der Container
-über einen längeren Zeitraum läuft / Dann bleibt die Log-Datei innerhalb der
-konfigurierten Größen-/Anzahlgrenze.
+**AK-M19.1:** ✅ Docker-Logging-Optionen gesetzt für `backend` und `frontend`,
+`docker compose config` validiert.
 
-**AK-M19.2:** Gegeben ein Request kommt von einer IPv4-Adresse an / Wenn das
-Zugriffslog geschrieben wird / Dann steht dort die Adresse mit auf `0` gesetztem
-letzten Oktett, nicht die volle IP.
+**AK-M19.2:** ✅ IPv4 — Test + End-to-End-Lauf bestätigen: letztes Oktett auf `0`.
 
-**AK-M19.3:** Gegeben ein Request kommt von einer IPv6-Adresse an / Wenn das
-Zugriffslog geschrieben wird / Dann stehen dort die letzten 80 Bit auf `0` gesetzt.
+**AK-M19.3:** ✅ IPv6 — Test bestätigt: letzte 80 Bit auf `0`, Klammer-Notation bei
+Reassemblierung.
 
-**AK-M19.4:** Gegeben der Kürzungs-Test läuft / Dann schlägt er fehl, wenn die volle
-IP im Log-Output erscheint (Regressionsschutz).
+**AK-M19.4:** ✅ Regressionstest (`test_full_ip_never_reaches_the_formatted_log_line`)
+prüft die gerenderte Zeile, nicht nur Zwischenwerte.
 
 ### Aufwandsschätzung
 ~2–3 Stunden (Docker-Logging-Optionen ~0,5–1h; IP-Kürzungsfilter inkl. Test ~1,5–2h).
@@ -508,3 +554,7 @@ selbst beeinträchtigen.
 4. **Dienstleistungen-Filter-Bug:** Können wir zur Verifizierung des Befunds auf die Produktionsdatenbank schauen (z.B. `SELECT target_group, is_active, COUNT(*) FROM services GROUP BY 1, 2`)? Das würde klären, ob es ein Daten- oder Code-Problem ist.
 
 5. **Admin-Token-Refactoring (M7):** Soll M7 alle Admin-Seiten auf einmal umstellen oder seitenweise als Teil der jeweiligen Bug-Fixes?
+
+6. **Traefik-Access-Log (im Rahmen von M19 aufgefallen):** Traefik läuft als separater, Coolify-verwalteter Container außerhalb dieses Repos. Ist dessen Access-Log aktiv, welches Format hat es, und wie lange wird es aufbewahrt? Von hier aus nicht prüfbar (Coolify-Proxy-Einstellungen bzw. SSH auf den Server nötig). Falls dort volle Besucher-IPs unbegrenzt geloggt werden, bleibt das PII-Log-Problem auf Infrastrukturebene bestehen, auch wenn Backend/Frontend jetzt sauber sind.
+
+7. **Soll `FORWARDED_ALLOW_IPS` gesetzt werden (im Rahmen von M19 aufgefallen):** Aktuell vertraut uvicorn keinem `X-Forwarded-For`-Header, weil der einzige Zugriffspfad zum Backend über den `frontend`-Container läuft, dessen interne Docker-IP nicht in uvicorns Standard-`trusted_hosts` (`127.0.0.1`) enthalten ist — im Zugriffslog steht deshalb aktuell die interne Frontend-IP, nicht die reale Besucher-IP. Das ist datenschutzfreundlich, macht das Backend-Log aber für Abuse-/Missbrauchserkennung wertlos. Soll das so bleiben, oder soll `FORWARDED_ALLOW_IPS` auf die Frontend-Container-Adresse gesetzt werden (dann würde M19 die dann tatsächlich reale, weitergereichte Besucher-IP kürzen, nicht mehr nur die interne)?
