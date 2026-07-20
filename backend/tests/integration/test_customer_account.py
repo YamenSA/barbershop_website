@@ -530,6 +530,17 @@ async def test_customer_cookie_rejected_by_admin(account_client: AsyncClient, se
 
 
 @pytest.mark.asyncio
+async def test_customer_cookie_rejected_by_customers_endpoint(account_client: AsyncClient, session: AsyncSession, account_setup):
+    """GET /customers serves customer PII to admins only — a customer session must not read it."""
+    email = "rolesep2@example.com"
+    await _register_and_verify(account_client, session, email)
+    await account_client.post("/api/v1/account/login", json={"email": email, "password": "password1234"})
+
+    resp = await account_client.get("/api/v1/customers")
+    assert resp.status_code in (401, 403, 404)
+
+
+@pytest.mark.asyncio
 async def test_admin_cookie_rejected_by_account(session: AsyncSession, account_setup):
     from app.domains.auth.service import create_session_token
 

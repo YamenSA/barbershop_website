@@ -160,4 +160,14 @@ Coolify-Server-/Logging-Einstellungen nachsehen.
 - **Vor jedem Push muss 
 pm run build im Frontend lokal grn sein**. Ein Push lst bei uns den Produktions-Deploy aus.
 - **Push nur nach meiner ausdrcklichen Freigabe**.
+- **Ein Test zählt erst als Nachweis, wenn er nachweislich ausgeführt wurde und grün
+  war.** Eine Testdatei, die existiert und plausibel aussieht, ist kein Beleg — sie
+  muss tatsächlich unter `pytest` (bzw. dem jeweiligen Runner) gelaufen sein, mit
+  echten Assertions, gegen existierende Fixtures. "Verifiziert" oder "getestet" darf
+  nur gemeldet werden, wenn die Ausführung und ihr grünes Ergebnis gezeigt wurden
+  (Testname + Ergebnis), nicht aufgrund des bloßen Vorhandenseins der Datei. Anlass:
+  zwei aus P0-3 stammende Dateien (`test_p0_3_verify.py`, Teile von
+  `test_admin_endpoints.py`) referenzierten nicht existierende Fixtures bzw. einen
+  veralteten Response-Vertrag und sind nie erfolgreich gelaufen, wurden aber als
+  Absicherung mitgeführt.
 

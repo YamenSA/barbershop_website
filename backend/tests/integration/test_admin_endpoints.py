@@ -136,16 +136,48 @@ async def test_customer_search_by_phone_prefix(client: AsyncClient, session: Asy
     # Phone prefix search
     resp = await client.get("/api/v1/customers?search=015")
     assert resp.status_code == 200
-    names = [c["name"] for c in resp.json()]
+    names = [c["name"] for c in resp.json()["items"]]
     assert "Anna Müller" in names
     assert "Bob Schmidt" not in names
 
     # Name prefix search
     resp2 = await client.get("/api/v1/customers?search=bob")
     assert resp2.status_code == 200
-    names2 = [c["name"] for c in resp2.json()]
+    names2 = [c["name"] for c in resp2.json()["items"]]
     assert "Bob Schmidt" in names2
     assert "Anna Müller" not in names2
+
+
+@pytest.mark.asyncio
+async def test_customers_endpoint_rejects_unauthenticated(public_client: AsyncClient):
+    """GET /customers serves customer PII — must require an admin session."""
+    resp = await public_client.get("/api/v1/customers")
+    assert resp.status_code in (401, 403)
+
+
+@pytest.mark.asyncio
+async def test_delete_customer_anonymizes_pii_via_api(client: AsyncClient, session: AsyncSession):
+    """DELETE /customers/{id} (M10) must clear name, email and phone on the raw row,
+    not just exclude the customer from the active list."""
+    from sqlalchemy import select
+    from app.domains.booking.models import Customer
+
+    customer = Customer(name="Test User", email="test@example.com", phone="123456789")
+    session.add(customer)
+    await session.commit()
+    await session.refresh(customer)
+    customer_id = customer.id
+
+    resp = await client.delete(f"/api/v1/customers/{customer_id}")
+    assert resp.status_code == 204
+
+    stmt = select(Customer).where(Customer.id == customer_id)
+    raw_customer = (await session.execute(stmt)).scalar_one()
+
+    assert raw_customer.name == "[anonymisiert]"
+    assert raw_customer.email.startswith("[anonymisiert]")
+    assert raw_customer.phone == "[anonymisiert]"
+    assert raw_customer.anonymized_at is not None
 
 
 # ── T050 PDF tests ────────────────────────────────────────────────────────────
