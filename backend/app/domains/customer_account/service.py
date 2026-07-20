@@ -139,7 +139,7 @@ async def register(
         )
         await send_account_email(to_email=customer.email, subject=subject, html_body=body)
     except Exception as exc:
-        logger.error("Failed to send verification email to %s: %s", customer.email, exc)
+        logger.error("Failed to send verification email for customer_id=%s: %s", customer.id, exc)
 
 
 async def verify_email(session: AsyncSession, plaintext: str) -> None:
@@ -201,7 +201,7 @@ async def request_reset(session: AsyncSession, email: str) -> None:
         subject, body = render_password_reset(customer_name=customer.name, token=plaintext)
         await send_account_email(to_email=customer.email, subject=subject, html_body=body)
     except Exception as exc:
-        logger.error("Failed to send reset email to %s: %s", customer.email, exc)
+        logger.error("Failed to send reset email for customer_id=%s: %s", customer.id, exc)
 
 
 async def reset_password(session: AsyncSession, plaintext: str, new_password: str) -> None:

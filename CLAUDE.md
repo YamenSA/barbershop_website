@@ -18,7 +18,7 @@ Specs sind auf Deutsch geschrieben; Code verwendet englische Bezeichner. Mapping
 | Ausnahme | WorkingException |
 | Termin | Appointment |
 | Kunde | Customer |
-| Anonymisierungslauf | `run_retention_job` |
+| Anonymisierungslauf | `MaintenanceService.run_retention` |
 | Tages-Überschreibung | `DayOverride` |
 | Admin-Konto | `AdminAccount` |
 
@@ -50,7 +50,7 @@ The backend is built with FastAPI, SQLModel, and PostgreSQL. It requires Python 
    python -m venv .venv
    source .venv/Scripts/activate  # Or activate.ps1 in PowerShell
    pip install -e ".[dev]"
-   cp .env.example .env
+   cp ../.env.example .env  # .env.example lives at the repo root, not in backend/
    ```
 
 2. **Database Setup**:
@@ -75,9 +75,10 @@ The backend is built with FastAPI, SQLModel, and PostgreSQL. It requires Python 
    ```
 
 5. **GDPR Anonymization Job**:
-   To manually run the retention job that anonymizes expired guest appointments and inactive customers:
+   To manually trigger the retention job that anonymizes inactive customers and expired guest appointments (calls the `POST /api/v1/maintenance/retention` endpoint; requires `RETENTION_CRON_SECRET` and, if the backend runs elsewhere than `http://localhost:8000`, `BACKEND_INTERNAL_URL`):
    ```sh
-   python scripts/run_retention.py
+   python scripts/retention_cron.py          # dry-run (default)
+   python scripts/retention_cron.py --execute # actually deletes/anonymizes
    ```
 
 6. **Notification Reminder Job**:
@@ -105,21 +106,58 @@ Es gibt derzeit folgende dokumentierte Befunde (siehe `docs/analysis/ADMIN_FIX_S
 - **M15:** Admin-Kalender: Fehlende Kontaktdaten (Telefon) und Kundenlink im Termin-Modal.
 - **M16:** Admin-Kalender: Neues Datum & Uhrzeit im Termin-Modal unschön (leer) vorbelegt.
 - **M17:** Admin-Kalender: Inkonsistente Akzentfarbe (Violett in Modal und Events statt Malachite).
+- **M18 (P0, umgesetzt, noch nicht deployed):** Security/DSGVO: PII in Klartext-Logs. SQL-Echo war hartkodiert (`echo=True`) und drei eigene `logger.error`-Aufrufe protokollierten E-Mail-Adressen. Jetzt: `SQL_ECHO`-Env-Var (Default `False`), Log-Aufrufe nutzen `customer.id` statt E-Mail. **Nach Deploy: Alt-Logs auf dem Server manuell leeren** (siehe Deployment-Abschnitt unten).
 
 ## Deployment & Environment Variables
 
 **WICHTIG**: Die Umgebungsvariable `RETENTION_CRON_SECRET` ist **Pflicht**. Das Backend startet nicht (Pydantic ValidationError), wenn diese Variable fehlt. Dies schtzt den DSGVO-Lschendpunkt vor unautorisiertem Zugriff. Bei jedem neuen Server-Setup oder Coolify-Deploy MUSS diese Variable gesetzt werden.
 
 ### Coolify Scheduled Tasks (Cronjobs)
-Fr die tgliche Datenlschung muss in Coolify ein Scheduled Task angelegt werden:
-- **Container**: backend
-- **Command**: `python scripts/retention_cron.py --execute`
-- **Frequency**: e.g. `0 3 * * *` (Tglich um 03:00 Uhr)
+Für die tägliche Datenlöschung muss in Coolify ein Scheduled Task angelegt werden. Die Einrichtung erfolgt zweistufig:
 
-Das Skript schlgt fehl (Exit-Code != 0), wenn das Secret fehlt oder das Backend Fehler meldet.
+**Schritt 1: Trockenlauf (Testen)**
+- **Container**: backend
+- **Command**: `python scripts/retention_cron.py` (ohne Argumente)
+- **Frequency**: e.g. `0 3 * * *` (Täglich um 03:00 Uhr)
+Lass den Task einmal laufen und prüfe im Task-Log, ob das Ergebnis plausibel ist (Dry-Run = true).
+
+**Schritt 2: Scharfschalten**
+Wenn das Log sauber ist, ändere den Command auf:
+- **Command**: `python scripts/retention_cron.py --execute`
+
+Das Skript schlägt fehl (Exit-Code != 0), wenn das Secret fehlt oder das Backend Fehler meldet.
+
+### Alt-Logs mit PII bereinigen (einmalig, nach dem M18-Deploy)
+
+Der M18-Fix verhindert nur *künftige* PII in Logs. Der bisherige `backend`-Container hat
+seit Produktivstart jede Query inkl. Parametern geloggt (SQL-Echo) — diese Logs liegen
+noch auf dem Server und werden **nicht** durch den Deploy selbst gelöscht. Docker legt
+pro Container eine eigene Log-Datei an; beim Deploy erstellt Coolify normalerweise einen
+neuen Container (neue Container-ID, neue Log-Datei) — die PII bleibt in der Log-Datei
+des *alten* Containers, bis diese explizit entfernt wird. Vorgehen per SSH auf dem
+Coolify-Host, **nach** erfolgreichem Deploy des M18-Fixes:
+
+```sh
+# 1. Alten (gestoppten) und neuen (laufenden) backend-Container auflisten
+docker ps -a --filter "name=backend" --format "{{.ID}}  {{.Names}}  {{.Status}}"
+
+# 2. Den ALTEN, gestoppten Container entfernen — löscht dessen Log-Datei mit
+docker rm <alte_container_id>
+
+# 3. Falls der neue Container VOR dem Deploy schon eine Weile mit dem alten
+#    Code lief (Logs mit PII), dessen aktuelle Log-Datei leeren (Root/sudo nötig,
+#    json-file-Treiber vorausgesetzt):
+sudo sh -c ': > $(docker inspect --format="{{.LogPath}}" <laufende_container_id>)'
+```
+
+**Hinweis:** Falls Coolify die Logs zusätzlich an ein externes Log-Aggregations-Tool
+weiterleitet oder einen anderen Logging-Treiber als `json-file` nutzt, müssen die Logs
+auch dort bereinigt werden — das lässt sich von hier aus nicht prüfen, bitte in den
+Coolify-Server-/Logging-Einstellungen nachsehen.
 
 ## Workflow Regeln
 
 - **Vor jedem Push muss 
 pm run build im Frontend lokal grn sein**. Ein Push lst bei uns den Produktions-Deploy aus.
 - **Push nur nach meiner ausdrcklichen Freigabe**.
+

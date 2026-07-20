@@ -27,6 +27,7 @@
 | M15 | **P1** | Admin-Kalender: Fehlende Kontaktdaten (Telefon) im Termin-Modal | ~1h | Niedrig |
 | M16 | **P1** | Admin-Kalender: Leeres Datum-Feld beim Bearbeiten unschön | ~0,5h | Niedrig |
 | M17 | **P1** | Admin-Kalender: Inkonsistente Akzentfarbe (Violett vs. Malachite) | ~1h | Niedrig |
+| M18 | **P0** | Security/DSGVO: PII in Klartext-Logs (SQL-Echo + eigene Log-Aufrufe) | ~1h | Niedrig |
 
 ---
 
@@ -393,6 +394,35 @@ Das System legt bei jeder öffentlichen Buchung im Hintergrund (ohne Kenntnis de
 ### M17: Inkonsistente Akzentfarbe (Violett) im Kalender (P1)
 **Befund:** Gemäß `DESIGN.md` gilt das "Einzelakzent-Prinzip", wonach primäre Aktionen im Admin-Bereich das grüne "Malachite" (`var(--admin-primary)`) nutzen sollen. Im Termin-Modal (`AppointmentModal.tsx`) ist der Speichern-Button jedoch hartkodiert auf `bg-indigo-600` gesetzt, und die Kalender-Blöcke (FullCalendar) nutzen die Default-Farbe Blau/Violett (`#3788d8`).
 **Erwartetes Verhalten:** Alle Violett/Indigo-Klassen aus dem Modal entfernen und durch Malachite ersetzen. FullCalendar-Events über die `eventColor`-Eigenschaft oder CSS-Variablen ebenfalls auf Malachite umstellen.
+
+### M18: PII in Klartext-Logs — SQL-Echo + eigene Log-Aufrufe (P0)
+
+**Hochstufung auf P0 (2026-07-20):** Ursprünglich als P1 erfasst, auf Wunsch des Auftraggebers auf P0 angehoben. Begründung: Personenbezogene Daten landen im Klartext in den Docker-Logs. Diese Logs werden von `delete_customer` und vom Retention-Job (M13) **nicht erfasst** — das ist ein zweiter, unkontrollierter Speicherort für genau die Daten, die durch M10/M13 löschbar gemacht wurden. Ein DSGVO-Löschkonzept, das einen parallelen Log-Kanal ignoriert, ist unvollständig.
+
+**Befund 1 — SQL-Echo:** `backend/app/core/database.py` Zeile 9 setzte `echo=True` hartkodiert auf der SQLAlchemy-Engine, ohne Umgebungsvariable — identisch in jeder Umgebung, auch Produktion. Jede SQL-Query inkl. gebundener Parameter (Name, E-Mail, Telefon, `guest_name`, `guest_phone`, `notes`) landete im Docker-Log.
+
+**Befund 2 — eigene Log-Aufrufe mit PII:** Bei der Durchsicht aller `logger.*`-Aufrufe im Backend (`grep -rn "logger\.(info|warning|error|debug)" backend/app`) wurden drei weitere Stellen gefunden, die Klardaten in die Log-Message einbetten:
+- `backend/app/domains/customer_account/service.py` (Verifikations-E-Mail-Fehlschlag) — loggte `customer.email`.
+- `backend/app/domains/customer_account/service.py` (Passwort-Reset-E-Mail-Fehlschlag) — loggte `customer.email`.
+- `backend/app/domains/notifications/service.py` (`send_account_email`) — loggte `to_email`.
+
+Geprüft und **unauffällig** (nur IDs/Zeitstempel, keine PII): `notifications/service.py::_send_and_log`/`send_confirmation`/`send_reminder` (nutzen `appointment_id`), `booking/service.py` AUDIT-Log (nutzt `appointment.id`, `starts_at`, `team_member_id`), `maintenance/router.py` (nutzt keine Kundendaten). Der uvicorn Access-Log wurde bewusst nicht verändert — er protokolliert HTTP-Metadaten (Methode, Pfad, Status), keine Kunden-Payload.
+
+**Umgesetzte Lösung (implementiert, noch nicht deployed):**
+- `Settings` (`backend/app/core/config.py`) um `SQL_ECHO: bool = False` erweitert; `database.py` liest `settings.SQL_ECHO` statt der hartkodierten Konstante `True`.
+- Die drei o.g. Log-Aufrufe geben statt der E-Mail-Adresse die `customer.id` aus bzw. verzichten ganz auf den Empfänger (wo keine ID vorliegt).
+- `.env.example` (Repo-Root) um `SQL_ECHO=False` (mit Kommentar) sowie das zuvor fehlende Pflichtfeld `RETENTION_CRON_SECRET` ergänzt; `RETENTION_CUSTOMER_MONTHS` dort von veraltet `24` auf `12` korrigiert (Abgleich mit M13-Entscheidung und Code-Default).
+- Coolify-Produktions-Env setzt `SQL_ECHO` nicht bzw. explizit `False`; lokale `.env` kann `SQL_ECHO=True` für Debugging setzen.
+
+**Offen — Alt-Logs bereinigen:** Der Code-Fix verhindert nur *neue* Log-Einträge. Bereits geschriebene Docker-Logs auf dem Produktionsserver enthalten weiterhin Klartext-PII (SQL-Echo lief seit Produktivstart). Diese müssen nach dem Deploy manuell auf dem Server geleert werden (siehe Anleitung in CLAUDE.md/GEMINI.md, Abschnitt Deployment).
+
+### Akzeptanzkriterien
+**AK-M18.1:** Gegeben `SQL_ECHO` ist nicht gesetzt oder `False` / Wenn das Backend eine Query ausführt / Dann erscheint keine SQL-Query mit Parametern im Log.
+**AK-M18.2:** Gegeben `SQL_ECHO=True` ist lokal gesetzt / Wenn das Backend eine Query ausführt / Dann erscheint die Query wie bisher im Log (Debugging weiterhin möglich).
+**AK-M18.3:** Gegeben eine Verifikations-, Reset- oder Konto-E-Mail schlägt fehl / Wenn der Fehler geloggt wird / Dann enthält die Log-Zeile keine E-Mail-Adresse.
+
+### Aufwandsschätzung
+~1 Stunde. Risiko: Niedrig — reine Konfigurations- und Logging-Änderung, keine Migration.
 
 ---
 

@@ -6,6 +6,7 @@ class Settings(BaseSettings):
     RETENTION_GUEST_MONTHS: int = 12
     RETENTION_CUSTOMER_MONTHS: int = 12
     RETENTION_CRON_SECRET: str
+    SQL_ECHO: bool = False
 
     # Phase 1: Admin & Auth
     JWT_SECRET_KEY: str

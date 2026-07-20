@@ -72,7 +72,7 @@ async def send_account_email(*, to_email: str, subject: str, html_body: str) -> 
     try:
         send_email(EmailMessage(to=to_email, subject=subject, html_body=html_body))
     except Exception as exc:
-        logger.error("Failed to send account email to %s: %s", to_email, exc)
+        logger.error("Failed to send account email: %s", exc)
 
 
 async def send_confirmation(session: AsyncSession, appointment) -> None:

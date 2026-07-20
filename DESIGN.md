@@ -270,9 +270,17 @@ A single skip link is the first focusable element in `app/layout.tsx`.
 **WICHTIG**: Die Umgebungsvariable `RETENTION_CRON_SECRET` ist **Pflicht**. Das Backend startet nicht (Pydantic ValidationError), wenn diese Variable fehlt. Dies schtzt den DSGVO-Lschendpunkt vor unautorisiertem Zugriff. Bei jedem neuen Server-Setup oder Coolify-Deploy MUSS diese Variable gesetzt werden.
 
 ### Coolify Scheduled Tasks (Cronjobs)
-Fr die tgliche Datenlschung muss in Coolify ein Scheduled Task angelegt werden:
-- **Container**: backend
-- **Command**: `python scripts/retention_cron.py --execute`
-- **Frequency**: e.g. `0 3 * * *` (Tglich um 03:00 Uhr)
+Für die tägliche Datenlöschung muss in Coolify ein Scheduled Task angelegt werden. Die Einrichtung erfolgt zweistufig:
 
-Das Skript schlgt fehl (Exit-Code != 0), wenn das Secret fehlt oder das Backend Fehler meldet.
+**Schritt 1: Trockenlauf (Testen)**
+- **Container**: backend
+- **Command**: `python scripts/retention_cron.py` (ohne Argumente)
+- **Frequency**: e.g. `0 3 * * *` (Täglich um 03:00 Uhr)
+Lass den Task einmal laufen und prüfe im Task-Log, ob das Ergebnis plausibel ist (Dry-Run = true).
+
+**Schritt 2: Scharfschalten**
+Wenn das Log sauber ist, ändere den Command auf:
+- **Command**: `python scripts/retention_cron.py --execute`
+
+Das Skript schlägt fehl (Exit-Code != 0), wenn das Secret fehlt oder das Backend Fehler meldet.
+
