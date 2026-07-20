@@ -9,24 +9,6 @@ export const metadata: Metadata = {
 
 export const revalidate = 3600;
 
-function PlaceholderBlock({ children }: { children: React.ReactNode }) {
-  return (
-    <div
-      className="rounded-[6px] p-4 text-sm leading-relaxed"
-      style={{
-        background: 'oklch(0.88 0.12 55 / 0.06)',
-        border: '1px solid oklch(0.88 0.12 55 / 0.25)',
-        color: 'oklch(0.88 0.12 55 / 0.85)',
-      }}
-    >
-      <p className="font-semibold mb-1 text-xs uppercase tracking-[0.08em]">
-        Betreiber einzutragen
-      </p>
-      {children}
-    </div>
-  );
-}
-
 export default function DatenschutzPage() {
   return (
     <section className="px-4 sm:px-6 lg:px-8 py-16">
@@ -139,18 +121,27 @@ export default function DatenschutzPage() {
               <li>Referrer-URL</li>
               <li>Hostname des zugreifenden Rechners</li>
               <li>Uhrzeit der Serveranfrage</li>
-              <li>IP-Adresse (anonymisiert bzw. nach kurzer Zeit gelöscht)</li>
+              <li>IP-Adresse (vollständig, ohne automatische Löschung)</li>
             </ul>
             <p className="mt-3">
               Diese Daten sind nicht bestimmten Personen zuordenbar. Eine Zusammenführung dieser
               Daten mit anderen Datenquellen wird nicht vorgenommen. Rechtsgrundlage ist Art. 6
               Abs. 1 lit. f DSGVO.
             </p>
-            <div className="mt-3">
-              <PlaceholderBlock>
-                <p>Name und Datenschutzinformationen des Hosting-Anbieters eintragen (z. B. Hetzner, Uberspace, AWS, etc.) sowie dessen Datenschutzerklärung verlinken.</p>
-              </PlaceholderBlock>
-            </div>
+            <p className="mt-3">
+              Hosting-Anbieter dieser Website ist die{' '}
+              <strong className="text-ink">Hetzner Online GmbH</strong>, Industriestr. 25,
+              91710 Gunzenhausen, Deutschland. Weitere Informationen finden Sie in der
+              Datenschutzerklärung von Hetzner:{' '}
+              <a
+                href="https://www.hetzner.com/de/legal/privacy-policy/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-brass hover:text-ink transition-colors duration-[150ms]"
+              >
+                hetzner.com/de/legal/privacy-policy
+              </a>
+            </p>
           </section>
 
           {/* 5. Terminbuchung */}
@@ -259,7 +250,7 @@ export default function DatenschutzPage() {
                 Name und Telefonnummer werden 12 Monate nach dem Termin automatisch anonymisiert.
               </li>
               <li>
-                <strong className="text-ink">Kundenkonten:</strong> Bei 24 Monaten ohne
+                <strong className="text-ink">Kundenkonten:</strong> Bei 12 Monaten ohne
                 Aktivität werden die Kontodaten automatisch anonymisiert. Unabhängig davon
                 können Sie Ihr Konto jederzeit selbst löschen.
               </li>

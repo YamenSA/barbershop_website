@@ -28,6 +28,7 @@
 | M16 | **P1** | Admin-Kalender: Leeres Datum-Feld beim Bearbeiten unschön | ~0,5h | Niedrig |
 | M17 | **P1** | Admin-Kalender: Inkonsistente Akzentfarbe (Violett vs. Malachite) | ~1h | Niedrig |
 | M18 | **P0** | Security/DSGVO: PII in Klartext-Logs (SQL-Echo + eigene Log-Aufrufe) | ~1h | Niedrig |
+| M19 | **P1** | Security/DSGVO: Log-Rotation + IP-Kürzung im Zugriffslog | ~2-3h | Niedrig |
 
 ---
 
@@ -423,6 +424,76 @@ Geprüft und **unauffällig** (nur IDs/Zeitstempel, keine PII): `notifications/s
 
 ### Aufwandsschätzung
 ~1 Stunde. Risiko: Niedrig — reine Konfigurations- und Logging-Änderung, keine Migration.
+
+---
+
+### M19: Log-Rotation + IP-Kürzung im Zugriffslog (P1)
+
+**Status:** Spezifiziert am 2026-07-20, **wartet auf Freigabe — keine Umsetzung ohne
+Freigabe.** Folgemaßnahme zum Rechtstexte-Abgleich (`docs/analysis/RECHTSTEXTE_ABGLEICH.md`,
+Kategorie 3): Die Datenschutzerklärung behauptete „IP-Adresse (anonymisiert bzw. nach
+kurzer Zeit gelöscht)" — das stimmte nicht mit dem Code überein. Als Sofortmaßnahme
+wurde der Text am 2026-07-20 auf die tatsächliche Faktenlage korrigiert („vollständig,
+ohne automatische Löschung", `frontend/src/app/(public)/datenschutz/page.tsx`). M19 ist
+die technische Gegenmaßnahme, die diese Aussage in der Sache verbessert; erst nach
+Abschluss von M19 darf der Text ein zweites Mal angepasst werden („gekürzt" statt
+„vollständig").
+
+**Befund:** uvicorn läuft mit Standard-Zugriffslog (volle Client-IP), gestartet ohne
+zusätzliche Logging-Konfiguration (`backend/entrypoint.sh`: `exec uvicorn app.main:app
+--host 0.0.0.0 --port 8000`, kein Custom-Formatter). Weder `docker-compose.yml` noch
+`Dockerfile` (Backend oder Frontend) enthalten einen `logging`-Abschnitt — keine
+Rotation, keine Größen-/Anzahlbegrenzung. Der Docker-Standardtreiber (`json-file`)
+akkumuliert dadurch unbegrenzt.
+
+**Erwartetes Verhalten:**
+1. Docker-seitige Logs sind in Größe und Anzahl begrenzt (Rotation), für **beide**
+   Services (`backend` und `frontend`), damit alte Log-Dateien nicht unbegrenzt
+   wachsen bzw. liegen bleiben.
+2. Die IP-Adresse wird **vor dem Schreiben ins Log** gekürzt, nicht erst nachträglich
+   oder zeitlich begrenzt — das entfernt den Personenbezug direkt an der Quelle, statt
+   ihn nur für eine begrenzte Zeit aufzubewahren. Etabliertes Verfahren (vgl. Praxis von
+   z. B. Matomo/Google Analytics „IP-Anonymisierung"): IPv4 letztes Oktett auf `0`,
+   IPv6 letzte 80 Bit auf `0`.
+3. Ein automatisierter Test belegt, dass nach der Änderung keine vollständige IP mehr
+   im Log-Output auftaucht (z. B. Regex-Prüfung auf eine Test-Log-Zeile).
+
+**Vorgeschlagene Lösung (zur Freigabe, noch nicht umgesetzt):**
+- **Docker-Logging-Optionen:** In `docker-compose.yml` je einen `logging`-Block
+  (Treiber `json-file`, `options: max-size`, `max-file`) für die Services `backend`
+  und `frontend` ergänzen. Reine Compose-Konfiguration, kein Python-Code.
+- **IP-Kürzung:** Ein `logging.Filter`, der an den `uvicorn.access`-Logger gehängt wird
+  (z. B. in `backend/app/core/logging.py`, neu, eingebunden vor dem Start des Servers
+  bzw. via `--log-config` von uvicorn) und den Client-Host-Anteil im Log-Record vor der
+  Ausgabe kürzt (letztes Oktett/letzte 80 Bit auf `0`). Betrifft nur das Zugriffslog —
+  SQL-Echo (M18) und die Anwendungs-Logs bleiben unverändert (dort steht ohnehin keine
+  IP).
+- **Test:** Unit-/Integrationstest, der eine bekannte Test-IP durch den Filter schickt
+  und prüft, dass die Ausgabe die gekürzte, nicht die volle IP enthält.
+- **Reihenfolge:** Erst nach grünem Test und Freigabe deployen; danach zweite
+  Textanpassung in `datenschutz/page.tsx` §4 (durch die juristische Prüfung
+  freizugeben, hier nicht vorformuliert).
+
+### Akzeptanzkriterien
+**AK-M19.1:** Gegeben die Docker-Logging-Optionen sind gesetzt / Wenn der Container
+über einen längeren Zeitraum läuft / Dann bleibt die Log-Datei innerhalb der
+konfigurierten Größen-/Anzahlgrenze.
+
+**AK-M19.2:** Gegeben ein Request kommt von einer IPv4-Adresse an / Wenn das
+Zugriffslog geschrieben wird / Dann steht dort die Adresse mit auf `0` gesetztem
+letzten Oktett, nicht die volle IP.
+
+**AK-M19.3:** Gegeben ein Request kommt von einer IPv6-Adresse an / Wenn das
+Zugriffslog geschrieben wird / Dann stehen dort die letzten 80 Bit auf `0` gesetzt.
+
+**AK-M19.4:** Gegeben der Kürzungs-Test läuft / Dann schlägt er fehl, wenn die volle
+IP im Log-Output erscheint (Regressionsschutz).
+
+### Aufwandsschätzung
+~2–3 Stunden (Docker-Logging-Optionen ~0,5–1h; IP-Kürzungsfilter inkl. Test ~1,5–2h).
+Risiko: Niedrig — kein DB-Zugriff, keine Migration; Fehlkonfiguration des Filters
+würde im schlimmsten Fall das Zugriffslog unbrauchbar machen, nicht die Anwendung
+selbst beeinträchtigen.
 
 ---
 

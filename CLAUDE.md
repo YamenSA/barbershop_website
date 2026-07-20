@@ -107,6 +107,7 @@ Es gibt derzeit folgende dokumentierte Befunde (siehe `docs/analysis/ADMIN_FIX_S
 - **M16:** Admin-Kalender: Neues Datum & Uhrzeit im Termin-Modal unschön (leer) vorbelegt.
 - **M17:** Admin-Kalender: Inkonsistente Akzentfarbe (Violett in Modal und Events statt Malachite).
 - **M18 (P0, umgesetzt, noch nicht deployed):** Security/DSGVO: PII in Klartext-Logs. SQL-Echo war hartkodiert (`echo=True`) und drei eigene `logger.error`-Aufrufe protokollierten E-Mail-Adressen. Jetzt: `SQL_ECHO`-Env-Var (Default `False`), Log-Aufrufe nutzen `customer.id` statt E-Mail. **Nach Deploy: Alt-Logs auf dem Server manuell leeren** (siehe Deployment-Abschnitt unten).
+- **M19 (P1, spezifiziert, wartet auf Freigabe):** Security/DSGVO: Log-Rotation (Docker `logging`-Optionen für `backend`+`frontend`) und IP-Kürzung im Zugriffslog (letztes IPv4-Oktett / letzte 80 IPv6-Bit vor dem Schreiben auf `0`, statt nur zeitlich zu begrenzen). Details in `docs/analysis/ADMIN_FIX_SPEC.md`. Erst nach Umsetzung + Test darf die Datenschutzerklärung ein zweites Mal angepasst werden ("gekürzt" statt "vollständig").
 
 ## Deployment & Environment Variables
 
