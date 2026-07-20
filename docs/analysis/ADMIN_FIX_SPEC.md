@@ -29,6 +29,7 @@
 | M17 | **P1** | Admin-Kalender: Inkonsistente Akzentfarbe (Violett vs. Malachite) | ~1h | Niedrig |
 | M18 | **P0** | Security/DSGVO: PII in Klartext-Logs (SQL-Echo + eigene Log-Aufrufe) | ~1h | Niedrig |
 | M19 | **P1** | Security/DSGVO: Log-Rotation + IP-Kürzung im Zugriffslog | ~2-3h | Niedrig — umgesetzt, wartet auf Deploy-Freigabe |
+| M20 | **P1** | Security: Rate-Limits laufen gegen interne Frontend-IP statt Besucher-IP (`FORWARDED_ALLOW_IPS`) | ~3-4h | Mittel — Konfigurationsfehler kann Schutz aufheben oder Header-Spoofing öffnen |
 
 ---
 
@@ -470,15 +471,22 @@ angepasst — Text und System stimmen jetzt überein, beides im selben Commit/De
    in-memory für die Rate-Limit-Zählung, slowapis eigener Logger protokolliert laut
    Quellcode nur Storage-/Fehlerzustände, nie die Client-IP selbst; `auth/service.py`
    (`record_failed_attempt`/`compute_delay`, Login-Bruteforce-Bremse) hält die IP nur in
-   einem In-Memory-`TTLCache` (600s TTL), schreibt sie in keinen Logger. **Traefik-eigenes
-   Access-Log: nicht prüfbar von hier aus.** Traefik läuft als separater,
-   Coolify-verwalteter Container außerhalb dieses Repos — seine Konfiguration (ob
-   Access-Log aktiv ist, welches Format, welche Aufbewahrung) liegt nicht im Code und
-   kann nicht per Repo-Analyse verifiziert werden. **Das ist eine offene Lücke im
-   Gesamtbild**, unabhängig vom Ergebnis von M19: Selbst wenn Backend und Frontend
-   PII-arm loggen, könnte Traefik selbst unbegrenzt volle Besucher-IPs (die es ja direkt
-   sieht, TLS-Terminierung) loggen. Muss direkt in Coolify (Proxy-/Traefik-Einstellungen,
-   ggf. per SSH auf dem Server) geprüft werden — siehe offene Frage.
+   einem In-Memory-`TTLCache` (600s TTL), schreibt sie in keinen Logger.
+   **Traefik-eigenes Access-Log — geklärt (2026-07-20, Prüfung auf dem Server durch
+   Azzam):** `docker logs coolify-proxy` enthält ausschließlich ACME-Fehlermeldungen,
+   keine Zugriffszeilen und keine IP-Adressen — Traefik führt kein Access-Log. Damit
+   gibt es **keinen zweiten Speicherort für ungekürzte Besucher-IPs**; §4 der
+   Datenschutzerklärung ist vollständig und korrekt. Offene Frage 6 (unten) ist
+   geschlossen.
+
+   **Nebenbefund bei derselben Server-Prüfung (nur dokumentiert, kein Handlungsbedarf):**
+   TLS-Zertifikat für `azzam-salon.de` gültig bis 14.10.2026 (ausgestellt 16.07.2026).
+   Die ACME-Fehlermeldungen im Traefik-Log tragen den Token `*` und stammen mit hoher
+   Wahrscheinlichkeit von externen Scannern, die `/.well-known/acme-challenge/`
+   abklappern — kein Konfigurationsfehler. DNS korrekt: `azzam-salon.de` und
+   `www.azzam-salon.de` zeigen beide auf den Server. **Merken: Zertifikatserneuerung
+   Mitte September 2026 kontrollieren** (Coolify erneuert i.d.R. automatisch vor
+   Ablauf, aber gegenprüfen).
 
 **Befund:** uvicorn läuft mit Standard-Zugriffslog (volle Client-IP), gestartet ohne
 zusätzliche Logging-Konfiguration (`backend/entrypoint.sh`: `exec uvicorn app.main:app
@@ -543,6 +551,178 @@ selbst beeinträchtigen.
 
 ---
 
+### M20: Rate-Limits laufen gegen interne Frontend-IP statt Besucher-IP (P1)
+
+**Status:** Spezifiziert am 2026-07-20, **wartet auf Freigabe — keine Umsetzung ohne
+Freigabe, insbesondere ohne Entscheidung zu Punkt 3 (voll vs. gekürzt).** Bei der
+M19-Umsetzung aufgefallener Sicherheitsbefund, kein Datenschutzthema: Weil
+`forwarded_allow_ips` auf uvicorns Default `127.0.0.1` steht (s. M19, Prüfung 1) und
+der Backend-Container ausschließlich vom `frontend`-Container aus erreicht wird,
+verwirft `ProxyHeadersMiddleware` jeden `X-Forwarded-For`-Header. Alle
+sicherheitsrelevanten Mechanismen, die aktuell `request.client.host` lesen, sehen
+deshalb nicht die Besucher-IP, sondern die interne, für alle Besucher gleiche
+Frontend-Container-IP.
+
+#### 1. Beleg im Code — alle Stellen, die Client-IP für Sicherheitszwecke nutzen
+
+**Globaler Rate-Limiter (slowapi):**
+- `backend/app/core/limiter.py:4` — `Limiter(key_func=get_remote_address)`.
+  `get_remote_address` (slowapi, `slowapi/util.py:20-25`) liest `request.client.host`
+  — dieselbe, von `ProxyHeadersMiddleware` betroffene Adresse.
+- Eingesetzt an 7 Endpunkten:
+  - `backend/app/domains/auth/router.py:22` — Admin-Login (`RATE_LIMIT_LOGIN_PER_MINUTE`/min)
+  - `backend/app/domains/customer_account/router.py:60` — Registrierung
+  - `backend/app/domains/customer_account/router.py:79` — Kunden-Login
+  - `backend/app/domains/customer_account/router.py:118` — Passwort-Vergessen
+  - `backend/app/domains/customer_account/router.py:129` — Passwort-Reset
+  - `backend/app/domains/booking/public_router.py:52` — Öffentliche Terminbuchung
+  - `backend/app/domains/booking/public_router.py:73` — Stornierung per Token
+  - `backend/app/domains/maintenance/router.py:32` — Retention-Cron (zusätzlich durch
+    Secret-Token geschützt, daher geringeres Einzelrisiko)
+
+**Zweiter, unabhängiger Mechanismus — Login-Bruteforce-Bremse (exponentielles Backoff):**
+- `backend/app/domains/auth/service.py:12` — `failed_attempts_cache = TTLCache(maxsize=1000, ttl=600)`
+- `backend/app/domains/auth/service.py:70-77` — `record_failed_attempt(ip)` / `compute_delay(ip)`
+- Genutzt von **beiden** Login-Wegen, nicht nur Admin:
+  - `backend/app/domains/auth/router.py:29` — `ip = request.client.host` (Admin-Login)
+  - `backend/app/domains/customer_account/router.py:85` — `ip = request.client.host if request.client else "unknown"`, übergeben an `account_service.login(..., ip=ip)`, welches intern dieselben `compute_delay`/`record_failed_attempt`-Funktionen aus `auth/service.py` aufruft (Kunden-Login teilt sich den Cache mit dem Admin-Login).
+
+**Konsequenz (wie vom Auftraggeber benannt):** Beide Mechanismen — slowapi UND die
+Backoff-Bremse — schlüsseln aktuell effektiv nach einer für alle Besucher identischen
+IP (der internen Frontend-Adresse). Damit teilen sich alle echten Kunden ein
+gemeinsames Rate-Limit-/Backoff-Konto: Ein Angreifer mit vielen Login- oder
+Buchungsversuchen sperrt faktisch alle echten Besucher aus (Denial-of-Service durch
+Fremdverschulden), während die Bremse pro einzelnem Angreifer nicht mehr greift, weil
+sein Kontingent mit dem aller anderen vermischt ist. Betroffen sind damit: Admin-Login,
+Kunden-Login, Registrierung, Passwort-Reset, öffentliche Terminbuchung und
+Stornierung per Token — nicht nur Login, wie ursprünglich vermutet.
+
+#### 2. Lösungsvorschlag: `FORWARDED_ALLOW_IPS` korrekt setzen
+
+`forwarded_allow_ips` wird von uvicorn direkt aus der Umgebungsvariable
+`FORWARDED_ALLOW_IPS` gelesen (`uvicorn/config.py:356`) — kein Code-Change in unserer
+Settings-Klasse nötig, nur eine Env-Var im Deployment.
+
+Drei Optionen, mit Begründung, unter der Randbedingung, dass das Backend **keinen
+Host-Port hat** und ausschließlich über das interne Compose-Netz erreichbar ist
+(Commit `68391bb`):
+
+- **a) Literale Frontend-Container-IP.** Nicht empfohlen: Docker weist IPs im
+  Standard-Bridge-Netz beim Neuerstellen des Containers neu zu (kein Garant für
+  Stabilität über Neustarts/Deploys hinweg), ohne zusätzliche Konfiguration (feste IP
+  auf einem eigenen Netz) ist das brüchig und würde nach jedem Frontend-Redeploy
+  stillschweigend wieder auf „nicht vertraut" zurückfallen.
+- **b) Docker-Netzbereich (CIDR), auf einem eigenen, fest definierten Netz —
+  empfohlen.** `docker-compose.yml` bekommt ein zusätzliches internes Netz mit fest
+  vergebenem Subnetz (z. B. `172.30.0.0/24`, gewählt außerhalb gängiger
+  Docker-Default-Bereiche), an das `backend` und `frontend` gehängt werden;
+  `FORWARDED_ALLOW_IPS=172.30.0.0/24` auf dem Backend. Vorteil: im Repo dokumentiert,
+  nicht von Docker-interner Auto-Zuweisung abhängig (die aktuelle
+  `default`-Netz-Subnetz ist nicht im Repo fixiert und kann sich je nach Host/anderen
+  laufenden Projekten unterscheiden — sie hier zu erraten und hart zu kodieren wäre
+  unzuverlässig). Aufwand: ein zusätzlicher `networks`-Block, überschaubar.
+- **c) `FORWARDED_ALLOW_IPS=*`.** Vertraut jedem `X-Forwarded-For`, unabhängig vom
+  tatsächlichen TCP-Peer. Aktuell risikoarm, **weil** der Backend-Port nicht exponiert
+  ist — aber genau das ist eine stille, nicht erzwungene Abhängigkeit: Wird der
+  Backend-Host-Port jemals wieder geöffnet (z. B. für Debugging, und danach vergessen
+  zu entfernen — ist in diesem Repo bereits einmal passiert, s. Commit `68391bb`), kann
+  **jeder** aus dem Internet per gefälschtem `X-Forwarded-For`-Header eine beliebige
+  IP vortäuschen und damit Rate-Limits/Bruteforce-Bremsen umgehen. **Nicht empfohlen**
+  als Dauerlösung, explizit wegen dieses Risikos.
+
+**Empfehlung: Option b.** Etwas mehr Aufwand als c), aber ohne die stille Abhängigkeit
+von „Host-Port bleibt für immer geschlossen" und ohne die Brüchigkeit von a).
+
+#### 3. Entscheidungspunkt: volle oder gekürzte IP als Rate-Limit-Schlüssel?
+
+Nach Umsetzung von Option b liest `request.client.host` die echte, weitergereichte
+Besucher-IP. Offen ist, ob diese **voll** oder **vorab gekürzt** (wie in M19, aber
+hier zusätzlich auf den Rate-Limit-*Schlüssel* angewandt — M19 selbst ändert nur den
+Access-Log-Text, nicht `scope["client"]`, betrifft slowapi/Backoff also nicht
+automatisch) als Schlüssel verwendet wird:
+
+| | **Voll** | **Gekürzt (/24 IPv4, /48 IPv6)** |
+|---|---|---|
+| Zuordnungsgenauigkeit | Exakt pro Besucher | Mehrere Besucher im selben Adressblock teilen sich einen Zähler |
+| Praktisches Risiko | Keins zusätzlich zum Bestehenden | Nutzer hinter Mobilfunk-CGNAT oder Firmen-NAT (oft Hunderte Geräte in einem /24) können sich gegenseitig aussperren — dasselbe Grundproblem wie heute, nur eine Stufe kleiner statt komplett gelöst |
+| Datenschutz | IP wird **in-memory** gehalten (nicht geloggt — s. u.) | Etwas datensparsamer, aber der Unterschied ist gering, da ohnehin nicht geloggt/persistiert |
+| Konsistenz mit M19 | M19 kürzt nur den Log-**Text**; der Schlüsselwert bliebe eine separate, unabhängige Verarbeitung | Würde bedeuten: derselbe Kürzungs-Helper (`backend/app/core/logging.truncate_ip`) wird zusätzlich hier wiederverwendet |
+
+**Geprüft und belegt — „voll" wird nirgends geloggt:** slowapis Standard-Storage ist
+`MemoryStorage` (kein `storage_uri` in `backend/app/core/limiter.py` gesetzt) — reiner
+Zähler im Prozessspeicher, nicht auf Platte, nicht in einem Logger. Der
+Backoff-`TTLCache` (`auth/service.py:12`) ebenso: In-Memory, TTL 600s, kein
+`logger`-Aufruf in `record_failed_attempt`/`compute_delay`. Beide Werte verschwinden
+beim Neustart des Containers bzw. nach Ablauf des jeweiligen Zeitfensters.
+
+**Empfehlung: volle IP.** Begründung: Die gekürzte Variante löst das
+Denial-of-Service-Problem nur unvollständig (CGNAT/Firmen-NAT-Kollisionen bleiben ein
+reales Risiko, gerade bei Mobilfunknutzern), während der Datenschutz-Mehrwert der
+Kürzung hier gering ist, da der Wert ohnehin nie geloggt oder persistiert wird, nur
+kurzzeitig (Rate-Limit-Fenster bzw. 600s) im Arbeitsspeicher liegt und einem klar
+umrissenen, legitimen Sicherheitszweck dient. **Entscheidung liegt bei Azzam.**
+
+#### 4. Wirkung auf M19 / §4 der Datenschutzerklärung
+
+Der M19-Filter (`TruncateClientIPFilter`) hängt am `uvicorn.access`-Logger und kürzt,
+was auch immer zum Zeitpunkt des Log-Schreibens in `scope["client"]` steht — er ist
+unabhängig davon, wie dieser Wert zustande kam. **Er greift nach der Umstellung
+unverändert weiter**, kürzt danach aber die tatsächliche, weitergereichte
+Besucher-IP statt der bisherigen internen Frontend-IP. Die Aussage in §4 („IP-Adresse
+gekürzt … Logs rotieren automatisch") bleibt damit **wörtlich weiterhin korrekt** —
+sie hat nie behauptet, wessen IP dort steht, nur dass sie gekürzt wird. **Keine
+Textänderung an §4 durch M20 nötig.**
+
+Separat davon: M20 führt eine **neue, bisher nirgends erwähnte** Datenverarbeitung
+ein — die Datenschutzerklärung beschreibt aktuell keine IP-basierte
+Rate-Limitierung/Bruteforce-Bremse überhaupt (weder in-memory noch anderweitig). Das
+ist keine Ungenauigkeit einer bestehenden Aussage, sondern eine Lücke, die bei der
+nächsten Textüberarbeitung mitgedacht werden sollte — hier bewusst nicht
+vorformuliert.
+
+### Akzeptanzkriterien
+
+**AK-M20.1:** Gegeben zwei Requests kommen mit unterschiedlichen (nach Option b
+vertrauenswürdig weitergereichten) Client-IPs an / Wenn beide denselben
+rate-limitierten Endpunkt aufrufen / Dann führen sie zu getrennten
+Rate-Limit-Zählern (slowapi).
+
+**AK-M20.2:** Gegeben zwei Requests mit unterschiedlichen Client-IPs lösen beide
+einen fehlgeschlagenen Login aus / Dann führen sie zu getrennten Einträgen im
+Backoff-`TTLCache`, nicht zu einem gemeinsamen Zähler.
+
+**AK-M20.3:** Gegeben ein Request kommt vom Backend-Zugriffslog aus gesehen an /
+Wenn die Zeile geschrieben wird / Dann steht dort weiterhin keine vollständige IP
+(M19 bleibt wirksam).
+
+**AK-M20.4:** Gegeben ein `X-Forwarded-For`-Header wird von einem **nicht**
+vertrauenswürdigen Absender gesendet (außerhalb des konfigurierten
+`FORWARDED_ALLOW_IPS`-Bereichs) / Wenn der Request das Backend erreicht / Dann wird
+der Header-Wert **nicht** übernommen — `scope["client"]` bleibt der tatsächliche
+TCP-Peer.
+
+**AK-M20.5:** Gegeben ein Request kommt regulär über den `frontend`-Container /
+Wenn die Umstellung aktiv ist / Dann funktioniert die normale Buchungs-/Login-Kette
+weiterhin unverändert (Regressionsschutz — keine Endpunkte brechen durch die
+Netz-/Env-Änderung).
+
+### Aufwandsschätzung
+~3–4 Stunden (Custom-Netz + `FORWARDED_ALLOW_IPS` in `docker-compose.yml` ~0,5–1h;
+ggf. Kürzungs-Wrapper für Rate-Limit-Schlüssel, falls Option „gekürzt" gewählt wird,
+~0,5–1h; Tests für beide Mechanismen inkl. Trust-Boundary-Test für
+`ProxyHeadersMiddleware` ~1,5–2h — hier zu beachten: der bestehende Testaufbau nutzt
+`ASGITransport` und ruft die FastAPI-`app` direkt auf, wodurch
+`ProxyHeadersMiddleware` (das nur beim echten uvicorn-Start über
+`Config.load()`/`configure_logging()` eingehängt wird) **nicht** mitgetestet wird —
+AK-M20.4 braucht entweder einen dedizierten Middleware-Unit-Test mit einem
+handgebauten ASGI-Scope oder einen echten End-to-End-Lauf wie bei M19). Risiko:
+**Mittel** — anders als M18/M19 ist dies eine sicherheitskritische
+Vertrauenskonfiguration: zu eng gefasst lässt das Problem ungelöst, zu weit gefasst
+öffnet Header-Spoofing (s. Option c oben). Sorgfältige Wahl und Test von
+`FORWARDED_ALLOW_IPS` sind entscheidend.
+
+---
+
 ## Offene Fragen
 
 1. **Pagination für Kundenliste?** Bei >100 Kunden wird die Liste unhandlich. Soll Pagination (Backend: `limit`/`offset`-Parameter) in M1 mitgebaut werden oder als separates Ticket?
@@ -555,6 +735,6 @@ selbst beeinträchtigen.
 
 5. **Admin-Token-Refactoring (M7):** Soll M7 alle Admin-Seiten auf einmal umstellen oder seitenweise als Teil der jeweiligen Bug-Fixes?
 
-6. **Traefik-Access-Log (im Rahmen von M19 aufgefallen):** Traefik läuft als separater, Coolify-verwalteter Container außerhalb dieses Repos. Ist dessen Access-Log aktiv, welches Format hat es, und wie lange wird es aufbewahrt? Von hier aus nicht prüfbar (Coolify-Proxy-Einstellungen bzw. SSH auf den Server nötig). Falls dort volle Besucher-IPs unbegrenzt geloggt werden, bleibt das PII-Log-Problem auf Infrastrukturebene bestehen, auch wenn Backend/Frontend jetzt sauber sind.
+6. ~~**Traefik-Access-Log:**~~ **Geschlossen 2026-07-20.** Kein Access-Log vorhanden (`docker logs coolify-proxy` zeigt nur ACME-Fehlermeldungen ohne IP-Bezug) — kein zweiter Speicherort für Besucher-IPs. S. M19 oben.
 
-7. **Soll `FORWARDED_ALLOW_IPS` gesetzt werden (im Rahmen von M19 aufgefallen):** Aktuell vertraut uvicorn keinem `X-Forwarded-For`-Header, weil der einzige Zugriffspfad zum Backend über den `frontend`-Container läuft, dessen interne Docker-IP nicht in uvicorns Standard-`trusted_hosts` (`127.0.0.1`) enthalten ist — im Zugriffslog steht deshalb aktuell die interne Frontend-IP, nicht die reale Besucher-IP. Das ist datenschutzfreundlich, macht das Backend-Log aber für Abuse-/Missbrauchserkennung wertlos. Soll das so bleiben, oder soll `FORWARDED_ALLOW_IPS` auf die Frontend-Container-Adresse gesetzt werden (dann würde M19 die dann tatsächlich reale, weitergereichte Besucher-IP kürzen, nicht mehr nur die interne)?
+7. **`FORWARDED_ALLOW_IPS` setzen?** — jetzt als **M20** spezifiziert (Sicherheitsbefund: Rate-Limits laufen aktuell gegen die interne Frontend-IP statt gegen die echte Besucher-IP, alle Besucher teilen sich ein Kontingent). S. M20 unten, insbesondere Entscheidungspunkt 3 (volle vs. gekürzte IP für den Rate-Limit-Schlüssel).

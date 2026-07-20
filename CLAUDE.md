@@ -107,9 +107,19 @@ Es gibt derzeit folgende dokumentierte Befunde (siehe `docs/analysis/ADMIN_FIX_S
 - **M16:** Admin-Kalender: Neues Datum & Uhrzeit im Termin-Modal unschön (leer) vorbelegt.
 - **M17:** Admin-Kalender: Inkonsistente Akzentfarbe (Violett in Modal und Events statt Malachite).
 - **M18 (P0, umgesetzt, noch nicht deployed):** Security/DSGVO: PII in Klartext-Logs. SQL-Echo war hartkodiert (`echo=True`) und drei eigene `logger.error`-Aufrufe protokollierten E-Mail-Adressen. Jetzt: `SQL_ECHO`-Env-Var (Default `False`), Log-Aufrufe nutzen `customer.id` statt E-Mail. **Nach Deploy: Alt-Logs auf dem Server manuell leeren** (siehe Deployment-Abschnitt unten).
-- **M19 (P1, umgesetzt und getestet, wartet auf Deploy-Freigabe):** Security/DSGVO: Log-Rotation (Docker `logging`-Optionen für `backend`+`frontend`) und IP-Kürzung im Zugriffslog (`backend/app/core/logging.py`, letztes IPv4-Oktett / letzte 80 IPv6-Bit vor dem Schreiben auf `0`). Datenschutzerklärung §4 entsprechend ein zweites Mal angepasst ("gekürzt … rotieren automatisch"). Details inkl. zweier Anschlussbefunde (Traefik-Log ungeprüft, `forwarded_allow_ips` erfasst Frontend-Container nicht) in `docs/analysis/ADMIN_FIX_SPEC.md`.
+- **M19 (P1, umgesetzt und getestet, wartet auf Deploy-Freigabe):** Security/DSGVO: Log-Rotation (Docker `logging`-Optionen für `backend`+`frontend`) und IP-Kürzung im Zugriffslog (`backend/app/core/logging.py`, letztes IPv4-Oktett / letzte 80 IPv6-Bit vor dem Schreiben auf `0`). Datenschutzerklärung §4 entsprechend ein zweites Mal angepasst ("gekürzt … rotieren automatisch"). **Traefik-Access-Log geprüft und geschlossen** (2026-07-20, Azzam auf dem Server): kein Access-Log, kein zweiter IP-Speicherort — §4 vollständig korrekt. Details in `docs/analysis/ADMIN_FIX_SPEC.md`.
+- **M20 (P1, spezifiziert, wartet auf Freigabe + Entscheidung):** Security (kein Datenschutzthema): Rate-Limits (Login, Registrierung, Passwort-Reset, öffentliche Buchung, Storno) laufen aktuell gegen die interne Frontend-Container-IP statt die echte Besucher-IP (`forwarded_allow_ips` erfasst den Frontend-Container nicht) — alle Besucher teilen sich faktisch ein Kontingent, ein Angreifer kann damit echte Kunden aussperren. Lösung + Optionen (`FORWARDED_ALLOW_IPS`, volle vs. gekürzte IP als Rate-Limit-Schlüssel) in `docs/analysis/ADMIN_FIX_SPEC.md`. Entscheidung zu voll/gekürzt steht noch aus.
 
 ## Deployment & Environment Variables
+
+**TLS-Zertifikat (`azzam-salon.de`):** Aktuell gültig bis **14.10.2026** (ausgestellt
+16.07.2026, Coolify/Traefik-ACME). Coolify erneuert Let's-Encrypt-Zertifikate i. d. R.
+automatisch vor Ablauf — **Mitte September 2026 trotzdem gegenprüfen** (Coolify-UI
+oder `docker logs coolify-proxy`), dass die Erneuerung tatsächlich gegriffen hat.
+Hinweis aus derselben Prüfung (2026-07-20): ACME-Fehlermeldungen mit Token `*` im
+Traefik-Log stammen mit hoher Wahrscheinlichkeit von externen Scannern
+(`/.well-known/acme-challenge/`), kein Konfigurationsfehler. DNS korrekt: beide
+`azzam-salon.de` und `www.azzam-salon.de` zeigen auf den Server.
 
 **WICHTIG**: Die Umgebungsvariable `RETENTION_CRON_SECRET` ist **Pflicht**. Das Backend startet nicht (Pydantic ValidationError), wenn diese Variable fehlt. Dies schtzt den DSGVO-Lschendpunkt vor unautorisiertem Zugriff. Bei jedem neuen Server-Setup oder Coolify-Deploy MUSS diese Variable gesetzt werden.
 
