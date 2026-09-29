@@ -226,8 +226,7 @@ uvicorn-Subprozess-Test läuft separat: `RUN_E2E_TESTS=1 pytest tests/integratio
 
 ## Workflow Regeln
 
-- **Vor jedem Push muss 
-pm run build im Frontend lokal grn sein**. Ein Push lst bei uns den Produktions-Deploy aus.
+- **Vor jedem Push muss `npm run build` im Frontend lokal grün sein**. Ein Push löst bei uns den Produktions-Deploy aus.
 - **Push nur nach meiner ausdrcklichen Freigabe**.
 - **Ein Test zählt erst als Nachweis, wenn er nachweislich ausgeführt wurde und grün
   war.** Eine Testdatei, die existiert und plausibel aussieht, ist kein Beleg — sie
