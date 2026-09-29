@@ -1,10 +1,12 @@
 from datetime import datetime
 
 from app.core.config import settings
+from app.core.time import format_salon
 
 
 def _fmt(dt: datetime) -> str:
-    return dt.strftime("%d.%m.%Y um %H:%M Uhr")
+    """Appointment time as the salon means it: Berlin wall time (never the raw UTC clock)."""
+    return format_salon(dt, "%d.%m.%Y um %H:%M Uhr")
 
 
 def render_verification(*, customer_name: str, token: str) -> tuple[str, str]:

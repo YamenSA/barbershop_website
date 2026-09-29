@@ -3,6 +3,7 @@ from typing import Optional
 from uuid import UUID
 
 from pydantic import BaseModel, EmailStr, field_validator
+from app.core.schema_types import SalonDatetimeIn, SalonDatetimeOut
 
 
 def _require_strong_password(v: str) -> str:
@@ -58,8 +59,8 @@ class AccountAppointmentRead(BaseModel):
     id: UUID
     service_name: str
     team_member_name: str
-    starts_at: datetime
-    ends_at: datetime
+    starts_at: SalonDatetimeOut
+    ends_at: SalonDatetimeOut
     status: str
     cancellable: bool
     reschedulable: bool
@@ -71,7 +72,7 @@ class AppointmentListOut(BaseModel):
 
 
 class RescheduleRequest(BaseModel):
-    starts_at: datetime
+    starts_at: SalonDatetimeIn
     team_member_id: Optional[UUID] = None
 
 

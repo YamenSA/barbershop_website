@@ -13,6 +13,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 logger = logging.getLogger(__name__)
 
 from app.core.config import settings
+from app.core.time import as_utc, combine_local, salon_day_bounds, to_salon, to_utc
 from app.domains.booking.models import Appointment, AppointmentOrigin, AppointmentStatus, Customer
 from app.domains.booking.schemas import (
     AppointmentCreate,
@@ -115,8 +116,7 @@ class BookingService:
         if not service:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Service not found")
 
-        starts_at = appointment_in.starts_at.replace(tzinfo=timezone.utc) \
-            if appointment_in.starts_at.tzinfo is None else appointment_in.starts_at
+        starts_at = to_utc(appointment_in.starts_at)  # naive = salon (Berlin) wall time
         ends_at = starts_at + timedelta(minutes=service.duration_minutes)
 
         if not appointment_in.admin_override:
@@ -150,7 +150,10 @@ class BookingService:
         session: AsyncSession, team_member_id: UUID, starts_at: datetime, ends_at: datetime, service: Service
     ) -> None:
         from app.domains.stammdaten.models import SalonClosure, SalonHours, DayOverride, WorkingDaySchedule
-        appt_date = starts_at.date()
+        # Salon rules are Berlin wall time: derive date/weekday/clock from the local view.
+        local_start = to_salon(starts_at)
+        local_end = to_salon(ends_at)
+        appt_date = local_start.date()
         weekday = appt_date.weekday()
 
         closure_stmt = select(SalonClosure).where(SalonClosure.date == appt_date)
@@ -173,8 +176,8 @@ class BookingService:
                 raise HTTPException(status_code=422, detail="Mitarbeiter hat an diesem Tag frei")
             eff_start = day_override.custom_start_time
             eff_end = day_override.custom_end_time
-            window_start = datetime.combine(appt_date, max(salon_hours.open_time, eff_start), tzinfo=timezone.utc)
-            window_end = datetime.combine(appt_date, min(salon_hours.close_time, eff_end), tzinfo=timezone.utc)
+            window_start = combine_local(appt_date, max(salon_hours.open_time, eff_start))
+            window_end = combine_local(appt_date, min(salon_hours.close_time, eff_end))
             if starts_at < window_start or ends_at > window_end:
                 raise HTTPException(status_code=422, detail="Termin liegt außerhalb der Arbeitszeiten")
         else:
@@ -186,8 +189,8 @@ class BookingService:
             if not schedule or not schedule.is_working or not schedule.intervals:
                 raise HTTPException(status_code=422, detail="Mitarbeiter arbeitet an diesem Tag nicht")
             
-            appt_start_time = starts_at.time() if starts_at.tzinfo is None else starts_at.replace(tzinfo=None).time()
-            appt_end_time = ends_at.time() if ends_at.tzinfo is None else ends_at.replace(tzinfo=None).time()
+            appt_start_time = local_start.time().replace(tzinfo=None)
+            appt_end_time = local_end.time().replace(tzinfo=None)
             fits = False
             for iv in schedule.intervals:
                 eff_start = max(salon_hours.open_time, iv.start_time)
@@ -239,10 +242,10 @@ class BookingService:
         if customer_id:
             statement = statement.where(Appointment.customer_id == customer_id)
         if from_date:
-            from_dt = datetime.combine(from_date, time_type.min, tzinfo=timezone.utc)
+            from_dt = salon_day_bounds(from_date)[0]
             statement = statement.where(Appointment.starts_at >= from_dt)
         if to_date:
-            to_dt = datetime.combine(to_date + timedelta(days=1), time_type.min, tzinfo=timezone.utc)
+            to_dt = salon_day_bounds(to_date)[1]
             statement = statement.where(Appointment.starts_at < to_dt)
         results = await session.execute(statement)
         return results.scalars().all()
@@ -259,8 +262,11 @@ class BookingService:
 
         if update_in.starts_at is not None or update_in.team_member_id is not None:
             new_member_id = update_in.team_member_id or appointment.team_member_id
-            new_starts = update_in.starts_at or appointment.starts_at
-            new_starts = new_starts.replace(tzinfo=timezone.utc) if new_starts.tzinfo is None else new_starts
+            new_starts = (
+                to_utc(update_in.starts_at)
+                if update_in.starts_at is not None
+                else as_utc(appointment.starts_at)
+            )
 
             svc = await session.get(Service, appointment.service_id)
             new_ends = new_starts + timedelta(minutes=svc.duration_minutes)
@@ -407,18 +413,15 @@ async def reschedule_appointment(
 
     # Normalize new_starts_at to UTC
     now = datetime.now(timezone.utc)
-    new_starts = (
-        new_starts_at.replace(tzinfo=timezone.utc)
-        if new_starts_at.tzinfo is None
-        else new_starts_at.astimezone(timezone.utc)
-    )
+    new_starts = to_utc(new_starts_at)  # naive = salon (Berlin) wall time
 
     # Guardrails
     if new_starts < now + timedelta(hours=settings.BOOKING_MIN_LEAD_HOURS):
         raise HTTPException(status_code=422, detail="BOOKING_TOO_SOON")
     if new_starts > now + timedelta(days=settings.BOOKING_MAX_HORIZON_DAYS):
         raise HTTPException(status_code=422, detail="BOOKING_TOO_FAR")
-    if new_starts.minute % 15 != 0 or new_starts.second != 0 or new_starts.microsecond != 0:
+    local_new = to_salon(new_starts)
+    if local_new.minute % 15 != 0 or local_new.second != 0 or local_new.microsecond != 0:
         raise HTTPException(status_code=422, detail="INVALID_SLOT_TIME")
 
     service = await session.get(Service, appt.service_id)
@@ -542,7 +545,7 @@ async def _build_cancellation_view(
     service = await session.get(Service, appointment.service_id)
     team_member = await session.get(TeamMember, appointment.team_member_id)
     now = datetime.now(timezone.utc)
-    deadline = appointment.starts_at - timedelta(hours=settings.CANCELLATION_CUTOFF_HOURS)
+    deadline = as_utc(appointment.starts_at) - timedelta(hours=settings.CANCELLATION_CUTOFF_HOURS)
     cancellable = (
         appointment.status == AppointmentStatus.confirmed
         and now < deadline
@@ -578,8 +581,8 @@ async def cancel_by_token(session: AsyncSession, token: str):
     if appointment.status == AppointmentStatus.cancelled:
         return await _build_cancellation_view(session, appointment)
 
-    # Deadline check
-    deadline = appointment.starts_at - timedelta(hours=settings.CANCELLATION_CUTOFF_HOURS)
+    # Deadline check: 24 REAL hours (instant arithmetic on real UTC)
+    deadline = as_utc(appointment.starts_at) - timedelta(hours=settings.CANCELLATION_CUTOFF_HOURS)
     if datetime.now(timezone.utc) >= deadline:
         raise HTTPException(status_code=410, detail="CANCELLATION_WINDOW_CLOSED")
 
@@ -597,11 +600,7 @@ async def create_public_appointment(
     now = datetime.now(timezone.utc)
 
     # Normalize to UTC
-    starts_at = (
-        data.starts_at.replace(tzinfo=timezone.utc)
-        if data.starts_at.tzinfo is None
-        else data.starts_at.astimezone(timezone.utc)
-    )
+    starts_at = to_utc(data.starts_at)  # naive = salon (Berlin) wall time
 
     # Guardrails
     if starts_at < now + timedelta(hours=settings.BOOKING_MIN_LEAD_HOURS):
@@ -609,8 +608,9 @@ async def create_public_appointment(
     if starts_at > now + timedelta(days=settings.BOOKING_MAX_HORIZON_DAYS):
         raise HTTPException(status_code=422, detail="BOOKING_TOO_FAR")
 
-    # 15-minute grid
-    if starts_at.minute % 15 != 0 or starts_at.second != 0 or starts_at.microsecond != 0:
+    # 15-minute grid (on the salon wall clock)
+    local_start = to_salon(starts_at)
+    if local_start.minute % 15 != 0 or local_start.second != 0 or local_start.microsecond != 0:
         raise HTTPException(status_code=422, detail="INVALID_SLOT_TIME")
 
     # Load service

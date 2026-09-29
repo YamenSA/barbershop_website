@@ -20,6 +20,8 @@ dependencies = [
     "slowapi>=0.1.9",
     "fpdf2>=2.7.0",
     "cachetools>=5.3.3",
+    # IANA tz database for zoneinfo("Europe/Berlin") — Windows/dev has none, slim images may not.
+    "tzdata>=2024.1",
 ]
 requires-python = ">=3.11"
 

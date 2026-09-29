@@ -5,6 +5,7 @@ import pytest
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
+from app.core.time import combine_local, to_salon
 from app.domains.booking.availability import get_available_slots
 from app.domains.stammdaten.models import (
     DayOverride,
@@ -38,8 +39,9 @@ async def test_basic_slot_generation(session: AsyncSession):
 
     # Expected slots: 09:00, 09:15, 09:30, 09:45, 10:00, 10:15, 10:30 (ends at 11:00)
     assert len(slots) == 7
-    assert slots[0].starts_at == datetime.combine(test_date, time(9, 0), tzinfo=timezone.utc)
-    assert slots[-1].starts_at == datetime.combine(test_date, time(10, 30), tzinfo=timezone.utc)
+    # Salon hours are Berlin wall time: 09:00 Berlin on 13 Jul 2026 (CEST) is 07:00 UTC.
+    assert slots[0].starts_at == combine_local(test_date, time(9, 0))
+    assert slots[-1].starts_at == combine_local(test_date, time(10, 30))
 
 
 @pytest.mark.asyncio
@@ -86,8 +88,8 @@ async def test_working_exception_blocks_slots(session: AsyncSession):
     # Lunch break 10:00 - 11:00
     session.add(WorkingException(
         team_member_id=member.id,
-        starts_at=datetime.combine(test_date, time(10, 0), tzinfo=timezone.utc),
-        ends_at=datetime.combine(test_date, time(11, 0), tzinfo=timezone.utc),
+        starts_at=combine_local(test_date, time(10, 0)),
+        ends_at=combine_local(test_date, time(11, 0)),
         reason="Lunch"
     ))
     await session.commit()
@@ -95,9 +97,9 @@ async def test_working_exception_blocks_slots(session: AsyncSession):
     slots = await get_available_slots(session, member.id, service.id, test_date)
     # Expected: 09:00 (ends 10:00), 11:00 (ends 12:00). 10:00 is blocked.
     assert len(slots) == 2
-    assert any(s.starts_at.time() == time(9, 0) for s in slots)
-    assert any(s.starts_at.time() == time(11, 0) for s in slots)
-    assert not any(s.starts_at.time() == time(10, 0) for s in slots)
+    assert any(to_salon(s.starts_at).time() == time(9, 0) for s in slots)
+    assert any(to_salon(s.starts_at).time() == time(11, 0) for s in slots)
+    assert not any(to_salon(s.starts_at).time() == time(10, 0) for s in slots)
 
 
 @pytest.mark.asyncio
@@ -146,8 +148,8 @@ async def test_extra_hours_override_uses_custom_times(session: AsyncSession):
     slots = await get_available_slots(session, member.id, service.id, test_date)
     # Expected: 14:00, 14:15, 14:30, 14:45, 15:00.
     assert len(slots) == 5
-    assert all(s.starts_at.time() >= time(14, 0) for s in slots)
-    assert all(s.starts_at.time() < time(16, 0) for s in slots)
+    assert all(to_salon(s.starts_at).time() >= time(14, 0) for s in slots)
+    assert all(to_salon(s.starts_at).time() < time(16, 0) for s in slots)
 
 
 @pytest.mark.asyncio

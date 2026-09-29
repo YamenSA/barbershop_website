@@ -1,0 +1,6 @@
+{
+  "_comment": "Decisions for rows the deterministic rules cannot classify (TIMEZONE_HOTFIX_SPEC.md 2.4). Keys are row ids. appointments / working_exceptions: 'W' (Berlin clock reading stored as UTC -> convert) or 'R' (already real UTC -> leave). dst_edge: same, for W rows whose clock reading is ambiguous or non-existent. Empty = every row is classified by the rules (verified by production queries a-e, all 22 appointments are W).",
+  "appointments": {},
+  "working_exceptions": {},
+  "dst_edge": {}
+}

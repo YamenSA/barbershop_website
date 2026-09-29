@@ -7,6 +7,8 @@ from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.core.config import settings
+from app.core.schema_types import SalonDatetimeOut
+from app.core.time import as_utc, combine_local
 from app.domains.stammdaten.models import (
     DayOverride,
     SalonClosure,
@@ -21,8 +23,8 @@ from app.domains.stammdaten.models import (
 
 
 class SlotResult(BaseModel):
-    starts_at: datetime
-    ends_at: datetime
+    starts_at: SalonDatetimeOut
+    ends_at: SalonDatetimeOut
 
 
 async def get_available_slots(
@@ -90,8 +92,8 @@ async def get_available_slots(
     # 6. Load exceptions for the full day span
     overall_start = min(w[0] for w in working_windows)
     overall_end = max(w[1] for w in working_windows)
-    start_dt = datetime.combine(target_date, overall_start, tzinfo=timezone.utc)
-    end_dt = datetime.combine(target_date, overall_end, tzinfo=timezone.utc)
+    start_dt = combine_local(target_date, overall_start)
+    end_dt = combine_local(target_date, overall_end)
     
     exception_stmt = select(WorkingException).where(
         WorkingException.team_member_id == team_member_id,
@@ -117,8 +119,8 @@ async def get_available_slots(
     slots: List[SlotResult] = []
     
     for w_start, w_end in working_windows:
-        window_start_dt = datetime.combine(target_date, w_start, tzinfo=timezone.utc)
-        window_end_dt = datetime.combine(target_date, w_end, tzinfo=timezone.utc)
+        window_start_dt = combine_local(target_date, w_start)
+        window_end_dt = combine_local(target_date, w_end)
         current_dt = window_start_dt
         
         while current_dt + duration <= window_end_dt:
@@ -126,16 +128,16 @@ async def get_available_slots(
             
             is_blocked = False
             for exc in exceptions:
-                exc_start = exc.starts_at.replace(tzinfo=timezone.utc) if exc.starts_at.tzinfo is None else exc.starts_at
-                exc_end = exc.ends_at.replace(tzinfo=timezone.utc) if exc.ends_at.tzinfo is None else exc.ends_at
+                exc_start = as_utc(exc.starts_at)
+                exc_end = as_utc(exc.ends_at)
                 if current_dt < exc_end and slot_end > exc_start:
                     is_blocked = True
                     break
             
             if not is_blocked:
                 for apt in appointments:
-                    apt_start = apt.starts_at.replace(tzinfo=timezone.utc) if apt.starts_at.tzinfo is None else apt.starts_at
-                    apt_end = apt.ends_at.replace(tzinfo=timezone.utc) if apt.ends_at.tzinfo is None else apt.ends_at
+                    apt_start = as_utc(apt.starts_at)
+                    apt_end = as_utc(apt.ends_at)
                     if current_dt < apt_end and slot_end > apt_start:
                         is_blocked = True
                         break
@@ -209,8 +211,8 @@ async def _load_members_for_service(
 
 
 class PublicSlotResult(BaseModel):
-    starts_at: datetime
-    ends_at: datetime
+    starts_at: SalonDatetimeOut
+    ends_at: SalonDatetimeOut
     team_member_id: UUID
     team_member_name: str
 

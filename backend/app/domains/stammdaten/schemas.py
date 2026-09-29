@@ -3,6 +3,7 @@ from typing import List, Optional
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
+from app.core.schema_types import SalonDatetimeIn, SalonDatetimeOut
 from app.domains.stammdaten.models import TargetGroup, ServiceKind
 
 
@@ -134,18 +135,19 @@ class WorkingHoursUpdate(BaseModel):
 
 
 class WorkingExceptionBase(BaseModel):
-    starts_at: datetime
-    ends_at: datetime
     reason: Optional[str] = None
 
 
 class WorkingExceptionCreate(WorkingExceptionBase):
-    pass
+    starts_at: SalonDatetimeIn  # naive = salon (Berlin) wall time
+    ends_at: SalonDatetimeIn
 
 
 class WorkingExceptionRead(WorkingExceptionBase):
     id: UUID
     team_member_id: UUID
+    starts_at: SalonDatetimeOut
+    ends_at: SalonDatetimeOut
     model_config = ConfigDict(from_attributes=True)
 
 
