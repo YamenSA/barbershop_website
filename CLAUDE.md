@@ -108,7 +108,7 @@ Es gibt derzeit folgende dokumentierte Befunde (siehe `docs/analysis/ADMIN_FIX_S
 - **M17:** Admin-Kalender: Inkonsistente Akzentfarbe (Violett in Modal und Events statt Malachite).
 - **M18 (P0, umgesetzt, noch nicht deployed):** Security/DSGVO: PII in Klartext-Logs. SQL-Echo war hartkodiert (`echo=True`) und drei eigene `logger.error`-Aufrufe protokollierten E-Mail-Adressen. Jetzt: `SQL_ECHO`-Env-Var (Default `False`), Log-Aufrufe nutzen `customer.id` statt E-Mail. **Nach Deploy: Alt-Logs auf dem Server manuell leeren** (siehe Deployment-Abschnitt unten).
 - **M19 (P1, umgesetzt und getestet, wartet auf Deploy-Freigabe):** Security/DSGVO: Log-Rotation (Docker `logging`-Optionen für `backend`+`frontend`) und IP-Kürzung im Zugriffslog (`backend/app/core/logging.py`, letztes IPv4-Oktett / letzte 80 IPv6-Bit vor dem Schreiben auf `0`). Datenschutzerklärung §4 entsprechend ein zweites Mal angepasst ("gekürzt … rotieren automatisch"). **Traefik-Access-Log geprüft und geschlossen** (2026-07-20, Azzam auf dem Server): kein Access-Log, kein zweiter IP-Speicherort — §4 vollständig korrekt. Details in `docs/analysis/ADMIN_FIX_SPEC.md`.
-- **M20 (P1, spezifiziert, wartet auf Freigabe + Entscheidung):** Security (kein Datenschutzthema): Rate-Limits (Login, Registrierung, Passwort-Reset, öffentliche Buchung, Storno) laufen aktuell gegen die interne Frontend-Container-IP statt die echte Besucher-IP (`forwarded_allow_ips` erfasst den Frontend-Container nicht) — alle Besucher teilen sich faktisch ein Kontingent, ein Angreifer kann damit echte Kunden aussperren. Lösung + Optionen (`FORWARDED_ALLOW_IPS`, volle vs. gekürzte IP als Rate-Limit-Schlüssel) in `docs/analysis/ADMIN_FIX_SPEC.md`. Entscheidung zu voll/gekürzt steht noch aus.
+- **M20 (P1, umgesetzt und getestet, wartet auf Deploy-Freigabe):** Security (kein Datenschutzthema): Rate-Limits (Login, Registrierung, Passwort-Reset, öffentliche Buchung, Storno) liefen gegen die interne Frontend-Container-IP statt die echte Besucher-IP. Fix: `FORWARDED_ALLOW_IPS` als Pflichtvariable + gepinntes Docker-Netz (`172.28.238.0/24`, s. u.). Entscheidung: **volle IP** für Rate-Limiting (nirgends geloggt, nur kurz im Speicher — s. `docs/analysis/ADMIN_FIX_SPEC.md`, M20). AK-M20.4 (Header-Spoofing-Schutz) per echtem uvicorn-Subprozess verifiziert, nicht per `ASGITransport` — dieser Test ist wegen einer Windows-spezifischen Verlangsamung des Gesamtlaufs standardmäßig übersprungen und läuft explizit mit `RUN_E2E_TESTS=1` (Details in `ADMIN_FIX_SPEC.md`).
 
 ## Deployment & Environment Variables
 
@@ -122,6 +122,32 @@ Traefik-Log stammen mit hoher Wahrscheinlichkeit von externen Scannern
 `azzam-salon.de` und `www.azzam-salon.de` zeigen auf den Server.
 
 **WICHTIG**: Die Umgebungsvariable `RETENTION_CRON_SECRET` ist **Pflicht**. Das Backend startet nicht (Pydantic ValidationError), wenn diese Variable fehlt. Dies schtzt den DSGVO-Lschendpunkt vor unautorisiertem Zugriff. Bei jedem neuen Server-Setup oder Coolify-Deploy MUSS diese Variable gesetzt werden.
+
+**WICHTIG (M20)**: Die Umgebungsvariable `FORWARDED_ALLOW_IPS` ist ebenfalls **Pflicht**
+(gleiches Muster: fehlt sie, startet das Backend nicht). Sie steuert, welchen Peers
+uvicorn den `X-Forwarded-For`-Header vertraut — ohne sie fällt uvicorn lautlos auf
+seinen Default `127.0.0.1` zurück und die Login-/Buchungs-Rate-Limits laufen dann
+unbemerkt gegen die interne Frontend-Container-IP statt gegen die echte Besucher-IP
+(alle Besucher teilen sich ein Kontingent).
+
+**Wird NICHT in `docker-compose.yml` hartkodiert** — Coolify verwaltet das
+Docker-Netz selbst, ein Subnetz lässt sich auf einem bestehenden Netz nicht ändern
+(ein Pin-Versuch auf ein falsches Subnetz wurde deshalb wieder entfernt, s.
+`docs/analysis/ADMIN_FIX_SPEC.md`, M20). Stattdessen wie `CORS_ORIGINS`/
+`COOKIE_SECURE` als `${FORWARDED_ALLOW_IPS}` referenziert und von außen gesetzt:
+- **Lokal ohne Docker:** `127.0.0.1` (uvicorn-Default, kein Proxy im Spiel).
+- **Coolify/Produktion:** **Nicht raten** — erst `docker network inspect` auf dem
+  Server prüfen (beobachtet: `10.0.2.0/24`), dann in Coolifys Environment-Variablen
+  setzen. Empfohlen: das `/8` des beobachteten Subnetzes (aktuell `10.0.0.0/8`) —
+  übersteht eine Docker-Netz-Neuanlage mit anderem `/24` im selben privaten Block,
+  ohne die Header-Prüfung ganz aufzugeben (**niemals `*`**, außer der Backend-Port
+  ist garantiert nie extern erreichbar).
+- **Drift-Check:** Deckt der gesetzte Wert die eigene Container-Adresse nicht mehr
+  ab (z. B. nach einer Netz-Neuanlage), schreibt das Backend beim Start eine
+  Log-Warnung (`app/core/logging.py`). Nach jeder Änderung am Coolify-Docker-Netz
+  im Log danach schauen.
+
+Details: `docs/analysis/ADMIN_FIX_SPEC.md`, M20.
 
 ### Coolify Scheduled Tasks (Cronjobs)
 Für die tägliche Datenlöschung muss in Coolify ein Scheduled Task angelegt werden. Die Einrichtung erfolgt zweistufig:

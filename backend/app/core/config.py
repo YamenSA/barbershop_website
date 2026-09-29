@@ -7,6 +7,13 @@ class Settings(BaseSettings):
     RETENTION_CUSTOMER_MONTHS: int = 12
     RETENTION_CRON_SECRET: str
     SQL_ECHO: bool = False
+    # M20: uvicorn reads FORWARDED_ALLOW_IPS directly from the OS environment
+    # (uvicorn/config.py), not from this Settings object — this field exists
+    # purely as a trip-wire so a missing value fails startup loudly (like
+    # RETENTION_CRON_SECRET) instead of silently falling back to uvicorn's
+    # own default ("127.0.0.1"), which would leave rate limits keyed on the
+    # internal frontend-container IP with no visible error.
+    FORWARDED_ALLOW_IPS: str
 
     # Phase 1: Admin & Auth
     JWT_SECRET_KEY: str
