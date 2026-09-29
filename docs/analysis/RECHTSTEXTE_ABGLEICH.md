@@ -134,6 +134,7 @@ Ergänzend geprüft, **kein externer Request gefunden**: keine Analytics-Skripte
 9. **[Niedrig]** TikTok-Verlinkung im Code vorbereitet, in der Datenschutzerklärung (§10) nicht erwähnt; Live-Status auf dem Produktivserver ungeprüft.
 10. **[Niedrig]** `next.config.ts` erlaubt technisch beliebige externe Bildquellen (`remotePatterns: '**'`); aktuell ungenutzt, aber keine Beschränkung, die künftigen Missbrauch verhindern würde.
 11. **[Erledigt]** Externe Schriftarten/Icons/Skripte/Stylesheets — geprüft, **kein Befund**. `next/font/google` hostet Barlow Condensed und Inter selbst (Build-Nachweis s. Teil 2, #26); keine Icon-Bibliothek (Inline-SVG, kein Paket in `package.json`); keine externen `<script>`/`<link>`-Quellen im Quellcode oder im gerenderten HTML-Output; keine `preconnect`/`dns-prefetch`-Hints zu Font-Hosts.
+12. **[Niedrig, neu — bei M20 aufgefallen]** IP-basierte Rate-Limitierung/Bruteforce-Bremse (Login, Registrierung, Passwort-Reset, öffentliche Buchung, Storno — `docs/analysis/ADMIN_FIX_SPEC.md`, M20) ist in der Datenschutzerklärung **nirgends erwähnt**, weder als eigener Abschnitt noch innerhalb von §3/§4. Verarbeitung ist kurzlebig und rein in-memory (belegt in M20), aber aktuell textlich nicht abgedeckt. Nur als offener Punkt festgehalten — bewusst nicht formuliert, das macht die juristische Prüfung.
 
 ---
 

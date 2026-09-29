@@ -3,7 +3,10 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
 from app.core.exceptions import setup_exception_handlers
-from app.core.logging import setup_access_log_ip_truncation
+from app.core.logging import (
+    setup_access_log_ip_truncation,
+    warn_if_forwarded_allow_ips_mismatches_network,
+)
 
 
 def create_app() -> FastAPI:
@@ -11,6 +14,11 @@ def create_app() -> FastAPI:
     # runs before this module is imported, so attaching the filter here is safe
     # — it won't be wiped out by a later dictConfig call.
     setup_access_log_ip_truncation()
+
+    # M20: FORWARDED_ALLOW_IPS being required only catches a MISSING value —
+    # a wrong one (e.g. after the Docker network is recreated with a
+    # different subnet) fails silently otherwise. Warn once at startup.
+    warn_if_forwarded_allow_ips_mismatches_network(settings.FORWARDED_ALLOW_IPS)
 
     app = FastAPI(
         title="Barbershop API",

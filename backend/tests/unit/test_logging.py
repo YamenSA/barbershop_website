@@ -1,6 +1,11 @@
 import logging
+from unittest.mock import patch
 
-from app.core.logging import TruncateClientIPFilter, truncate_ip
+from app.core.logging import (
+    TruncateClientIPFilter,
+    truncate_ip,
+    warn_if_forwarded_allow_ips_mismatches_network,
+)
 
 
 def test_truncate_ipv4_zeroes_last_octet():
@@ -67,3 +72,49 @@ def test_full_ip_never_reaches_the_formatted_log_line():
 
     assert full_ip not in formatted
     assert "203.0.113.0:54321" in formatted
+
+
+def test_no_warning_when_own_ip_is_inside_configured_range(caplog):
+    """M20: FORWARDED_ALLOW_IPS covering this container's own address is the
+    expected, healthy state — no warning."""
+    with patch("app.core.logging._own_container_ip", return_value="10.0.2.5"):
+        with caplog.at_level(logging.WARNING):
+            warn_if_forwarded_allow_ips_mismatches_network("10.0.0.0/8")
+    assert caplog.records == []
+
+
+def test_warns_when_own_ip_is_outside_configured_range(caplog):
+    """M20: the actual drift scenario this check exists for — e.g. Coolify
+    recreated the Docker network on a different subnet than what's
+    configured."""
+    with patch("app.core.logging._own_container_ip", return_value="10.0.2.5"):
+        with caplog.at_level(logging.WARNING):
+            warn_if_forwarded_allow_ips_mismatches_network("172.28.238.0/24")
+    assert len(caplog.records) == 1
+    assert "172.28.238.0/24" in caplog.records[0].message
+    assert "10.0.2.5" in caplog.records[0].message
+
+
+def test_no_warning_for_wildcard_trust():
+    """FORWARDED_ALLOW_IPS=* trusts everyone — there is nothing to compare
+    against, and it must never be flagged as "wrong"."""
+    with patch("app.core.logging._own_container_ip", return_value="10.0.2.5"):
+        warn_if_forwarded_allow_ips_mismatches_network("*")  # must not raise
+
+
+def test_no_warning_when_own_ip_cannot_be_resolved(caplog):
+    """Local dev outside Docker, or any environment where the container can't
+    resolve its own hostname — degrade silently, don't false-positive."""
+    with patch("app.core.logging._own_container_ip", return_value=None):
+        with caplog.at_level(logging.WARNING):
+            warn_if_forwarded_allow_ips_mismatches_network("10.0.0.0/8")
+    assert caplog.records == []
+
+
+def test_matches_literal_address_not_only_cidr(caplog):
+    """FORWARDED_ALLOW_IPS may be a bare literal address, not just a CIDR
+    range (matches uvicorn's own _TrustedHosts parsing) — must not false-positive."""
+    with patch("app.core.logging._own_container_ip", return_value="127.0.0.1"):
+        with caplog.at_level(logging.WARNING):
+            warn_if_forwarded_allow_ips_mismatches_network("127.0.0.1")
+    assert caplog.records == []

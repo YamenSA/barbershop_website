@@ -31,7 +31,7 @@ Es gibt derzeit folgende dokumentierte Befunde (siehe `docs/analysis/ADMIN_FIX_S
 - **M17:** Admin-Kalender: Inkonsistente Akzentfarbe (Violett in Modal und Events statt Malachite).
 - **M18 (P0, umgesetzt, noch nicht deployed):** Security/DSGVO: PII in Klartext-Logs. SQL-Echo war hartkodiert (`echo=True`) und drei eigene `logger.error`-Aufrufe protokollierten E-Mail-Adressen. Jetzt: `SQL_ECHO`-Env-Var (Default `False`), Log-Aufrufe nutzen `customer.id` statt E-Mail. **Nach Deploy: Alt-Logs auf dem Server manuell leeren** (siehe Deployment-Abschnitt unten).
 - **M19 (P1, umgesetzt und getestet, wartet auf Deploy-Freigabe):** Security/DSGVO: Log-Rotation (Docker `logging`-Optionen für `backend`+`frontend`) und IP-Kürzung im Zugriffslog (`backend/app/core/logging.py`, letztes IPv4-Oktett / letzte 80 IPv6-Bit vor dem Schreiben auf `0`). Datenschutzerklärung §4 entsprechend ein zweites Mal angepasst ("gekürzt … rotieren automatisch"). **Traefik-Access-Log geprüft und geschlossen** (2026-07-20, Azzam auf dem Server): kein Access-Log, kein zweiter IP-Speicherort — §4 vollständig korrekt. Details in `docs/analysis/ADMIN_FIX_SPEC.md`.
-- **M20 (P1, spezifiziert, wartet auf Freigabe + Entscheidung):** Security (kein Datenschutzthema): Rate-Limits (Login, Registrierung, Passwort-Reset, öffentliche Buchung, Storno) laufen aktuell gegen die interne Frontend-Container-IP statt die echte Besucher-IP (`forwarded_allow_ips` erfasst den Frontend-Container nicht) — alle Besucher teilen sich faktisch ein Kontingent, ein Angreifer kann damit echte Kunden aussperren. Lösung + Optionen (`FORWARDED_ALLOW_IPS`, volle vs. gekürzte IP als Rate-Limit-Schlüssel) in `docs/analysis/ADMIN_FIX_SPEC.md`. Entscheidung zu voll/gekürzt steht noch aus.
+- **M20 (P1, umgesetzt und getestet, wartet auf Deploy-Freigabe):** Security (kein Datenschutzthema): Rate-Limits (Login, Registrierung, Passwort-Reset, öffentliche Buchung, Storno) liefen gegen die interne Frontend-Container-IP statt die echte Besucher-IP. Fix: `FORWARDED_ALLOW_IPS` als Pflichtvariable (Wert = Subnetz des App-Docker-Netzes, kein Pin im Repo, s. u.). Entscheidung: **volle IP** für Rate-Limiting (nirgends geloggt, nur kurz im Speicher — s. `docs/analysis/ADMIN_FIX_SPEC.md`, M20). AK-M20.4 (Header-Spoofing-Schutz) per echtem uvicorn-Subprozess verifiziert, nicht per `ASGITransport` — dieser Test ist wegen einer Windows-spezifischen Verlangsamung des Gesamtlaufs standardmäßig übersprungen und läuft explizit mit `RUN_E2E_TESTS=1` (Details in `ADMIN_FIX_SPEC.md`).
 
 ## Deployment & Environment Variables
 
@@ -44,7 +44,37 @@ Traefik-Log stammen mit hoher Wahrscheinlichkeit von externen Scannern
 (`/.well-known/acme-challenge/`), kein Konfigurationsfehler. DNS korrekt: beide
 `azzam-salon.de` und `www.azzam-salon.de` zeigen auf den Server.
 
-**WICHTIG**: Die Umgebungsvariable `RETENTION_CRON_SECRET` ist **Pflicht**. Das Backend startet nicht (Pydantic ValidationError), wenn diese Variable fehlt. Dies schtzt den DSGVO-Lschendpunkt vor unautorisiertem Zugriff. Bei jedem neuen Server-Setup oder Coolify-Deploy MUSS diese Variable gesetzt werden.
+**WICHTIG**: `RETENTION_CRON_SECRET` ist **Pflicht** und wird nirgends im Repo vorbelegt.
+`docker-compose.yml` referenziert sie als `${RETENTION_CRON_SECRET:?…}`: fehlt sie oder ist
+sie leer, bricht bereits `docker compose` / der Coolify-Deploy ab; zusätzlich lässt
+`config.py` (`min_length=1`) einen leeren Wert beim Start nicht zu. Der Löschendpunkt bleibt
+damit vor unautorisiertem Zugriff geschützt. Bei jedem neuen Server-Setup oder Coolify-Deploy
+MUSS sie in Coolify gesetzt sein (früher war ein Standardwert im Compose-File hartkodiert).
+
+**WICHTIG (M20)**: Die Umgebungsvariable `FORWARDED_ALLOW_IPS` ist ebenfalls **Pflicht**
+(fehlt oder leer ⇒ `docker compose` bricht mit `:?` ab und `config.py` lehnt den Start ab).
+Sie steuert, welchen Peers uvicorn den `X-Forwarded-For`-Header vertraut — ohne sie fällt
+uvicorn lautlos auf seinen Default `127.0.0.1` zurück und die Login-/Buchungs-Rate-Limits
+laufen dann unbemerkt gegen die interne Frontend-Container-IP statt gegen die echte
+Besucher-IP (alle Besucher teilen sich ein Kontingent).
+
+**Wird NICHT in `docker-compose.yml` hartkodiert** — Coolify verwaltet das Docker-Netz
+selbst, ein Subnetz lässt sich auf einem bestehenden Netz nicht ändern (ein Pin-Versuch
+wurde deshalb wieder entfernt, s. `docs/analysis/ADMIN_FIX_SPEC.md`, M20). Der Wert wird wie
+`CORS_ORIGINS`/`COOKIE_SECURE` in Coolify gesetzt:
+- **Lokal ohne Docker:** `127.0.0.1` (uvicorn-Default, kein Proxy im Spiel).
+- **Coolify/Produktion:** **exakt das Subnetz des App-Docker-Netzes** (z. B. `10.0.2.0/24`),
+  **nicht** das umgebende `/8`. Backend-Peer ist der **Frontend**-Container (Next.js-Rewrite),
+  nicht Traefik. Docker vergibt Container-IPs dynamisch aus dem Netz-Subnetz und ändert sie bei
+  jedem Neustart — eine Einzeladresse (`/32`) bricht also beim nächsten Deploy; das Subnetz
+  des Netzes ist der kleinste Bereich, der den Frontend-Container auch danach sicher abdeckt.
+  Ermittlung (nur lesend), Begründung und Grenzen: `docs/deploy/M18-M20_DEPLOY_CHECKLIST.md`,
+  Abschnitt „FORWARDED_ALLOW_IPS ermitteln“. **Nie `*`.**
+- **Drift-Check:** Deckt der gesetzte Wert die eigene Container-Adresse nicht mehr ab (z. B.
+  nach einer Netz-Neuanlage mit anderem Subnetz), schreibt das Backend beim Start eine
+  Log-Warnung (`app/core/logging.py`). Nach jedem Deploy im Log danach schauen.
+
+Details: `docs/analysis/ADMIN_FIX_SPEC.md`, M20.
 
 ### Coolify Scheduled Tasks (Cronjobs)
 Für die tägliche Datenlöschung muss in Coolify ein Scheduled Task angelegt werden. Die Einrichtung erfolgt zweistufig:
@@ -60,6 +90,16 @@ Wenn das Log sauber ist, ändere den Command auf:
 - **Command**: `python scripts/retention_cron.py --execute`
 
 Das Skript schlägt fehl (Exit-Code != 0), wenn das Secret fehlt oder das Backend Fehler meldet.
+
+**Woher kommt das Secret?** Der Scheduled Task läuft per `docker exec` im laufenden
+`backend`-Container; `scripts/retention_cron.py` liest `RETENTION_CRON_SECRET` aus der
+**Umgebung dieses Containers** (dieselbe, aus der auch der Endpunkt es liest). Der Command
+darf das Secret daher **nicht** enthalten — exakt `python scripts/retention_cron.py`
+(bzw. `… --execute`). Secret wechseln = in Coolify ändern und das Backend **neu deployen**
+(Container neu erstellen); ein bestehender Container behält seine alte Umgebung. Am Task
+selbst ist dann nichts zu ändern (nur prüfen, dass im Command kein `RETENTION_CRON_SECRET=…`
+steht). Prüfung nach dem Deploy: `docs/deploy/M18-M20_DEPLOY_CHECKLIST.md`, Abschnitt 4.
+
 
 ### Alt-Logs mit PII bereinigen (einmalig, nach dem M18-Deploy)
 
@@ -89,11 +129,28 @@ weiterleitet oder einen anderen Logging-Treiber als `json-file` nutzt, müssen d
 auch dort bereinigt werden — das lässt sich von hier aus nicht prüfen, bitte in den
 Coolify-Server-/Logging-Einstellungen nachsehen.
 
+## Tests: SQLite und PostgreSQL
+
+Die Standard-Suite läuft gegen In-Memory-SQLite (`pytest -v`). PostgreSQL-spezifisches
+(z. B. der `EXCLUDE`-Constraint gegen Doppelbuchungen) prüft nur ein echtes Postgres:
+Tests mit dem Marker `@pytest.mark.postgres` werden auf SQLite **übersprungen** und laufen
+nur im PG-Modus (`TEST_DATABASE_URL=postgresql+asyncpg://…/<name>_test`, Datenbankname muss auf
+`_test` enden — `conftest.py` verweigert sonst; nach jedem Test wird `TRUNCATE`d).
+Voraussetzung: Docker läuft, Port 5432 ist frei, Python-venv aktiv. Nur Seed-/Testdaten.
+
+```sh
+cd backend && source .venv/Scripts/activate   # Linux/macOS: .venv/bin/activate
+bash scripts/run_pg_tests.sh                  # startet nur den compose-`db`-Dienst (eigenes Projekt
+                                              # + Volume), legt barbershop_test an, `alembic upgrade
+                                              # head`, `pytest -m postgres`, räumt danach auf
+```
+Ein PG-Test zählt erst als Nachweis, wenn dieser Lauf mit Ausgabe gezeigt wurde. Der
+uvicorn-Subprozess-Test läuft separat: `RUN_E2E_TESTS=1 pytest tests/integration/test_forwarded_for_trust_boundary.py`.
+
 ## Workflow Regeln
 
-- **Vor jedem Push muss 
-pm run build im Frontend lokal grn sein**. Ein Push lst bei uns den Produktions-Deploy aus.
-- **Push nur nach meiner ausdrcklichen Freigabe**.
+- **Vor jedem Push muss `npm run build` im Frontend lokal grün sein**. Ein Push löst bei uns den Produktions-Deploy aus.
+- **Push nur nach meiner ausdrücklichen Freigabe**.
 - **Ein Test zählt erst als Nachweis, wenn er nachweislich ausgeführt wurde und grün
   war.** Eine Testdatei, die existiert und plausibel aussieht, ist kein Beleg — sie
   muss tatsächlich unter `pytest` (bzw. dem jeweiligen Runner) gelaufen sein, mit

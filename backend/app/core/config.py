@@ -1,3 +1,4 @@
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -5,8 +6,18 @@ class Settings(BaseSettings):
     DATABASE_URL: str
     RETENTION_GUEST_MONTHS: int = 12
     RETENTION_CUSTOMER_MONTHS: int = 12
-    RETENTION_CRON_SECRET: str
+    # min_length=1: docker-compose turns a variable that is unset in Coolify into an
+    # EMPTY string, which a bare `str` would accept — the required-check would then
+    # never fire. An empty value must abort startup just like a missing one.
+    RETENTION_CRON_SECRET: str = Field(min_length=1)
     SQL_ECHO: bool = False
+    # M20: uvicorn reads FORWARDED_ALLOW_IPS directly from the OS environment
+    # (uvicorn/config.py), not from this Settings object — this field exists
+    # purely as a trip-wire so a missing value fails startup loudly (like
+    # RETENTION_CRON_SECRET) instead of silently falling back to uvicorn's
+    # own default ("127.0.0.1"), which would leave rate limits keyed on the
+    # internal frontend-container IP with no visible error.
+    FORWARDED_ALLOW_IPS: str = Field(min_length=1)
 
     # Phase 1: Admin & Auth
     JWT_SECRET_KEY: str

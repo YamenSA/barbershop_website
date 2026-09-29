@@ -1,7 +1,11 @@
+import os
+
 import pytest
 from httpx import AsyncClient, ASGITransport
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import NullPool
 from sqlmodel import SQLModel
 from sqlmodel.ext.asyncio.session import AsyncSession
 
@@ -12,15 +16,60 @@ from app.domains.auth.models import AdminAccount
 from app.main import app
 
 
+# Default: in-memory SQLite. PostgreSQL mode (tests marked `postgres`, e.g. the
+# EXCLUDE-constraint test) is opt-in via TEST_DATABASE_URL and expects a database
+# that `alembic upgrade head` has already been applied to — create_all() cannot
+# create the EXCLUDE constraint. See CLAUDE.md "Tests: SQLite und PostgreSQL" and
+# scripts/run_pg_tests.sh.
+TEST_DATABASE_URL = os.environ.get("TEST_DATABASE_URL", "sqlite+aiosqlite:///:memory:")
+IS_PG = TEST_DATABASE_URL.startswith("postgresql")
 
-TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
-
-engine = create_async_engine(TEST_DATABASE_URL, echo=False, future=True)
+if IS_PG:
+    # The PG fixture TRUNCATEs every table after each test — refuse anything that
+    # is not clearly a disposable test database (never a dev/prod database).
+    _db_name = TEST_DATABASE_URL.rsplit("/", 1)[-1].split("?")[0]
+    if not _db_name.endswith("_test"):
+        raise RuntimeError(
+            f"Refusing to run PG tests against database '{_db_name}': "
+            "TEST_DATABASE_URL must point at a database whose name ends in '_test'."
+        )
+    engine = create_async_engine(TEST_DATABASE_URL, echo=False, future=True, poolclass=NullPool)
+else:
+    engine = create_async_engine(TEST_DATABASE_URL, echo=False, future=True)
 async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+
+
+def pytest_collection_modifyitems(config, items):
+    skip_pg = pytest.mark.skip(
+        reason="needs PostgreSQL: set TEST_DATABASE_URL=postgresql+asyncpg://…/<name>_test "
+        "and run `pytest -m postgres` (see scripts/run_pg_tests.sh)"
+    )
+    skip_sqlite_suite = pytest.mark.skip(reason="PG mode runs only tests marked `postgres`")
+    for item in items:
+        is_pg_test = item.get_closest_marker("postgres") is not None
+        if is_pg_test and not IS_PG:
+            item.add_marker(skip_pg)
+        elif IS_PG and not is_pg_test:
+            item.add_marker(skip_sqlite_suite)
 
 
 @pytest.fixture(name="session")
 async def session_fixture():
+    if IS_PG:
+        async with async_session() as session:
+            yield session
+            await session.rollback()
+            tables = (
+                await session.execute(
+                    text("SELECT quote_ident(tablename) FROM pg_tables "
+                         "WHERE schemaname = 'public' AND tablename <> 'alembic_version'")
+                )
+            ).scalars().all()
+            if tables:
+                await session.execute(text(f"TRUNCATE {', '.join(tables)} RESTART IDENTITY CASCADE"))
+            await session.commit()
+        return
+
     async with engine.begin() as conn:
         await conn.run_sync(SQLModel.metadata.create_all)
 

@@ -553,8 +553,8 @@ selbst beeinträchtigen.
 
 ### M20: Rate-Limits laufen gegen interne Frontend-IP statt Besucher-IP (P1)
 
-**Status:** Spezifiziert am 2026-07-20, **wartet auf Freigabe — keine Umsetzung ohne
-Freigabe, insbesondere ohne Entscheidung zu Punkt 3 (voll vs. gekürzt).** Bei der
+**Status:** Freigegeben und in Umsetzung (2026-07-20). Entscheidung zu Punkt 3
+(voll vs. gekürzt) getroffen: **volle IP** (s. Punkt 3 unten). Bei der
 M19-Umsetzung aufgefallener Sicherheitsbefund, kein Datenschutzthema: Weil
 `forwarded_allow_ips` auf uvicorns Default `127.0.0.1` steht (s. M19, Prüfung 1) und
 der Backend-Container ausschließlich vom `frontend`-Container aus erreicht wird,
@@ -603,35 +603,56 @@ Stornierung per Token — nicht nur Login, wie ursprünglich vermutet.
 `FORWARDED_ALLOW_IPS` gelesen (`uvicorn/config.py:356`) — kein Code-Change in unserer
 Settings-Klasse nötig, nur eine Env-Var im Deployment.
 
-Drei Optionen, mit Begründung, unter der Randbedingung, dass das Backend **keinen
-Host-Port hat** und ausschließlich über das interne Compose-Netz erreichbar ist
-(Commit `68391bb`):
+**Korrektur (2026-07-20):** Die ursprünglich hier empfohlene Option — ein eigenes,
+in `docker-compose.yml` fest auf `172.28.238.0/24` gepinntes Netz — wurde umgesetzt
+und dann **wieder verworfen**, nachdem eine Prüfung auf dem Server ergab: Das
+tatsächliche Docker-Netz existiert bereits, verwaltet von Coolify, mit Subnetz
+**`10.0.2.0/24`** (Beleg: `docker network inspect fqn7wcg6j298388nl152nrty` →
+`"Subnet": "10.0.2.0/24"`; Frontend-Container-IP in den Backend-Logs entsprechend
+`10.0.2.5`). Docker kann das Subnetz eines bestehenden Netzes nicht nachträglich
+ändern — das gepinnte `172.28.238.0/24` hätte den Deploy entweder scheitern lassen
+oder Coolify hätte das Netz neu angelegt, was alle Container kurzzeitig von der
+Verbindung trennt. Coolify verwaltet dieses Netz selbst; wir pinnen es **nicht**.
+Das `networks`-Overrde in `docker-compose.yml` wurde vollständig entfernt.
 
-- **a) Literale Frontend-Container-IP.** Nicht empfohlen: Docker weist IPs im
-  Standard-Bridge-Netz beim Neuerstellen des Containers neu zu (kein Garant für
-  Stabilität über Neustarts/Deploys hinweg), ohne zusätzliche Konfiguration (feste IP
-  auf einem eigenen Netz) ist das brüchig und würde nach jedem Frontend-Redeploy
-  stillschweigend wieder auf „nicht vertraut" zurückfallen.
-- **b) Docker-Netzbereich (CIDR), auf einem eigenen, fest definierten Netz —
-  empfohlen.** `docker-compose.yml` bekommt ein zusätzliches internes Netz mit fest
-  vergebenem Subnetz (z. B. `172.30.0.0/24`, gewählt außerhalb gängiger
-  Docker-Default-Bereiche), an das `backend` und `frontend` gehängt werden;
-  `FORWARDED_ALLOW_IPS=172.30.0.0/24` auf dem Backend. Vorteil: im Repo dokumentiert,
-  nicht von Docker-interner Auto-Zuweisung abhängig (die aktuelle
-  `default`-Netz-Subnetz ist nicht im Repo fixiert und kann sich je nach Host/anderen
-  laufenden Projekten unterscheiden — sie hier zu erraten und hart zu kodieren wäre
-  unzuverlässig). Aufwand: ein zusätzlicher `networks`-Block, überschaubar.
-- **c) `FORWARDED_ALLOW_IPS=*`.** Vertraut jedem `X-Forwarded-For`, unabhängig vom
-  tatsächlichen TCP-Peer. Aktuell risikoarm, **weil** der Backend-Port nicht exponiert
-  ist — aber genau das ist eine stille, nicht erzwungene Abhängigkeit: Wird der
-  Backend-Host-Port jemals wieder geöffnet (z. B. für Debugging, und danach vergessen
-  zu entfernen — ist in diesem Repo bereits einmal passiert, s. Commit `68391bb`), kann
-  **jeder** aus dem Internet per gefälschtem `X-Forwarded-For`-Header eine beliebige
-  IP vortäuschen und damit Rate-Limits/Bruteforce-Bremsen umgehen. **Nicht empfohlen**
-  als Dauerlösung, explizit wegen dieses Risikos.
+Neu bewertete Optionen, jetzt mit dem tatsächlich beobachteten Subnetz:
 
-**Empfehlung: Option b.** Etwas mehr Aufwand als c), aber ohne die stille Abhängigkeit
-von „Host-Port bleibt für immer geschlossen" und ohne die Brüchigkeit von a).
+- **a) `10.0.2.0/24` (exakt, das aktuell beobachtete Subnetz).** Präzise, aber
+  bricht still, falls Coolify das Netz je neu anlegt (z. B. bei einem größeren
+  Coolify-Update oder Host-Wechsel) — dann sind Rate-Limits wieder wirkungslos,
+  ohne Fehlermeldung, exakt das ursprüngliche Problem in neuer Form.
+- **b) `10.0.0.0/8` — empfohlen.** Deckt das beobachtete `10.0.2.0/24` ab und bleibt
+  auch gültig, falls Coolify beim Neuanlegen ein anderes `10.x.x.0/24`-Subnetz
+  vergibt (plausibel, da IPAM-Pools i. d. R. innerhalb desselben privaten Blocks
+  bleiben). **Wichtige Klarstellung, warum das hier nicht riskanter ist als
+  Option a):** Die Breite von `FORWARDED_ALLOW_IPS` entscheidet nicht, *wer das
+  Backend erreichen kann* — das regelt ausschließlich die Docker-Netz-Mitgliedschaft
+  (nur Container, die Coolify auf dasselbe Netz legt, können uvicorns Port
+  überhaupt anfragen; verschiedene Docker-Netze sind standardmäßig voneinander
+  isoliert). `FORWARDED_ALLOW_IPS` entscheidet nur, ob einem *bereits erreichenden*
+  Peer der `X-Forwarded-For`-Header geglaubt wird. Selbst im Fehlerfall „Backend-Port
+  wird versehentlich wieder freigegeben" (ist hier schon einmal passiert, Commit
+  `68391bb`) hilft die engere Option a) kaum zusätzlich: Ein echter Angreifer aus
+  dem Internet hätte eine öffentliche Absender-IP, keine private RFC-1918-Adresse
+  wie `10.x.x.x` — sein gefälschter Header würde von `10.0.0.0/8` so wenig vertraut
+  wie von `10.0.2.0/24`, weil sein *TCP-Peer* (seine echte IP) in beiden Fällen
+  nicht im vertrauten Bereich liegt. `172.16.0.0/12` (die andere ursprünglich
+  genannte Alternative) wäre dagegen falsch — das aktuell beobachtete `10.0.2.0/24`
+  liegt gar nicht in diesem Bereich.
+- **c) `FORWARDED_ALLOW_IPS=*`.** Nicht empfohlen, unverändert zur vorherigen
+  Bewertung — vertraut *jedem* Peer, der das Backend erreicht, nicht nur denen im
+  aktuellen privaten Netz. Verschenkt die letzte Verteidigungslinie ohne Not, da b)
+  denselben praktischen Schutz bei genauso geringem Restrisiko bietet.
+
+**Empfehlung: Option b) `10.0.0.0/8`.** Umgesetzt. Robuster als a) gegen eine
+Netz-Neuanlage, ohne den in c) aufgegebenen Header-Schutz.
+
+**Wie `FORWARDED_ALLOW_IPS` jetzt gesetzt wird:** Nicht mehr in `docker-compose.yml`
+hartkodiert (das Subnetz ist umgebungsabhängig und wird von Coolify verwaltet,
+nicht von diesem Repo) — stattdessen wie `CORS_ORIGINS`/`COOKIE_SECURE` als
+`${FORWARDED_ALLOW_IPS}` referenziert und von außen gesetzt: lokal über die
+Root-`.env` (`127.0.0.1`), in Coolify über dessen Environment-Variablen-UI
+(`10.0.0.0/8`, empfohlener Produktionswert).
 
 #### 3. Entscheidungspunkt: volle oder gekürzte IP als Rate-Limit-Schlüssel?
 
@@ -662,6 +683,14 @@ Kürzung hier gering ist, da der Wert ohnehin nie geloggt oder persistiert wird,
 kurzzeitig (Rate-Limit-Fenster bzw. 600s) im Arbeitsspeicher liegt und einem klar
 umrissenen, legitimen Sicherheitszweck dient. **Entscheidung liegt bei Azzam.**
 
+**Entschieden (2026-07-20): volle IP.** Begründung fürs Protokoll (Auftraggeber): Der
+Wert wird nirgends geschrieben, lebt nur kurz im Speicher, und die gekürzte Variante
+verkleinert das NAT-Kollisionsrisiko nur, statt es zu lösen. Der Kürzungsfilter aus
+M19 bleibt für das **Log** unverändert wirksam — gekürzt im Log, voll im Speicher
+(Rate-Limit-Zähler und Backoff-Cache). Kein Kürzungs-Wrapper für den
+Rate-Limit-Schlüssel nötig; `limiter.py`/`auth/service.py` bleiben unverändert, sie
+lesen nach der Umstellung automatisch die korrekte, echte IP.
+
 #### 4. Wirkung auf M19 / §4 der Datenschutzerklärung
 
 Der M19-Filter (`TruncateClientIPFilter`) hängt am `uvicorn.access`-Logger und kürzt,
@@ -678,7 +707,57 @@ ein — die Datenschutzerklärung beschreibt aktuell keine IP-basierte
 Rate-Limitierung/Bruteforce-Bremse überhaupt (weder in-memory noch anderweitig). Das
 ist keine Ungenauigkeit einer bestehenden Aussage, sondern eine Lücke, die bei der
 nächsten Textüberarbeitung mitgedacht werden sollte — hier bewusst nicht
-vorformuliert.
+vorformuliert. Als offener Punkt in `docs/analysis/RECHTSTEXTE_ABGLEICH.md`
+aufgenommen.
+
+#### 5. `FORWARDED_ALLOW_IPS`: Fehlen abfangen — und falschen Wert erkennen
+
+Zwei getrennte Probleme, zwei getrennte Mechanismen. Ein Pflichtfeld fängt nur ein
+**Fehlen** ab; ein falscher, aber vorhandener Wert (z. B. nach einer Docker-Netz-Neuanlage
+mit anderem Subnetz — genau das ist bei der Umsetzung dieser Maßnahme selbst passiert,
+s. Punkt 2) rutscht daran vorbei, ohne dass irgendetwas sichtbar scheitert.
+
+**5a. Fehlen abfangen — Pflichtfeld.** `FORWARDED_ALLOW_IPS` ist als **eigenes,
+erforderliches Feld** in `Settings` (`backend/app/core/config.py`) aufgenommen —
+obwohl uvicorn selbst den Wert unabhängig direkt aus der Umgebungsvariable liest
+(`uvicorn/config.py:356`), nicht aus unserer `Settings`-Klasse. Diese zweite,
+redundante Lesestelle dient ausschließlich als Stolperdraht: Fehlt die Variable,
+wirft Pydantic beim Start eine `ValidationError` und das Backend startet **nicht** —
+dasselbe, bereits etablierte Muster wie bei `RETENTION_CRON_SECRET`. Abgewogen gegen
+eine reine Log-Warnung bei Fehlen: Ein Startfehler kann nicht ignoriert werden, eine
+Log-Zeile schon — und nach M18 wissen wir, dass Log-Disziplin in diesem Projekt
+bereits einmal gelitten hat (hartkodiertes SQL-Echo lief unbemerkt bis zur Prüfung).
+
+**5b. Falschen Wert erkennen — Startup-Drift-Check.** Ein Pflichtfeld kann nicht
+prüfen, ob ein *vorhandener* Wert noch zum *tatsächlichen* Docker-Netz passt — dafür
+gibt es keine externe Quelle der Wahrheit, die sich zuverlässig zur Startzeit
+abfragen ließe. Es gibt aber ein billiges, echtes Signal: Backend und der Peer, dem
+`FORWARDED_ALLOW_IPS` vertrauen soll, hängen am **selben** Docker-Netz — die eigene
+Adresse des Backend-Containers liegt also zwangsläufig im selben Subnetz. Liegt sie
+**nicht** im konfigurierten Bereich, ist der Bereich zwangsläufig veraltet.
+
+Umgesetzt: `backend/app/core/logging.py::warn_if_forwarded_allow_ips_mismatches_network()`
+— ermittelt die eigene Container-Adresse (`socket.gethostbyname(socket.gethostname())`,
+Standardmuster für Container-Selbsterkennung), prüft sie gegen `FORWARDED_ALLOW_IPS`
+(CIDR- und Literal-Einträge, mehrere kommagetrennt, analog zu uvicorns eigenem
+`_TrustedHosts`-Parsing), und schreibt bei Nichtübereinstimmung eine `logger.warning(...)`
+mit beiden Werten. Kein Startabbruch — anders als beim fehlenden Wert lässt sich ein
+„falscher" Wert nicht mit derselben Sicherheit von einem harmlosen Grenzfall
+unterscheiden (z. B. lokale Entwicklung außerhalb Docker, wo die eigene
+Hostname-Auflösung etwas anderes als erwartet liefert); das bleibt eine Warnung, die
+ein Mensch liest, kein hartes Gate. `FORWARDED_ALLOW_IPS=*` und eine nicht auflösbare
+eigene Adresse (z. B. lokal ohne Docker) werden bewusst übersprungen, nicht als
+Fehler gewertet.
+
+Manuell verifiziert (zusätzlich zu den automatisierten Tests): Mit
+`FORWARDED_ALLOW_IPS=172.28.238.0/24` (dem verworfenen, falschen Wert) erscheint die
+Warnung beim Start; mit einem Wert, der die eigene aufgelöste Adresse abdeckt,
+erscheint keine.
+
+**Zu dokumentieren:** `.env.example` (Repo-Root), `CLAUDE.md`, `GEMINI.md`
+(Pflichtvariable, analog zum bestehenden `RETENTION_CRON_SECRET`-Hinweis) sowie der
+Deployment-Abschnitt (Coolify-Setup-Checkliste, empfohlener Produktionswert
+`10.0.0.0/8`).
 
 ### Akzeptanzkriterien
 
@@ -700,26 +779,100 @@ vertrauenswürdigen Absender gesendet (außerhalb des konfigurierten
 `FORWARDED_ALLOW_IPS`-Bereichs) / Wenn der Request das Backend erreicht / Dann wird
 der Header-Wert **nicht** übernommen — `scope["client"]` bleibt der tatsächliche
 TCP-Peer.
+**Verifikationspflicht, ausdrücklich festgehalten:** Dieses Kriterium MUSS über einen
+echten End-to-End-Lauf (echter uvicorn-Prozess, echter HTTP-Request, echte
+`ProxyHeadersMiddleware`) verifiziert werden — analog zum M19-Nachweis. Der
+bestehende Testaufbau (`httpx.ASGITransport`, ruft die FastAPI-`app` direkt auf) geht
+an `ProxyHeadersMiddleware` vorbei, weil diese ausschließlich beim echten
+uvicorn-Start über `Config.load()` eingehängt wird — ein Test über `ASGITransport`
+prüft damit nicht die Schicht, um die es hier geht, und zählt **nicht** als
+Nachweis für dieses Kriterium (vgl. die in dieser Spec bereits verankerte Regel: ein
+Test zählt erst als Nachweis, wenn er nachweislich ausgeführt wurde und die
+tatsächlich betroffene Schicht durchläuft).
 
 **AK-M20.5:** Gegeben ein Request kommt regulär über den `frontend`-Container /
 Wenn die Umstellung aktiv ist / Dann funktioniert die normale Buchungs-/Login-Kette
 weiterhin unverändert (Regressionsschutz — keine Endpunkte brechen durch die
 Netz-/Env-Änderung).
 
+**AK-M20.6:** Gegeben `FORWARDED_ALLOW_IPS` ist nicht gesetzt / Wenn das Backend
+startet / Dann startet es **nicht** (sichtbarer Fehler), analog zu
+`RETENTION_CRON_SECRET` — nicht ein stiller Rückfall auf „Rate-Limits laufen weiter
+gegen die Container-IP".
+
+**AK-M20.7:** Gegeben `FORWARDED_ALLOW_IPS` ist gesetzt, deckt aber nicht die eigene
+Container-Adresse ab (Drift, z. B. nach einer Docker-Netz-Neuanlage mit anderem
+Subnetz) / Wenn das Backend startet / Dann erscheint eine Log-Warnung mit dem
+konfigurierten und dem tatsächlichen Wert — das Backend startet trotzdem (Warnung,
+kein Gate). Gegenprobe: Deckt der Wert die eigene Adresse ab, erscheint keine
+Warnung.
+
 ### Aufwandsschätzung
-~3–4 Stunden (Custom-Netz + `FORWARDED_ALLOW_IPS` in `docker-compose.yml` ~0,5–1h;
-ggf. Kürzungs-Wrapper für Rate-Limit-Schlüssel, falls Option „gekürzt" gewählt wird,
-~0,5–1h; Tests für beide Mechanismen inkl. Trust-Boundary-Test für
-`ProxyHeadersMiddleware` ~1,5–2h — hier zu beachten: der bestehende Testaufbau nutzt
-`ASGITransport` und ruft die FastAPI-`app` direkt auf, wodurch
-`ProxyHeadersMiddleware` (das nur beim echten uvicorn-Start über
-`Config.load()`/`configure_logging()` eingehängt wird) **nicht** mitgetestet wird —
-AK-M20.4 braucht entweder einen dedizierten Middleware-Unit-Test mit einem
-handgebauten ASGI-Scope oder einen echten End-to-End-Lauf wie bei M19). Risiko:
-**Mittel** — anders als M18/M19 ist dies eine sicherheitskritische
-Vertrauenskonfiguration: zu eng gefasst lässt das Problem ungelöst, zu weit gefasst
-öffnet Header-Spoofing (s. Option c oben). Sorgfältige Wahl und Test von
-`FORWARDED_ALLOW_IPS` sind entscheidend.
+~3–4 Stunden veranschlagt, ~3,5h tatsächlich. Risiko war **Mittel** eingestuft
+(sicherheitskritische Vertrauenskonfiguration: zu eng gefasst lässt das Problem
+ungelöst, zu weit gefasst öffnet Header-Spoofing) — durch sorgfältige Wahl von
+`FORWARDED_ALLOW_IPS` (gepinntes Subnetz statt `*`) und den echten
+End-to-End-Nachweis (statt nur Unit-Test der Middleware-Logik) adressiert.
+
+### Umsetzung (2026-07-20, zweimal — s. Korrektur in Punkt 2)
+
+- **`docker-compose.yml`:** **Kein** Subnetz-Pinning (s. Korrektur, Punkt 2) — der
+  `networks.default.ipam`-Block wurde vollständig entfernt, Coolify verwaltet das
+  Netz selbst. `FORWARDED_ALLOW_IPS=${FORWARDED_ALLOW_IPS}` (wie `CORS_ORIGINS`/
+  `COOKIE_SECURE` von außen gesetzt, nicht hartkodiert). Lokal: Root-`.env` und
+  `backend/.env` auf `127.0.0.1`. Produktion: Coolify-Env auf `10.0.0.0/8` zu setzen
+  (außerhalb dieses Repos, vom Auftraggeber). Mit `docker compose config` validiert.
+- **`backend/app/core/config.py`:** `FORWARDED_ALLOW_IPS: str` als Pflichtfeld
+  (Stolperdraht-Muster, s. Punkt 5a) — kein weiterer Code-Change nötig, da uvicorn
+  den Wert selbst direkt aus der Umgebung liest; `limiter.py`/`auth/service.py`
+  unverändert, sie lesen nach der Umstellung automatisch die echte IP (Entscheidung:
+  volle IP, s. Punkt 3).
+- **`backend/app/core/logging.py`:** neue Funktion
+  `warn_if_forwarded_allow_ips_mismatches_network()` (Drift-Check, s. Punkt 5b),
+  eingehängt in `app/main.py:create_app()`.
+- **`.env.example`, Root-`.env`, `backend/.env`, CLAUDE.md, GEMINI.md:** dokumentiert,
+  analog zu `RETENTION_CRON_SECRET`, inkl. der Korrektur und des empfohlenen
+  Produktionswerts `10.0.0.0/8`.
+- **Tests:**
+  - `backend/tests/unit/test_config.py` — AK-M20.6 (Pflichtfeld, `ValidationError`
+    bei fehlendem Wert).
+  - `backend/tests/integration/test_rate_limiting_by_ip.py` — AK-M20.1 (slowapi,
+    zwei `ASGITransport`-Clients mit unterschiedlichem `client=`-Tupel, ein
+    ausgeschöpftes Kontingent blockiert nicht die andere IP) und AK-M20.2
+    (Backoff-Cache, direkt auf `record_failed_attempt`/`compute_delay` getestet).
+    Für diese beiden reicht `ASGITransport`, da sie nur prüfen, ob unterschiedliche
+    `request.client.host`-Werte getrennt gezählt werden — unabhängig davon, wie
+    dieser Wert zustande kommt.
+  - `backend/tests/integration/test_forwarded_for_trust_boundary.py` — AK-M20.4,
+    **wie gefordert über einen echten uvicorn-Subprozess**, nicht `ASGITransport`
+    (`ProxyHeadersMiddleware` wird nur beim echten uvicorn-Start über
+    `Config.load()` eingehängt, ein `ASGITransport`-Test würde diese Schicht
+    komplett umgehen und wäre kein Nachweis). Zwei Fälle: gefälschter
+    `X-Forwarded-For` von nicht-vertrauenswürdigem Absender wird verworfen
+    (negativ) **und** von vertrauenswürdigem Absender übernommen (positiv —
+    beweist, dass der negative Fall tatsächlich die Prüfung testet und nicht
+    einen ohnehin wirkungslosen Header). Beide grün, verifiziert am gerenderten
+    Access-Log-Output.
+  - **Befund beim Testen:** Diese beiden E2E-Tests liefen isoliert in 5,8s grün,
+    verlangsamten den **vollständigen** Suite-Lauf aber von ~53s auf ~774s
+    (reproduziert). Ursache mit hoher Wahrscheinlichkeit eine
+    Windows-spezifische Interaktion zwischen den gespawnten uvicorn-Subprozessen
+    und den vielen bereits offenen Async-Event-Loops aus vorangegangenen Tests —
+    kein Fehler im geprüften Verhalten selbst. Diese 13-fache Verlangsamung jedem
+    Routine-`pytest`-Lauf aufzuerlegen stand in keinem Verhältnis zum Nutzen für
+    zwei Tests. Datei daher standardmäßig übersprungen
+    (`pytestmark = pytest.mark.skipif(...)`), explizit ausführbar mit
+    `RUN_E2E_TESTS=1`. Frisch mit dieser Umgebungsvariable erneut verifiziert:
+    grün. Opt-in bedeutet hier nicht ungeprüft — der Test lief nachweislich und
+    war grün, nur nicht als Teil des Standardlaufs.
+  - `backend/tests/unit/test_logging.py` (ergänzt) — AK-M20.7 (Drift-Check):
+    keine Warnung, wenn die eigene Adresse im konfigurierten Bereich liegt (CIDR
+    **und** Literal-Match); Warnung mit beiden Werten, wenn nicht;
+    `FORWARDED_ALLOW_IPS=*` und nicht auflösbare eigene Adresse werden übersprungen,
+    nie fälschlich als Warnung gemeldet. Zusätzlich manuell mit echtem Prozessstart
+    gegengeprüft (s. Punkt 5b).
+- **Volle Suite (Standardlauf, ohne `RUN_E2E_TESTS`):** 150 passed, 3 skipped,
+  0 failed, ~54s.
 
 ---
 

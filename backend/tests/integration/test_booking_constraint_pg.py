@@ -24,17 +24,23 @@ async def test_postgres_exclude_constraint_prevents_overlap(session: AsyncSessio
     session.add_all([service, member])
     await session.commit()
 
+    # Capture ids now: after session.rollback() below the ORM objects are expired and
+    # touching .id would trigger a lazy load (MissingGreenlet under asyncio).
+    service_id, member_id = service.id, member.id
+
     starts_at = datetime.now(timezone.utc).replace(minute=0, second=0, microsecond=0) + timedelta(days=1)
     ends_at = starts_at + timedelta(minutes=30)
 
     # 1. Create first confirmed appointment
     apt1 = Appointment(
-        team_member_id=member.id,
-        service_id=service.id,
+        team_member_id=member_id,
+        service_id=service_id,
         starts_at=starts_at,
         ends_at=ends_at,
         status=AppointmentStatus.confirmed,
-        origin=AppointmentOrigin.walk_in
+        origin=AppointmentOrigin.walk_in,
+        guest_name="Gast",
+        guest_phone="0",
     )
     session.add(apt1)
     await session.commit()
@@ -42,16 +48,19 @@ async def test_postgres_exclude_constraint_prevents_overlap(session: AsyncSessio
     # 2. Attempt to create overlapping confirmed appointment for SAME member
     # Starts 15 minutes into the first one
     apt2 = Appointment(
-        team_member_id=member.id,
-        service_id=service.id,
+        team_member_id=member_id,
+        service_id=service_id,
         starts_at=starts_at + timedelta(minutes=15),
         ends_at=starts_at + timedelta(minutes=45),
         status=AppointmentStatus.confirmed,
-        origin=AppointmentOrigin.online
+        origin=AppointmentOrigin.online,
+        guest_name="Gast",
+        guest_phone="0",
     )
     session.add(apt2)
     
-    with pytest.raises(IntegrityError):
+    # Must be the EXCLUDE constraint itself — not e.g. customer_xor_guest.
+    with pytest.raises(IntegrityError, match="no_overlapping_confirmed_appointments"):
         await session.commit()
     
     await session.rollback()
@@ -63,11 +72,13 @@ async def test_postgres_exclude_constraint_prevents_overlap(session: AsyncSessio
 
     apt3 = Appointment(
         team_member_id=member2.id,
-        service_id=service.id,
+        service_id=service_id,
         starts_at=starts_at,
         ends_at=ends_at,
         status=AppointmentStatus.confirmed,
-        origin=AppointmentOrigin.online
+        origin=AppointmentOrigin.online,
+        guest_name="Gast",
+        guest_phone="0",
     )
     session.add(apt3)
     await session.commit() # Should succeed

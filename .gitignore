@@ -27,3 +27,12 @@ Thumbs.db
 *.swp
 .vscode/
 .idea/
+
+# Salon media and design handoff contain photos of identifiable people (KUG §22
+# / DSGVO) — not to be committed until consents are documented.
+Salon_Media/
+design_handoff_azzam_salon/
+
+# Design/site reference exports (not source)
+*.zip
+/*.pdf
