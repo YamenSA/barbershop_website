@@ -1,19 +1,11 @@
 import type { PublicAppointmentRead } from '@/lib/types';
+import { formatSalonDateTimeLong } from '@/lib/time';
 
 interface Props {
   result: PublicAppointmentRead;
 }
 
-function formatDateTime(iso: string): string {
-  return new Date(iso).toLocaleString('de-DE', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-}
+const formatDateTime = formatSalonDateTimeLong;
 
 export default function Confirmation({ result }: Props) {
   return (

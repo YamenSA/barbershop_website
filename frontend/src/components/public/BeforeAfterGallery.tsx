@@ -1,5 +1,6 @@
 import Image from 'next/image';
 import type { GalleryItem } from '@/lib/types';
+import { formatDateOnly } from '@/lib/time';
 
 interface BeforeAfterGalleryProps {
   items: GalleryItem[];
@@ -39,10 +40,7 @@ export default function BeforeAfterGallery({ items }: BeforeAfterGalleryProps) {
               Transformation {idx + 1}
               {item.publishedAt && (
                 <span className="ml-2 font-normal normal-case">
-                  — {new Date(item.publishedAt).toLocaleDateString('de-DE', {
-                    month: 'long',
-                    year: 'numeric',
-                  })}
+                  — {formatDateOnly(item.publishedAt, { month: 'long', year: 'numeric' })}
                 </span>
               )}
             </p>

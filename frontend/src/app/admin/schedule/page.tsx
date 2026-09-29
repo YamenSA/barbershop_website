@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { apiFetch } from '@/lib/api';
 import { TeamMember, DayOverride, WorkingDayScheduleRead, WorkingWeekScheduleIn, WorkingDayScheduleIn } from '@/lib/types';
+import { formatDateOnly } from '@/lib/time';
 
 const DAYS = [
   { id: 1, name: 'Montag' },
@@ -431,7 +432,7 @@ export default function SchedulePage() {
                 {overrides.map(ovr => (
                   <div key={ovr.id} className="flex justify-between items-center bg-gray-50 p-3 rounded border border-gray-200">
                     <div>
-                      <div className="font-bold text-gray-900">{new Date(ovr.date).toLocaleDateString('de-DE')}</div>
+                      <div className="font-bold text-gray-900">{formatDateOnly(ovr.date, { day: 'numeric', month: 'numeric', year: 'numeric' })}</div>
                       <div className="text-sm text-gray-700">
                         {ovr.override_type === 'day_off' ? 'Freigestellt' : `Sonderzeit: ${ovr.custom_start_time?.substring(0,5)} - ${ovr.custom_end_time?.substring(0,5)}`}
                       </div>

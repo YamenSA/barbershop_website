@@ -4,16 +4,9 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { accountListAppointments, accountCancelAppointment, accountRescheduleAppointment, accountLogout } from '@/lib/api';
 import type { AccountAppointmentRead, AppointmentListOut } from '@/lib/types';
+import { formatSalonDateTimeNumeric } from '@/lib/time';
 
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleString('de-DE', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-}
+const formatDate = formatSalonDateTimeNumeric;
 
 function AppointmentCard({
   appt,
@@ -109,7 +102,7 @@ export default function TerminePage() {
     if (!rescheduling || !newDate) return;
     setActionError('');
     try {
-      await accountRescheduleAppointment(rescheduling.id, { starts_at: new Date(newDate).toISOString() });
+      await accountRescheduleAppointment(rescheduling.id, { starts_at: newDate });
       setRescheduling(null);
       setNewDate('');
       load();

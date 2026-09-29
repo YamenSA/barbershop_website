@@ -1,5 +1,6 @@
 import React from 'react';
 import type { ReviewsSnapshot as ReviewsSnapshotType } from '@/lib/types';
+import { formatDateOnly } from '@/lib/time';
 
 interface ReviewsSnapshotProps {
   data: ReviewsSnapshotType;
@@ -57,10 +58,7 @@ export default function ReviewsSnapshot({ data }: ReviewsSnapshotProps) {
             <div className="mt-6 pt-4 border-t border-white/[0.04] flex justify-between items-center text-xs text-ash">
               <span className="font-semibold text-ink">{review.author}</span>
               <time dateTime={review.date}>
-                {new Date(review.date).toLocaleDateString('de-DE', {
-                  month: 'short',
-                  year: 'numeric',
-                })}
+                {formatDateOnly(review.date, { month: 'short', year: 'numeric' })}
               </time>
             </div>
           </div>

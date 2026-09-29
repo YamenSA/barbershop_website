@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { apiFetch, getCustomers, CustomerListOut } from '@/lib/api';
 import { Customer, Appointment } from '@/lib/types';
 import { getAppointments } from '@/lib/api';
+import { formatSalon, formatSalonDate } from '@/lib/time';
 
 export default function CustomersPage() {
   const [data, setData] = useState<CustomerListOut | null>(null);
@@ -89,7 +90,7 @@ export default function CustomersPage() {
   const formatDate = (dateString?: string | null) => {
     if (!dateString) return '–';
     const d = new Date(dateString);
-    return isNaN(d.getTime()) ? '–' : d.toLocaleDateString('de-DE');
+    return isNaN(d.getTime()) ? '–' : formatSalonDate(d);
   };
 
   const totalPages = data ? Math.ceil(data.total / limit) : 0;
@@ -246,7 +247,7 @@ export default function CustomersPage() {
                       <div className="flex justify-between items-start">
                         <div>
                           <div className="font-medium text-[var(--admin-text)]">
-                            {new Date(app.starts_at).toLocaleString('de-DE', { dateStyle: 'medium', timeStyle: 'short' })}
+                            {formatSalon(app.starts_at, { dateStyle: 'medium', timeStyle: 'short' })}
                           </div>
                           <div className="text-sm text-[var(--admin-text-muted)]">
                             Status: <span className="font-semibold">{app.status}</span>

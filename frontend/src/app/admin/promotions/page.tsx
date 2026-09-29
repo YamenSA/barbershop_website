@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import type { Promotion, PromotionCreate, PromotionUpdate, PromotionStatus } from '@/lib/types';
+import { formatDateOnly } from '@/lib/time';
 import {
   getPromotions,
   createPromotion,
@@ -250,8 +251,8 @@ export default function AdminPromotionsPage() {
                 </div>
                 <p className="text-ash text-xs line-clamp-1 mb-1">{promo.description}</p>
                 <p className="text-ash text-xs">
-                  {new Date(promo.starts_on).toLocaleDateString('de-DE')} –{' '}
-                  {new Date(promo.ends_on).toLocaleDateString('de-DE')}
+                  {formatDateOnly(promo.starts_on, { day: 'numeric', month: 'numeric', year: 'numeric' })} –{' '}
+                  {formatDateOnly(promo.ends_on, { day: 'numeric', month: 'numeric', year: 'numeric' })}
                 </p>
               </div>
 
