@@ -129,6 +129,22 @@ weiterleitet oder einen anderen Logging-Treiber als `json-file` nutzt, müssen d
 auch dort bereinigt werden — das lässt sich von hier aus nicht prüfen, bitte in den
 Coolify-Server-/Logging-Einstellungen nachsehen.
 
+## Zeit & Zeitzonen (Hotfix B-1)
+
+- **Die Datenbank speichert echtes UTC.** Alles, was der Salon als Uhrzeit meint (Öffnungszeiten,
+  Termine, „24 h vorher“, Vorlaufzeit) ist **Europe/Berlin-Wandzeit** und wird ausschließlich über
+  `backend/app/core/time.py` (`SALON_TZ`, `combine_local`, `to_salon`, `salon_day_bounds`, …) je Datum
+  per `zoneinfo` umgerechnet — **nie** mit festem Offset, nie mit Server- oder Browserzeit.
+- **Naive Datetimes:** von außen (API-Eingabe, Tests) = Berlin-Wandzeit (`to_utc`); aus der Datenbank
+  (SQLite liefert naive Werte) = UTC (`as_utc`). Ausgaben der API tragen den Berliner Offset
+  (`SalonDatetimeOut`, `+02:00`/`+01:00`); die Datenbank bleibt UTC.
+- **Frontend:** Zeiten nur über `frontend/src/lib/time.ts` (`Intl` mit `timeZone: 'Europe/Berlin'`), kein
+  `toLocale*`/`getHours()`/`toISOString().slice(0,10)`. FullCalendar läuft mit `timeZone="Europe/Berlin"`
+  (Plugin `@fullcalendar/luxon3`). Test: `npm run test:time` (Node, läuft unter mehreren `TZ`-Werten).
+- **Neue `timestamptz`-Spalte?** Sie muss in `app/core/tz_migration.py` (`CONVERTED_COLUMNS` oder
+  `REAL_UTC_COLUMNS`) eingetragen werden — ein Schema-Test schlägt sonst fehl.
+- Migration 017 (Wandzeit-als-UTC → echtes UTC), Dry-Run und Rollback: `TIMEZONE_HOTFIX_SPEC.md`.
+
 ## Tests: SQLite und PostgreSQL
 
 Die Standard-Suite läuft gegen In-Memory-SQLite (`pytest -v`). PostgreSQL-spezifisches
