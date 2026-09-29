@@ -36,14 +36,16 @@ services:
       - COOKIE_SECURE=${COOKIE_SECURE}
       - RETENTION_GUEST_MONTHS=12
       - RETENTION_CUSTOMER_MONTHS=12
-      - RETENTION_CRON_SECRET=dev-secret-change-in-prod
+      # Pflicht, KEIN Default: fehlt/leer in Coolify -> `docker compose` bricht mit der
+      # Meldung ab, statt mit einem bekannten Standardwert zu starten (frueher hartkodiert).
+      - RETENTION_CRON_SECRET=${RETENTION_CRON_SECRET:?RETENTION_CRON_SECRET muss gesetzt sein}
       # M20: Peers, denen uvicorn X-Forwarded-For vertraut — sonst bleibt uvicorns
       # Default (127.0.0.1) aktiv und die echte Besucher-IP wird nie übernommen
       # (s. docs/analysis/ADMIN_FIX_SPEC.md, M20). Umgebungsabhängig (Coolify
       # verwaltet das Docker-Netz selbst, das tatsächliche Subnetz ist NICHT in
       # diesem Repo fixiert) — deshalb wie CORS_ORIGINS/COOKIE_SECURE von außen
       # gesetzt, nicht hier hartkodiert.
-      - FORWARDED_ALLOW_IPS=${FORWARDED_ALLOW_IPS}
+      - FORWARDED_ALLOW_IPS=${FORWARDED_ALLOW_IPS:?FORWARDED_ALLOW_IPS muss gesetzt sein (Subnetz des App-Docker-Netzes)}
     depends_on:
       db:
         condition: service_healthy
