@@ -112,9 +112,9 @@ Es gibt derzeit folgende dokumentierte Befunde (siehe `docs/analysis/ADMIN_FIX_S
 
 ## Deployment & Environment Variables
 
-**TLS-Zertifikat (`azzam-salon.de`):** Aktuell gültig bis **14.10.2026** (ausgestellt
-16.07.2026, Coolify/Traefik-ACME). Coolify erneuert Let's-Encrypt-Zertifikate i. d. R.
-automatisch vor Ablauf — **Mitte September 2026 trotzdem gegenprüfen** (Coolify-UI
+**TLS-Zertifikat (`azzam-salon.de`):** Aktuell gültig bis **14.12.2026** (erneuert
+15.09.2026, Coolify/Traefik-ACME; per `openssl` auf dem Server geprüft). Coolify erneuert Let's-Encrypt-Zertifikate i. d. R.
+automatisch vor Ablauf — **Mitte November 2026 trotzdem gegenprüfen** (Coolify-UI
 oder `docker logs coolify-proxy`), dass die Erneuerung tatsächlich gegriffen hat.
 Hinweis aus derselben Prüfung (2026-07-20): ACME-Fehlermeldungen mit Token `*` im
 Traefik-Log stammen mit hoher Wahrscheinlichkeit von externen Scannern
