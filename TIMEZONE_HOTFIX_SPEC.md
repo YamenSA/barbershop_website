@@ -355,3 +355,5 @@ Keine kritischen Befunde. Entscheidungen zu den Befunden:
 | **L1** Ganztags-Klick liefert ein Datum ohne Uhrzeit | **Umgesetzt:** `allDaySlot={false}` im Kalender. |
 | L2 Verhaltensänderung Stornofrist/Vorlaufzeit | bekannt, dokumentiert (§9.2). |
 | L4–L9 (Sweep-Vorgänger, Downgrade in der Doppelstunde, Log-Aufbewahrung, `AdminAccount` naive Zeit, Test schreibt Entscheidungsdatei, OpenAPI-Format) | nicht in diesem Hotfix. |
+- **Sofortmaßnahme (Frontend-Zwischenpatch für die öffentlichen Seiten):** abgelehnt (Entscheidung 30.09.2026). Die Bestätigungsmails stimmen, Kunden kommen nach der Mail; es gibt keinen Zwischen-Deploy vor dem Livegang am 18.10.
+- **Stand Stufe 2 (30.09.2026):** Schema-Abgleich Produktion ↔ 016 (bis auf die kosmetische Formulierung von `valid_override_type` identisch), Migration/Downgrade gegen das Produktionsschema und Dry-Run gegen die Produktion (22 Zeilen, alle W, keine Probleme, keine zukünftigen bestätigten Termine) abgeschlossen. Der Dry-Run wird am 15.10. und unmittelbar vor dem Merge wiederholt.
