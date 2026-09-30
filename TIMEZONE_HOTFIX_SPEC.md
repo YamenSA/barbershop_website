@@ -225,6 +225,8 @@ Regel bleibt: **keine Produktionsdaten lokal**. „Prod-ähnlich“ heißt daher
 ### 7.2 Zeitplan
 Live-Ziel **So 18.10.2026** (11.10. liegt vor dem Test vom 13.10.; **spätestens am 25.10. gilt Winterzeit** — danach würden wieder zwei Offsets im Bestand koexistieren, was die Migration zwar beherrscht, aber die Wochen mit falschen Terminen verlängert). Vorschlag: Stufe 2 Code/Tests bis ~14.10., Dry-Run Produktion + Abgleich mit Azzam bis ~16.10., Freeze 17.10., Livegang 18.10.
 
+> **Maßgeblich für Stufe 2 ist `docs/deploy/TIMEZONE_HOTFIX_DEPLOY_CHECKLIST.md`** (Copy-Paste-Befehle für Backup, Restore-Übung, Dry-Run, Livegang-Probe, Rollback). Die folgenden Abschnitte 7.3/7.4 sind die ursprüngliche Planung.
+
 ### 7.3 Deploy (Migration und Code im **selben** Deploy — `entrypoint.sh` fährt `alembic upgrade head` beim Backend-Start)
 1. **T−7 … T−2:** Dry-Run gegen Produktion (read-only): `docker cp tz_dry_run.py <backend>:/tmp/ && docker exec <backend> python /tmp/tz_dry_run.py > dry_run.txt` (Skript ist im Prod-Image noch nicht enthalten, deshalb `docker cp`; es ändert nichts). REVIEW-Liste mit Azzam abarbeiten → `tz_decisions.json`, Freigabe der Stichprobe.
 2. **T−1:** Freeze; erneuter Dry-Run (Vergleich zur letzten Liste: nur neu entstandene W-Zeilen); alle Tests/Build grün gezeigt; du gibst frei.
@@ -337,3 +339,19 @@ Dry-Run gegen **Produktion** (read-only, von dir ausgeführt), Abgleich mit Azza
 
 - **BarberKasse (Flutter):** Laut Constitution/Spec 004 nicht an die API angebunden, in Produktion keine `walk_in`-Zeilen — kein Handlungsbedarf für den Hotfix. **Bei einer künftigen Anbindung:** Zeitangaben **immer mit Offset senden** (Dart: `dt.toUtc().toIso8601String()`, nie eine lokale `DateTime` ohne Offset), Antworten mit einem RFC-3339-Parser lesen (kein `substring`), „heute“/`from_date`/`to_date` als Berliner Kalendertag bilden, und die **Cookie-Authentifizierung klären** (Admin-Endpunkte prüfen nur das HttpOnly-Cookie `session`, `POST /auth/login` liefert kein Bearer-Token).
 - **Vorlaufzeit:** bleibt beim Default `BOOKING_MIN_LEAD_HOURS=2` (nach dem Hotfix echte 2 Stunden). Keine Compose-Änderung; `BOOKING_*`/`CANCELLATION_*`/`REMINDER_*` werden bewusst nicht an den Container durchgereicht.
+
+---
+
+## 11. Unabhängiger Review (Subagent ohne Vorkontext) — Ergebnis und Entscheidungen
+
+Keine kritischen Befunde. Entscheidungen zu den Befunden:
+
+| Befund | Entscheidung |
+|---|---|
+| **H1** Sweep sieht Zeilen nicht, die der alte Container **nach** Migrationsbeginn committet (`migrated_at` = Transaktionsbeginn) | Keine `--cutoff`-Mechanik. Beleg: Coolify-Deploy-Log zeigt „Removing old containers“ **vor** „Starting new application“, der alte Container ist vor der Migration weg. In die Checkliste: Deploy-Log dieses Deploys kontrollieren (3.5), Nachzügler-SQL (3.6). Sweep-Docstring nennt die Grenze ausdrücklich. Kein zusätzlicher Test (er würde nur die Grenze festschreiben). |
+| **M1** Downgrade setzt jede geloggte Zeile auf den Altwert zurück | **Umgesetzt:** Rückschreibung nur, wenn der aktuelle Wert noch dem geloggten neuen Wert entspricht; nachträglich bearbeitete Zeilen bleiben und werden im Downgrade gemeldet. Test auf Postgres (`test_downgrade_keeps_rows_that_were_edited_after_the_upgrade`; gegen die alte Logik nachweislich rot). |
+| **M2** Verlorenes Bestätigungs-Log ⇒ Migration bricht ab (Neustart-Schleife) | Dry-Run direkt vor dem Merge (Checkliste 3.3); Abbruch ⇒ Version 016 + Coolify „vorherige Version“ (Checkliste 4). |
+| **M3** (= B-2) Öffentliche Buchung/Umbuchung/Patch prüfen Öffnungszeiten nicht | Eigener Mini-Fix **nach** dem Hotfix. |
+| **L1** Ganztags-Klick liefert ein Datum ohne Uhrzeit | **Umgesetzt:** `allDaySlot={false}` im Kalender. |
+| L2 Verhaltensänderung Stornofrist/Vorlaufzeit | bekannt, dokumentiert (§9.2). |
+| L4–L9 (Sweep-Vorgänger, Downgrade in der Doppelstunde, Log-Aufbewahrung, `AdminAccount` naive Zeit, Test schreibt Entscheidungsdatei, OpenAPI-Format) | nicht in diesem Hotfix. |
