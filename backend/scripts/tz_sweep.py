@@ -1,9 +1,15 @@
 """Straggler check/repair for migration 017 (timezone hotfix, B-1).
 
-Appointments that the OLD code wrote while migration 017 was running (rolling
-deploy) are wall-clock-as-UTC but were created BEFORE the migration committed, and
-are therefore missing from tz_migration_log. Rows written by the NEW code after the
-migration are real UTC and are never touched (their created_at is later).
+Finds appointments that are NOT in tz_migration_log although they were created before the
+migration transaction started (``created_at < max(migrated_at)``; ``migrated_at`` is the
+transaction START time) and converts them with the same classification as the migration.
+
+LIMITATION (review finding H1): a booking that the OLD code commits *after* the migration
+transaction started has a later ``created_at`` and is invisible to this script. The deploy is
+therefore only safe because Coolify removes the old containers BEFORE the new application
+starts (verified in the deploy log; re-check it after go-live, see
+docs/deploy/TIMEZONE_HOTFIX_DEPLOY_CHECKLIST.md). This script is a belt-and-braces check for the
+narrow window of bookings that were already in flight when the migration began.
 
     python scripts/tz_sweep.py            # --check (default): read-only, expect "stragglers: 0"
     python scripts/tz_sweep.py --apply    # convert stragglers (same classification, logged)

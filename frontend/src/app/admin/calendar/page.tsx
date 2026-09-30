@@ -140,6 +140,7 @@ export default function CalendarPage() {
         <FullCalendar
           plugins={[timeGridPlugin, interactionPlugin, luxon3Plugin]}
           timeZone="Europe/Berlin"
+          allDaySlot={false} // appointments are timed; an all-day click would give a date-only value the form rejects
           initialView="timeGridWeek"
           headerToolbar={{
             left: 'prev,next today',

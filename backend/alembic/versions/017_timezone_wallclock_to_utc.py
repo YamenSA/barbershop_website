@@ -117,19 +117,29 @@ def downgrade() -> None:
     conn.execute(sa.text("SET LOCAL lock_timeout = '10s'"))
     conn.execute(sa.text(tzm.DROP_EXCLUDE_CONSTRAINT_SQL))
 
-    # 1) Rows recorded by the upgrade: restore the exact old values.
-    conn.execute(sa.text("""
-        UPDATE appointments a SET
-            starts_at = (SELECT old_value FROM tz_migration_log l WHERE l.table_name='appointments' AND l.row_id=a.id AND l.column_name='starts_at'),
-            ends_at   = (SELECT old_value FROM tz_migration_log l WHERE l.table_name='appointments' AND l.row_id=a.id AND l.column_name='ends_at')
-         WHERE EXISTS (SELECT 1 FROM tz_migration_log l WHERE l.table_name='appointments' AND l.row_id=a.id)
-    """))
-    conn.execute(sa.text("""
-        UPDATE working_exceptions w SET
-            starts_at = (SELECT old_value FROM tz_migration_log l WHERE l.table_name='working_exceptions' AND l.row_id=w.id AND l.column_name='starts_at'),
-            ends_at   = (SELECT old_value FROM tz_migration_log l WHERE l.table_name='working_exceptions' AND l.row_id=w.id AND l.column_name='ends_at')
-         WHERE EXISTS (SELECT 1 FROM tz_migration_log l WHERE l.table_name='working_exceptions' AND l.row_id=w.id)
-    """))
+    # 1) Rows recorded by the upgrade: restore the exact old values -- but ONLY if the row still holds the
+    #    value the upgrade wrote. A row that was edited after the upgrade (admin move, patch) keeps its
+    #    edit: the rollback must not silently undo real work done in the meantime.
+    for table in ("appointments", "working_exceptions"):
+        alias = "a"
+        conn.execute(sa.text(f"""
+            UPDATE {table} {alias} SET
+                starts_at = (SELECT old_value FROM tz_migration_log l WHERE l.table_name='{table}' AND l.row_id={alias}.id AND l.column_name='starts_at'),
+                ends_at   = (SELECT old_value FROM tz_migration_log l WHERE l.table_name='{table}' AND l.row_id={alias}.id AND l.column_name='ends_at')
+             WHERE EXISTS (SELECT 1 FROM tz_migration_log l WHERE l.table_name='{table}' AND l.row_id={alias}.id
+                              AND l.column_name='starts_at' AND l.new_value = {alias}.starts_at)
+               AND EXISTS (SELECT 1 FROM tz_migration_log l WHERE l.table_name='{table}' AND l.row_id={alias}.id
+                              AND l.column_name='ends_at' AND l.new_value = {alias}.ends_at)
+        """))
+        edited = conn.execute(sa.text(f"""
+            SELECT a.id::text FROM {table} a
+             WHERE EXISTS (SELECT 1 FROM tz_migration_log l WHERE l.table_name='{table}' AND l.row_id=a.id)
+               AND (a.starts_at <> (SELECT new_value FROM tz_migration_log l WHERE l.table_name='{table}' AND l.row_id=a.id AND l.column_name='starts_at')
+                 OR a.ends_at   <> (SELECT new_value FROM tz_migration_log l WHERE l.table_name='{table}' AND l.row_id=a.id AND l.column_name='ends_at'))
+        """)).scalars().all()
+        if edited:
+            print(f"[017 downgrade] {len(edited)} {table} row(s) were edited after the upgrade and keep their "
+                  f"current value (not rolled back): {', '.join(edited)}")
 
     # 2) Rows created AFTER the upgrade hold real UTC. The old code expects wall-clock-as-UTC only for
     #    rows its public booking path wrote (W-B/W-B2); everything else was R there and stays.

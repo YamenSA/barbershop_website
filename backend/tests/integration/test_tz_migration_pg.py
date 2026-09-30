@@ -243,6 +243,31 @@ def test_downgrade_roundtrip_restores_every_row_bit_exact(db016):
     assert snapshot() == snap1                       # and re-upgrading gives the same result
 
 
+def test_downgrade_keeps_rows_that_were_edited_after_the_upgrade(db016):
+    """A rollback must not silently undo work done after go-live: only rows that still hold the value
+    the upgrade wrote are restored; edited rows keep their current value."""
+    base = seed_base()
+    rows = seed_mixed(base)
+    command.upgrade(db016, "017")
+
+    # After go-live the admin moves a migrated walk-in and a migrated online booking (real UTC, as the new code writes).
+    sql("UPDATE appointments SET starts_at = :s, ends_at = :e WHERE id = :id",
+        dict(s=utc(2026, 10, 13, 12), e=utc(2026, 10, 13, 12, 30), id=rows["r_admin"]))
+    sql("UPDATE appointments SET starts_at = :s, ends_at = :e WHERE id = :id",
+        dict(s=utc(2026, 10, 13, 13), e=utc(2026, 10, 13, 13, 30), id=rows["w_summer"]))
+
+    command.downgrade(db016, "016")
+
+    assert times(rows["r_admin"]) == (utc(2026, 10, 13, 12), utc(2026, 10, 13, 12, 30))    # edit kept
+    assert times(rows["w_summer"]) == (utc(2026, 10, 13, 13), utc(2026, 10, 13, 13, 30))   # edit kept
+    # untouched rows are restored to their exact old (wall-clock-as-UTC) values
+    assert times(rows["w_winter"]) == (utc(2026, 10, 27, 9), utc(2026, 10, 27, 9, 30))
+    assert times(rows["w_sat_before_switch"]) == (utc(2026, 10, 24, 17, 30), utc(2026, 10, 24, 18))
+    assert times(rows["w_mon_after_switch"]) == (utc(2026, 10, 26, 17, 30), utc(2026, 10, 26, 18))
+    assert times(rows["w_cancelled"]) == (utc(2026, 10, 14, 10), utc(2026, 10, 14, 10, 30))
+    assert version() == "016" and has_constraint() and not has_log_table()
+
+
 # ---------------------------------------------------------------------------------------------
 # constraint handling
 # ---------------------------------------------------------------------------------------------
