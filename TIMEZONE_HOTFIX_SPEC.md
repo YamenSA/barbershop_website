@@ -330,3 +330,10 @@ SELECT count(*) FROM appointments old JOIN appointments nw
 
 ### 9.4 Was noch fehlt (Stufe 2)
 Dry-Run gegen **Produktion** (read-only, von dir ausgeführt), Abgleich mit Azzam, Freigabe, Livegang-Probe inkl. Sichtprüfung des FullCalendar und Backup/Restore-Übung, dann Merge nach deiner Freigabe (Ziel: Sonntag 18.10.2026). Offen bleibt B-2 (separater Mini-Fix) und die `.ics` (Redesign).
+
+---
+
+## 10. Später (bewusst nicht Teil dieses Hotfix)
+
+- **BarberKasse (Flutter):** Laut Constitution/Spec 004 nicht an die API angebunden, in Produktion keine `walk_in`-Zeilen — kein Handlungsbedarf für den Hotfix. **Bei einer künftigen Anbindung:** Zeitangaben **immer mit Offset senden** (Dart: `dt.toUtc().toIso8601String()`, nie eine lokale `DateTime` ohne Offset), Antworten mit einem RFC-3339-Parser lesen (kein `substring`), „heute“/`from_date`/`to_date` als Berliner Kalendertag bilden, und die **Cookie-Authentifizierung klären** (Admin-Endpunkte prüfen nur das HttpOnly-Cookie `session`, `POST /auth/login` liefert kein Bearer-Token).
+- **Vorlaufzeit:** bleibt beim Default `BOOKING_MIN_LEAD_HOURS=2` (nach dem Hotfix echte 2 Stunden). Keine Compose-Änderung; `BOOKING_*`/`CANCELLATION_*`/`REMINDER_*` werden bewusst nicht an den Container durchgereicht.
