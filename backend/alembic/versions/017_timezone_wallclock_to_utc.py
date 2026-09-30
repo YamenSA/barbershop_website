@@ -122,6 +122,15 @@ def downgrade() -> None:
     #    edit: the rollback must not silently undo real work done in the meantime.
     for table in ("appointments", "working_exceptions"):
         alias = "a"
+        # Which logged rows were edited after the upgrade? Must be determined BEFORE the restore below
+        # (afterwards every restored row would differ from the logged new value).
+        edited = conn.execute(sa.text(f"""
+            SELECT a.id::text FROM {table} a
+             WHERE EXISTS (SELECT 1 FROM tz_migration_log l WHERE l.table_name='{table}' AND l.row_id=a.id)
+               AND (a.starts_at <> (SELECT new_value FROM tz_migration_log l WHERE l.table_name='{table}' AND l.row_id=a.id AND l.column_name='starts_at')
+                 OR a.ends_at   <> (SELECT new_value FROM tz_migration_log l WHERE l.table_name='{table}' AND l.row_id=a.id AND l.column_name='ends_at'))
+             ORDER BY 1
+        """)).scalars().all()
         conn.execute(sa.text(f"""
             UPDATE {table} {alias} SET
                 starts_at = (SELECT old_value FROM tz_migration_log l WHERE l.table_name='{table}' AND l.row_id={alias}.id AND l.column_name='starts_at'),
@@ -131,12 +140,6 @@ def downgrade() -> None:
                AND EXISTS (SELECT 1 FROM tz_migration_log l WHERE l.table_name='{table}' AND l.row_id={alias}.id
                               AND l.column_name='ends_at' AND l.new_value = {alias}.ends_at)
         """))
-        edited = conn.execute(sa.text(f"""
-            SELECT a.id::text FROM {table} a
-             WHERE EXISTS (SELECT 1 FROM tz_migration_log l WHERE l.table_name='{table}' AND l.row_id=a.id)
-               AND (a.starts_at <> (SELECT new_value FROM tz_migration_log l WHERE l.table_name='{table}' AND l.row_id=a.id AND l.column_name='starts_at')
-                 OR a.ends_at   <> (SELECT new_value FROM tz_migration_log l WHERE l.table_name='{table}' AND l.row_id=a.id AND l.column_name='ends_at'))
-        """)).scalars().all()
         if edited:
             print(f"[017 downgrade] {len(edited)} {table} row(s) were edited after the upgrade and keep their "
                   f"current value (not rolled back): {', '.join(edited)}")

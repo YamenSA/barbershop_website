@@ -226,7 +226,7 @@ def test_upgrade_is_idempotent(db016):
     assert sql("SELECT count(*) AS n FROM tz_migration_log", fetch=True)[0]["n"] == 2 * len(rows)
 
 
-def test_downgrade_roundtrip_restores_every_row_bit_exact(db016):
+def test_downgrade_roundtrip_restores_every_row_bit_exact(db016, capfd):
     base = seed_base()
     seed_mixed(base)
     snap0 = snapshot()
@@ -235,7 +235,9 @@ def test_downgrade_roundtrip_restores_every_row_bit_exact(db016):
     snap1 = snapshot()
     assert snap1 != snap0
 
+    capfd.readouterr()
     command.downgrade(db016, "016")
+    assert "edited after the upgrade" not in capfd.readouterr().out   # nothing was edited: nothing to report
     assert snapshot() == snap0                       # bit-exact, including updated_at
     assert version() == "016" and has_constraint() and not has_log_table()
 
@@ -243,7 +245,7 @@ def test_downgrade_roundtrip_restores_every_row_bit_exact(db016):
     assert snapshot() == snap1                       # and re-upgrading gives the same result
 
 
-def test_downgrade_keeps_rows_that_were_edited_after_the_upgrade(db016):
+def test_downgrade_keeps_rows_that_were_edited_after_the_upgrade(db016, capfd):
     """A rollback must not silently undo work done after go-live: only rows that still hold the value
     the upgrade wrote are restored; edited rows keep their current value."""
     base = seed_base()
@@ -256,7 +258,12 @@ def test_downgrade_keeps_rows_that_were_edited_after_the_upgrade(db016):
     sql("UPDATE appointments SET starts_at = :s, ends_at = :e WHERE id = :id",
         dict(s=utc(2026, 10, 13, 13), e=utc(2026, 10, 13, 13, 30), id=rows["w_summer"]))
 
+    capfd.readouterr()
     command.downgrade(db016, "016")
+    report = "".join(l for l in capfd.readouterr().out.splitlines() if "edited after the upgrade" in l)
+    assert "2 appointments row(s)" in report                                                 # exactly the two edited rows are reported
+    assert rows["r_admin"] in report and rows["w_summer"] in report
+    assert rows["w_winter"] not in report and rows["w_cancelled"] not in report
 
     assert times(rows["r_admin"]) == (utc(2026, 10, 13, 12), utc(2026, 10, 13, 12, 30))    # edit kept
     assert times(rows["w_summer"]) == (utc(2026, 10, 13, 13), utc(2026, 10, 13, 13, 30))   # edit kept
