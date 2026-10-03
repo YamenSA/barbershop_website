@@ -358,13 +358,29 @@ Keine kritischen Befunde. Entscheidungen zu den Befunden:
 - **Sofortmaßnahme (Frontend-Zwischenpatch für die öffentlichen Seiten):** abgelehnt (Entscheidung 30.09.2026). Die Bestätigungsmails stimmen, Kunden kommen nach der Mail; es gibt keinen Zwischen-Deploy vor dem Livegang am 18.10.
 - **Stand Stufe 2 (30.09.2026):** Schema-Abgleich Produktion ↔ 016 (bis auf die kosmetische Formulierung von `valid_override_type` identisch), Migration/Downgrade gegen das Produktionsschema und Dry-Run gegen die Produktion (22 Zeilen, alle W, keine Probleme, keine zukünftigen bestätigten Termine) abgeschlossen. Der Dry-Run wird am 15.10. und unmittelbar vor dem Merge wiederholt.
 
-### Nachlauf-Liste (nach dem Zeitzonen-Livegang vom 18.10.2026)
+### Zeitplan (maßgeblich seit 03.10.2026 — ersetzt die älteren Termine in §0.2, §7.2 und Frage 2)
+
+**Livegang Sonntag 11.10.2026, Reserve Sonntag 18.10.2026** (harte Grenze: Winterzeit ab 25.10.).
+
+| Datum | Schritt | Checkliste |
+|---|---|---|
+| Sa 03.10. – So 04.10. | lokale Sichtprüfung des Kalenders (Sommer-/Winterzeit-Testdaten, Zeitzonen-Gegenprobe, Ganztags-Zeile weg) | 3.7 (vorgezogen) |
+| So 04.10. – Mo 05.10. | Backup + Restore-Übung auf dem Server, in kleinen Schritten | 2, 3.2 |
+| Do 08.10. | Dry-Run gegen Produktion wiederholen; Abgleich mit Azzam, sobald zukünftige bestätigte Termine existieren | 1b, 1c |
+| Sa 10.10. | Freeze, grüne Läufe auf dem Merge-Stand, **Go/No-Go durch dich** | 2 |
+| **So 11.10.** | Livegang: Aufgaben pausieren, Backup, Dry-Run direkt vor dem Merge, Merge nach deiner Freigabe, Deploy-Log, Kontrollen, Livegang-Probe | 3.1–3.8 |
+| Mo 12.10. | 24 h Beobachtung abgeschlossen | 6 |
+| ab Di 13.10. | Nachlauf-Liste (unten) |  |
+| So 18.10. | **Reserve**-Termin, falls der 11.10. ausfällt | 3 |
+| So 25.10. / Mo 26.10. | Umstellung auf Winterzeit / erster Werktag in Winterzeit: Stichprobe | 6 |
+
+### Nachlauf-Liste (nach dem Zeitzonen-Livegang vom 11.10.2026; bei Nutzung der Reserve alle Daten +7 Tage)
 
 | Wann | Was | Branch |
 |---|---|---|
-| ab Di 20.10. | Doku-Stand M18–M20 auf „deployed“ setzen (`CLAUDE.md`, `GEMINI.md`, `docs/analysis/ADMIN_FIX_SPEC.md`) | `docs/m18-m20-status` |
-| ab Di 20.10. | Retention-Task in Coolify auf `--execute`, einmaliger manueller Test bei 0 / 0 | – (Coolify) |
-| ab Di 20.10. | **Spec-Kit-Update zurückholen:** benannter Stash `speckit-update (Yamen, 2026-10-03)` (12 getrackte Dateien: `.agents/skills/speckit-*/SKILL.md` ×9, `.specify/init-options.json`, `.specify/integration.json`, `.specify/integrations/speckit.manifest.json`) mit `git stash pop`, prüfen, committen. Dazu gehören die **ungetrackten** Neuzugänge, die im Arbeitsbaum liegen geblieben sind (`.agents/skills/speckit-converge/`, `.specify/.gitignore`, `.specify/integrations/codex.manifest.json`, `.specify/scripts/powershell/resolve-template.ps1`). Bis dahin **kein `git add -A`**. | `chore/speckit-update` |
-| ab Di 20.10. | Salon-Benachrichtigung bei neuer Buchung/Storno (Name im Mailtext, Schalter; `SALON_NOTIFICATION_EMAIL`; Thread-Versand; Mail-Deckelung); Deploy frühestens Di 27.10. | `feature/salon-notifications` |
+| ab Di 13.10. | Doku-Stand M18–M20 auf „deployed“ setzen (`CLAUDE.md`, `GEMINI.md`, `docs/analysis/ADMIN_FIX_SPEC.md`) | `docs/m18-m20-status` |
+| ab Di 13.10. | Retention-Task in Coolify auf `--execute`, einmaliger manueller Test bei 0 / 0 | – (Coolify) |
+| ab Di 13.10. | **Spec-Kit-Update zurückholen:** benannter Stash `speckit-update (Yamen, 2026-10-03)` (12 getrackte Dateien: `.agents/skills/speckit-*/SKILL.md` ×9, `.specify/init-options.json`, `.specify/integration.json`, `.specify/integrations/speckit.manifest.json`) mit `git stash pop`, prüfen, committen. Dazu gehören die **ungetrackten** Neuzugänge, die im Arbeitsbaum liegen geblieben sind (`.agents/skills/speckit-converge/`, `.specify/.gitignore`, `.specify/integrations/codex.manifest.json`, `.specify/scripts/powershell/resolve-template.ps1`). Bis dahin **kein `git add -A`**. | `chore/speckit-update` |
+| Branch ab Di 20.10., Deploy frühestens Di 27.10. (Vorgabe, bleibt unverändert) | Salon-Benachrichtigung bei neuer Buchung/Storno (Name im Mailtext, Schalter; `SALON_NOTIFICATION_EMAIL`; Thread-Versand; Mail-Deckelung) | `feature/salon-notifications` |
 | nach 7 Tagen stabil | Backup löschen, Aufräum-Migration (`tz_migration_log` droppen) | eigener Branch |
 | danach | B-2: öffentliche Buchung prüft Öffnungszeiten/Feiertage/Arbeitszeit serverseitig | eigener Mini-Fix |
