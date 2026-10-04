@@ -374,6 +374,13 @@ Keine kritischen Befunde. Entscheidungen zu den Befunden:
 | So 18.10. | **Reserve**-Termin, falls der 11.10. ausfällt | 3 |
 | So 25.10. / Mo 26.10. | Umstellung auf Winterzeit / erster Werktag in Winterzeit: Stichprobe | 6 |
 
+### Lokale Sichtprüfung des Kalenders — erledigt (03./04.10.2026)
+Lokaler Stack (Docker-Postgres, Backend, Frontend-Produktionsbuild) mit synthetischen Daten über die echte API: 11 Online-Buchungen und 2 Walk-ins am 13.10. (Sommerzeit), 24.10. (letzter Sommerzeit-Tag), 26.10. (erster Winterzeit-Tag) und 27.10. (Winterzeit). Vom Betreiber im Browser geprüft und bestätigt:
+- alle Termine stehen in der Zeile ihrer Uhrzeit (09:00, 10:00, 11:00, 14:00, 17:30 bzw. 09:00/12:30, 09:00/17:30, 09:00/10:00/11:00/16:00), Dauer korrekt; **keine Ganztags-Zeile**;
+- Klick in eine leere Zelle 15:30 → Formular mit 13.10.2026 15:30 vorbelegt, gespeicherter Termin steht bei 15:30;
+- **Zeitzonen-Gegenprobe** (Chrome DevTools → Sensors → Location „Tokyo“, +7 h zu Berlin): alle Uhrzeiten unverändert.
+Hinweis für lokale Builds unter Git Bash: `MSYS_NO_PATHCONV=1` setzen, sonst wird `NEXT_PUBLIC_API_URL=/api/v1` beim Build in einen Windows-Pfad umgeschrieben („Failed to fetch“ im Browser). Betrifft nur lokale Builds, nicht Coolify.
+
 ### Nachlauf-Liste (nach dem Zeitzonen-Livegang vom 11.10.2026; bei Nutzung der Reserve alle Daten +7 Tage)
 
 | Wann | Was | Branch |
