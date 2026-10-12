@@ -29,6 +29,7 @@ Datei an mich (kein Datenbankinhalt, nur Tabellen/Constraints). Ich lade sie in 
 
 ### 1b. Dry-Run gegen Produktion (du, read-only, exakt so)
 Das Skript und das Modul sind im laufenden Prod-Image noch nicht enthalten und werden **nebeneinander** hineinkopiert. Es liest nur (`SET TRANSACTION READ ONLY`), gibt nur IDs und Zeiten aus, keine Namen/E-Mails/Telefonnummern.
+Der **Textlauf genügt**. Den CSV-Lauf (`--csv`) gibt es nur, wenn `mismatches` ≠ 0 ist (Entscheidung 12.10.2026).
 
 ```sh
 # 1) auf deinem Rechner, im Repo auf Branch hotfix/timezone:
@@ -37,17 +38,19 @@ scp backend/app/core/tz_migration.py backend/scripts/tz_dry_run.py DEIN_USER@DEI
 # 2) auf dem Server (Variablen B/F/DB wie oben gesetzt):
 docker cp /tmp/tz_migration.py $B:/tmp/tz_migration.py
 docker cp /tmp/tz_dry_run.py   $B:/tmp/tz_dry_run.py
-docker exec $B python /tmp/tz_dry_run.py       > ~/tz_dry_run_$(date +%F_%H%M).txt
-docker exec $B python /tmp/tz_dry_run.py --csv > ~/tz_future_$(date +%F_%H%M).csv
+docker exec $B python /tmp/tz_dry_run.py > ~/tz_dry_run_$(date +%F_%H%M).txt
+# Nur wenn "mismatches" != 0 (sonst entfällt der CSV-Lauf):
+#   docker exec $B python /tmp/tz_dry_run.py --csv > ~/tz_future_$(date +%F_%H%M).csv
 docker exec $B rm -f /tmp/tz_migration.py /tmp/tz_dry_run.py
+rm -f /tmp/tz_migration.py /tmp/tz_dry_run.py
 cat ~/tz_dry_run_*.txt
 ```
 Hinweise: Das Prod-Image hat noch keine `alembic/tz_decisions.json`; das Skript nimmt dann **leere Entscheidungen** — identisch zur committeten Datei. Der Kopierpfad (Modul neben dem Skript, `app` nicht importierbar) ist lokal gegen einen echten Postgres ausprobiert worden.
 
 **Erwartung (nach deinen Queries a–e):** 22 Zeilen, alles Regel `W-B`/`W-B2`, Klasse `W`; `problems that would ABORT the migration`: **none**; `mismatches: 0`; Versatz −120 (Termine bis 24.10.) bzw. −60 (ab 26.10.); 7 zukünftige Termine (2 bestätigt, 5 storniert). Jede Abweichung (andere Regel, ein Problem, andere Zahl) → stoppen und mir die Ausgabe schicken.
 
-### 1c. Abgleich mit Azzam
-Aus `tz_future_*.csv` (nur die **bestätigten** zukünftigen Termine sind operativ wichtig): Für jede Zeile muss `mail_vorher` = `angezeigt_nachher_berlin` sein, und diese Uhrzeit muss der Bestätigungsmail entsprechen, die der Kunde bekommen hat. Azzam prüft die Zeilen gegen das Mail-Postfach (Absender/Brevo) und bestätigt die Stichprobe. Abgeschlossene Zeilen: Datum + „ok“ notieren.
+### 1c. Abgleich mit Azzam (nur bei `mismatches` ≠ 0)
+Entfällt, solange `mismatches: 0` ist (Entscheidung 12.10.2026; zusätzlich gab es zu diesem Zeitpunkt keinen bestätigten zukünftigen Termin). Bei `mismatches` ≠ 0: CSV-Lauf aus 1b ausführen, dann gilt: Aus `tz_future_*.csv` (nur die **bestätigten** zukünftigen Termine sind operativ wichtig): Für jede Zeile muss `mail_vorher` = `angezeigt_nachher_berlin` sein, und diese Uhrzeit muss der Bestätigungsmail entsprechen, die der Kunde bekommen hat. Azzam prüft die Zeilen gegen das Mail-Postfach (Absender/Brevo) und bestätigt die Stichprobe. Abgeschlossene Zeilen: Datum + „ok“ notieren.
 
 ---
 
@@ -131,7 +134,7 @@ Mit deiner Test-E-Mail-Adresse; je einmal Sommer- und Winterzeit-Datum (z. B. Di
    - Klick in eine leere Zelle „10:30“ → im Formular steht **…T10:30**; einen Test-Walk-in speichern → er erscheint in der 10:30-Zeile.
    - Walk-in auf einen belegten Zeitraum desselben Mitarbeiters → Konflikt (409).
 4. **Stornofrist:** Termin über den Link stornieren (mehr als 24 h vorher: geht); Slot ist danach wieder buchbar. Eine Buchung für morgen früh: Absage muss abgelehnt werden (Telefonhinweis).
-5. **Aufräumen:** Test-Termine löschen/stornieren, Test-Kunden über den Admin löschen (prüft den DSGVO-Pfad).
+5. **Aufräumen:** Test-Termine und Test-Kunden **ausschließlich über den Admin** löschen (`BookingService.delete_customer`, prüft den DSGVO-Pfad), nie direkt in der Datenbank.
 6. **Erinnerungen nicht manuell auslösen** (`run_reminders.py` würde echte Kunden anschreiben). Erst beim nächsten planmäßigen Lauf prüfen, dass die Erinnerung ca. 24 h vor dem echten Termin kommt.
 7. Scheduled Tasks wieder aktivieren.
 
