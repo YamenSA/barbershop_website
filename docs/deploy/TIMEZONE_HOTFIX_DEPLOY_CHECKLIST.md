@@ -1,6 +1,6 @@
 # Deploy-Checkliste Zeitzonen-Hotfix (B-1) — Stufe 2
 
-Ziel: **Sonntag 11.10.2026** (Salon geschlossen); **Reserve: Sonntag 18.10.2026**; harte Grenze ist die Umstellung auf Winterzeit am 25.10. (Terminplan seit 03.10.2026, vorgezogen).
+Ziel: **Sonntag 18.10.2026** (Salon geschlossen); keine Reserve; harte Grenze ist die Umstellung auf Winterzeit am 25.10. (Terminplan seit 13.10.2026). Ablauf mit allen Befehlen: `TIMEZONE_HOTFIX_LIVEGANG.md`.
 Hintergrund und Begründungen: `TIMEZONE_HOTFIX_SPEC.md`. Die Migration `017` läuft **automatisch beim Backend-Start** (`entrypoint.sh` → `alembic upgrade head`), Code und Datenmigration gehen also in **einem** Deploy live.
 Kein Merge und kein Push ohne deine ausdrückliche Freigabe (Push = Produktions-Deploy).
 
@@ -54,7 +54,7 @@ Entfällt, solange `mismatches: 0` ist (Entscheidung 12.10.2026; zusätzlich gab
 
 ---
 
-## 2. T−1 (Samstag 10.10.; bei Nutzung der Reserve: Samstag 17.10.)
+## 2. T−1 (Samstag 17.10.)
 
 1. Freeze auf `hotfix/timezone`; ich zeige die grünen Läufe (SQLite, PG, E2E, Build, `npm run test:time`) auf genau dem Merge-Stand.
 2. **Backup + Restore-Übung** (Schritt 3.2) schon jetzt einmal durchspielen, damit am Sonntag nichts Neues passiert.
@@ -62,7 +62,7 @@ Entfällt, solange `mismatches: 0` ist (Entscheidung 12.10.2026; zusätzlich gab
 
 ---
 
-## 3. Livegang (Sonntag 11.10.2026; Reserve Sonntag 18.10.2026)
+## 3. Livegang (Sonntag 18.10.2026)
 
 ### 3.1 Aufgaben pausieren
 In Coolify die **Scheduled Tasks** (Erinnerungen, Retention) pausieren, damit während der Migration nichts läuft.
@@ -180,7 +180,7 @@ $PSQL -c "SELECT count(*) FROM pg_constraint WHERE conname='no_overlapping_confi
 ```
 Schlägt der Downgrade fehl, rollt seine Transaktion zurück (Stand 017 bleibt konsistent). Notfall-Fallback: Backup-Restore in eine frische Datenbank (`pg_restore` aus 3.2), Verbindung umstellen, Buchungen seit dem Backup aus Bestätigungsmails/Brevo nachtragen.
 
-Nach einem Rollback: Ursache klären, Fix, Dry-Run wiederholen, neuer Sonntag.
+Nach einem Rollback: Ursache klären, Fix, Dry-Run wiederholen, neuer Termin. Eine Reserve vor der Winterzeit gibt es nicht mehr; der nächste mögliche Termin wäre Samstag 24.10. und muss dann gesondert entschieden werden.
 
 ---
 
