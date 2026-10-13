@@ -77,7 +77,7 @@ export default function SiteHeader({ phone, phoneHref, activePath }: SiteHeaderP
   }, [closeMenu, restoreScroll]);
 
   return (
-    <header className="border-b border-line bg-surface-raise md:bg-surface-base">
+    <header data-booking-header={navigationPath === "/termin" ? true : undefined} className="border-b border-line bg-surface-raise md:bg-surface-base">
       <div className="mx-auto flex h-14 max-w-[1200px] items-center justify-between gap-2 pl-4 pr-1 md:h-20 md:px-4 lg:gap-4 lg:px-8">
         <Link href="/" aria-label="Azzam Salon Startseite" className={`flex shrink-0 items-center gap-2.5 md:gap-1.5 lg:gap-3.5 ${focus}`}>
           <Image src="/brand/logo-256.png" alt="" width={56} height={56} className="h-10 w-10 lg:h-14 lg:w-14" />

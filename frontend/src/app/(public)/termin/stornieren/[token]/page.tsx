@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { getCancellation } from '@/lib/api';
 import CancelCard from '@/components/public/booking/CancelCard';
 import { ApiError } from '@/lib/api';
+import Container from '@/components/ui/Container';
 
 export const metadata: Metadata = {
   title: 'Termin stornieren – Azzam Barbershop',
@@ -26,8 +27,8 @@ export default async function CancellationPage({ params }: Props) {
     throw err;
   }
   return (
-    <section className="container-page py-12 md:py-20">
+      <Container className="py-10 lg:py-16">
       <CancelCard view={view} token={token} />
-    </section>
+      </Container>
   );
 }

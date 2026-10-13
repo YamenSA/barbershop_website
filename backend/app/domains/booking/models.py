@@ -3,7 +3,7 @@ from enum import Enum
 from typing import Optional
 from uuid import UUID
 
-from sqlalchemy import DateTime
+from sqlalchemy import Column, DateTime, JSON
 from sqlmodel import Field, Relationship, SQLModel
 
 from app.core.base import TimestampModel, UUIDModel
@@ -46,6 +46,7 @@ class Appointment(UUIDModel, TimestampModel, table=True):
 
     team_member_id: UUID = Field(foreign_key="team_members.id", nullable=False)
     service_id: UUID = Field(foreign_key="services.id", nullable=False)
+    service_selection: Optional[list[dict]] = Field(default=None, sa_column=Column(JSON(none_as_null=True), nullable=True))
     customer_id: Optional[UUID] = Field(
         default=None, foreign_key="customers.id", nullable=True
     )
@@ -62,6 +63,18 @@ class Appointment(UUIDModel, TimestampModel, table=True):
     origin: AppointmentOrigin = Field(default=AppointmentOrigin.walk_in, nullable=False)
 
     customer: Optional[Customer] = Relationship()
+
+    @property
+    def selected_services(self) -> list[dict]:
+        return self.service_selection or []
+
+    @property
+    def service_names(self) -> list[str]:
+        return [s["name"] for s in self.selected_services]
+
+    @property
+    def service_summary(self) -> Optional[str]:
+        return " + ".join(self.service_names) or None
 
     @property
     def customer_name(self) -> Optional[str]:

@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-// The existing booking form keeps its typography and palette until step 10.
+// Scope the public booking/cancellation pages without changing admin/account.
 export default function BookingLayout({ children }: { children: ReactNode }) {
-  return <div className="bg-midnight font-body text-ink">{children}</div>;
+  return <div className="bg-surface-base font-text text-ink">{children}</div>;
 }

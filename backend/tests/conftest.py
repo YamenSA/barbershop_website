@@ -16,6 +16,15 @@ from app.domains.auth.models import AdminAccount
 from app.main import app
 
 
+@pytest.fixture(autouse=True)
+def isolated_rate_limit_counters():
+    """Cases share the app, but must not consume another case's request budget."""
+    from app.core.limiter import limiter
+    limiter.reset()
+    yield
+    limiter.reset()
+
+
 # Default: in-memory SQLite. PostgreSQL mode (tests marked `postgres`, e.g. the
 # EXCLUDE-constraint test) is opt-in via TEST_DATABASE_URL and expects a database
 # that `alembic upgrade head` has already been applied to — create_all() cannot

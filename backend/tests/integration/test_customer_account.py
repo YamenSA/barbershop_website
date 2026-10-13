@@ -45,7 +45,7 @@ async def account_setup_fixture(session: AsyncSession):
         Service,
         TeamMember,
         TeamMemberServiceLink,
-        WorkingHours,
+        WorkingDaySchedule, WorkingInterval,
     )
 
     service = Service(name="Haarschnitt", duration_minutes=30, price_cents=2500, is_active=True)
@@ -55,7 +55,10 @@ async def account_setup_fixture(session: AsyncSession):
     session.add(TeamMemberServiceLink(team_member_id=member.id, service_id=service.id))
     for dow in range(7):
         session.add(SalonHours(day_of_week=dow, is_open=True, open_time=t(8), close_time=t(20)))
-        session.add(WorkingHours(team_member_id=member.id, day_of_week=dow, start_time=t(8), end_time=t(20)))
+        schedule = WorkingDaySchedule(team_member_id=member.id, day_of_week=dow, is_working=True)
+        session.add(schedule)
+        await session.flush()
+        session.add(WorkingInterval(schedule_id=schedule.id, start_time=t(8), end_time=t(20)))
     await session.commit()
     return {"service_id": str(service.id), "member_id": str(member.id)}
 

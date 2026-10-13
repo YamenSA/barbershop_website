@@ -15,7 +15,7 @@ const focus = "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visi
 export default function BottomBar({ activePath }: { activePath?: string }) {
   const pathname = usePathname();
   const navigationPath = activePath ?? pathname;
-  if (pathname.startsWith("/termin")) return null;
+  if (navigationPath.startsWith("/termin")) return null;
 
   return (
     <nav aria-label="Schnellnavigation" className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-[1fr_1fr_1.5fr_1fr] gap-1 border-t border-line bg-surface-raise px-2 pt-2 pb-[max(1.25rem,env(safe-area-inset-bottom))] md:hidden">
@@ -40,9 +40,9 @@ export default function BottomBar({ activePath }: { activePath?: string }) {
   );
 }
 
-export function BottomBarSpacer() {
+export function BottomBarSpacer({ activePath }: { activePath?: string }) {
   const pathname = usePathname();
-  if (pathname.startsWith("/termin")) return null;
+  if ((activePath ?? pathname).startsWith("/termin")) return null;
 
   return <div aria-hidden className="md:hidden h-[calc(76px+env(safe-area-inset-bottom))]" />;
 }

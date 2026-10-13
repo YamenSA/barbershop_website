@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import Link from 'next/link';
 import { cancelAppointment } from '@/lib/api';
 import { ApiError } from '@/lib/api';
@@ -10,37 +10,42 @@ import { formatSalonDateTimeLong, formatSalonDeadline } from '@/lib/time';
 interface Props {
   view: CancellationView;
   token: string;
+  preview?: boolean;
 }
 
 const formatDateTime = formatSalonDateTimeLong;
 const formatDeadline = formatSalonDeadline;
 
-export default function CancelCard({ view: initial, token }: Props) {
+export default function CancelCard({ view: initial, token, preview = false }: Props) {
   const [view, setView] = useState<CancellationView>(initial);
   const [confirming, setConfirming] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const pending = useRef(false);
 
   async function handleCancel() {
+    if (pending.current) return;
+    pending.current = true;
     setSubmitting(true);
     setError(null);
     try {
-      const updated = await cancelAppointment(token);
+      const updated = preview ? { ...view, status: 'cancelled' as const, cancellable: false } : await cancelAppointment(token);
       setView(updated);
       setConfirming(false);
     } catch (err) {
       if (err instanceof ApiError) {
         if (err.status === 410) {
-          setError('Die Stornierungsfrist ist abgelaufen. Bitte kontaktieren Sie uns telefonisch.');
+          setError('Die Stornierungsfrist ist abgelaufen. Bitte ruf uns im Salon an.');
         } else if (err.status === 429) {
-          setError('Zu viele Anfragen. Bitte warten Sie kurz und versuchen Sie es erneut.');
+          setError('Zu viele Anfragen. Bitte warte kurz und versuche es erneut.');
         } else {
-          setError('Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.');
+          setError('Ein Fehler ist aufgetreten. Bitte versuche es erneut.');
         }
       } else {
-        setError('Verbindungsfehler. Bitte versuchen Sie es erneut.');
+        setError('Verbindungsfehler. Bitte versuche es erneut.');
       }
     } finally {
+      pending.current = false;
       setSubmitting(false);
     }
   }
@@ -48,12 +53,13 @@ export default function CancelCard({ view: initial, token }: Props) {
   const isCancelled = view.status === 'cancelled';
 
   return (
-    <div className="max-w-md">
+    <div className="mx-auto max-w-[640px]">
+      {preview && <p className="mb-6 rounded-lg border border-line bg-surface-raise p-4 text-sm leading-6 text-ink-muted">Design-Vorschau: Die Absage wird nur dargestellt. Es wird kein Termin verändert.</p>}
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
         <span
           className={`flex items-center justify-center w-10 h-10 rounded-full ${
-            isCancelled ? 'bg-ash/20 text-ash' : 'bg-malachite/15 text-malachite'
+            isCancelled ? 'bg-surface-card text-ink-muted' : 'bg-success-bg text-success'
           }`}
         >
           {isCancelled ? (
@@ -66,37 +72,37 @@ export default function CancelCard({ view: initial, token }: Props) {
             </svg>
           )}
         </span>
-        <h1 className="font-display font-bold text-ink text-xl">
-          {isCancelled ? 'Termin storniert' : 'Termin stornieren'}
+        <h1 className="font-brand font-medium uppercase text-ink text-[40px] leading-[44px]">
+          {isCancelled ? 'Termin abgesagt' : 'Termin absagen'}
         </h1>
       </div>
 
       {/* Appointment details */}
-      <div className="bg-slate rounded-[var(--radius-card)] px-5 py-4 space-y-3 mb-6 border border-hairline shadow-bevel">
+      <div className="bg-surface-card rounded-xl px-5 py-5 space-y-4 mb-6 border border-line">
         <div>
-          <span className="text-ash text-xs">Dienstleistung</span>
+          <span className="text-ink-muted text-xs">Dienstleistung</span>
           <p className="text-ink text-sm font-medium mt-0.5">{view.service_name}</p>
         </div>
         <div>
-          <span className="text-ash text-xs">Stylist</span>
+          <span className="text-ink-muted text-xs">Bei</span>
           <p className="text-ink text-sm font-medium mt-0.5">{view.team_member_name}</p>
         </div>
         <div>
-          <span className="text-ash text-xs">Datum &amp; Uhrzeit</span>
+          <span className="text-ink-muted text-xs">Datum &amp; Uhrzeit</span>
           <p className="text-ink text-sm font-medium mt-0.5">{formatDateTime(view.starts_at)}</p>
         </div>
         <div>
-          <span className="text-ash text-xs">Status</span>
-          <p className={`text-sm font-medium mt-0.5 ${isCancelled ? 'text-ash' : 'text-malachite'}`}>
-            {isCancelled ? 'Storniert' : 'Bestätigt'}
+          <span className="text-ink-muted text-xs">Status</span>
+          <p className={`text-sm font-medium mt-0.5 ${isCancelled ? 'text-ink-muted' : 'text-success'}`}>
+            {isCancelled ? 'Abgesagt' : 'Bestätigt'}
           </p>
         </div>
       </div>
 
       {/* Cancelled state */}
       {isCancelled && (
-        <p className="text-ash text-sm mb-6">
-          Ihr Termin wurde erfolgreich storniert. Der Slot ist wieder für andere Buchungen verfügbar.
+        <p className="text-ink-muted text-sm mb-6">
+          Dein Termin wurde abgesagt. Der Zeitraum ist wieder für andere Buchungen verfügbar.
         </p>
       )}
 
@@ -104,17 +110,17 @@ export default function CancelCard({ view: initial, token }: Props) {
       {!isCancelled && view.cancellable && !confirming && (
         <>
           {view.cancellation_deadline && (
-            <p className="text-ash text-sm mb-4">
-              Stornierung möglich bis:{' '}
+            <p className="text-ink-muted text-sm mb-4">
+              Absage möglich bis:{' '}
               <span className="text-ink font-medium">{formatDeadline(view.cancellation_deadline)}</span>
             </p>
           )}
           <button
             type="button"
             onClick={() => setConfirming(true)}
-            className="min-h-[44px] px-6 py-3 border border-red-800 text-red-400 text-sm font-medium rounded-[var(--radius-btn)] hover:bg-red-900/20 transition-colors duration-[var(--duration-fast)] focus-visible:outline-none focus-visible:shadow-[0_0_0_3px_oklch(0.65_0.19_140/0.5)]"
+            className="min-h-12 px-6 py-3 border border-gold-500 text-gold-300 text-sm font-bold rounded-lg hover:bg-surface-hover"
           >
-            Termin stornieren
+            Termin absagen
           </button>
         </>
       )}
@@ -123,22 +129,22 @@ export default function CancelCard({ view: initial, token }: Props) {
       {!isCancelled && view.cancellable && confirming && (
         <div className="space-y-4">
           <p className="text-ink text-sm">
-            Möchten Sie den Termin wirklich stornieren? Diese Aktion kann nicht rückgängig gemacht werden.
+            Möchtest du deinen Termin wirklich absagen? Diese Aktion kann nicht rückgängig gemacht werden.
           </p>
-          <div className="flex gap-3">
+          <div className="flex flex-wrap gap-3">
             <button
               type="button"
               onClick={handleCancel}
               disabled={submitting}
-              className="min-h-[44px] px-6 py-3 bg-red-800 text-red-100 text-sm font-medium rounded-[var(--radius-btn)] hover:bg-red-700 disabled:opacity-50 transition-colors duration-[var(--duration-fast)] focus-visible:outline-none focus-visible:shadow-[0_0_0_3px_oklch(0.65_0.19_140/0.5)]"
+              className="min-h-12 px-6 py-3 bg-danger text-surface-pitch text-sm font-bold rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {submitting ? 'Wird storniert …' : 'Ja, stornieren'}
+              {submitting ? 'Wird abgesagt …' : 'Ja, absagen'}
             </button>
             <button
               type="button"
               onClick={() => setConfirming(false)}
               disabled={submitting}
-              className="min-h-[44px] px-6 py-3 border border-hairline text-ash text-sm font-medium rounded-[var(--radius-btn)] hover:border-hairline-strong hover:text-ink disabled:opacity-50 transition-colors duration-[var(--duration-fast)] focus-visible:outline-none focus-visible:shadow-[0_0_0_3px_oklch(0.65_0.19_140/0.5)]"
+              className="min-h-12 px-6 py-3 border border-gold-500 text-gold-300 text-sm font-bold rounded-lg hover:bg-surface-hover disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Abbrechen
             </button>
@@ -148,14 +154,14 @@ export default function CancelCard({ view: initial, token }: Props) {
 
       {/* Past deadline */}
       {!isCancelled && !view.cancellable && (
-        <p className="text-ash text-sm">
-          Die Stornierungsfrist ist abgelaufen. Bitte kontaktieren Sie uns telefonisch, falls Sie Ihren
+        <p className="text-ink-muted text-sm">
+          Die Stornierungsfrist ist abgelaufen. Bitte ruf uns an, falls du deinen
           Termin absagen möchten.
         </p>
       )}
 
       {error && (
-        <p role="alert" className="mt-4 text-sm text-red-400 bg-red-900/20 rounded-[var(--radius-input)] px-4 py-3">
+        <p role="alert" className="mt-4 text-sm text-danger bg-danger-bg border border-danger-line rounded-lg px-4 py-3">
           {error}
         </p>
       )}
@@ -163,7 +169,7 @@ export default function CancelCard({ view: initial, token }: Props) {
       <div className="mt-8">
         <Link
           href="/"
-          className="text-ash text-sm hover:text-ink transition-colors duration-[var(--duration-fast)] focus-visible:outline-none focus-visible:shadow-[0_0_0_3px_oklch(0.65_0.19_140/0.5)] rounded"
+          className="inline-flex min-h-12 items-center text-gold-300 text-sm hover:text-ink underline underline-offset-4"
         >
           ← Zurück zur Startseite
         </Link>

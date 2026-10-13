@@ -7,6 +7,7 @@ import ContactPageView from "@/components/site/ContactPageView";
 import FaqPageView from "@/components/site/FaqPageView";
 import LegalPageView from "@/components/site/LegalPageView";
 import NotFoundPageView from "@/components/site/NotFoundPageView";
+import BookingPageView from "@/components/site/BookingPageView";
 import { getPublicServices, getPublicTeamMembers, getPublicSalonProfile, getPublicSalonHours } from "@/lib/api";
 
 export const metadata: Metadata = {
@@ -16,9 +17,19 @@ export const metadata: Metadata = {
 
 export const dynamic = "force-dynamic";
 
-export default async function DesignVorschauPage({ searchParams }: { searchParams: Promise<{ seite?: string }> }) {
+export default async function DesignVorschauPage({ searchParams }: { searchParams: Promise<{ seite?: string; service?: string; team?: string }> }) {
   if (process.env.NODE_ENV === "production") notFound();
-  const { seite } = await searchParams;
+  const { seite, service: initialServiceId, team: initialMemberId } = await searchParams;
+
+  if (seite === "buchung") {
+    const [services, team, profile, hours] = await Promise.all([
+      getPublicServices().catch(() => []),
+      getPublicTeamMembers().catch(() => []),
+      getPublicSalonProfile().catch(() => null),
+      getPublicSalonHours().catch(() => []),
+    ]);
+    return <BookingPageView services={services} team={team} profile={profile} hours={hours} initialServiceId={initialServiceId} initialMemberId={initialMemberId} preview />;
+  }
 
   if (seite === "impressum" || seite === "datenschutz" || seite === "404") {
     const [profile, hours] = await Promise.all([

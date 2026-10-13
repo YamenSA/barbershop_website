@@ -29,7 +29,7 @@ async def booking_setup_fixture(session: AsyncSession):
         Service,
         TeamMember,
         TeamMemberServiceLink,
-        WorkingHours,
+        WorkingDaySchedule, WorkingInterval,
     )
 
     service = Service(name="Haarschnitt", duration_minutes=30, price_cents=2500, is_active=True)
@@ -41,7 +41,10 @@ async def booking_setup_fixture(session: AsyncSession):
 
     for dow in range(7):
         session.add(SalonHours(day_of_week=dow, is_open=True, open_time=time(8, 0), close_time=time(20, 0)))
-        session.add(WorkingHours(team_member_id=member.id, day_of_week=dow, start_time=time(8, 0), end_time=time(20, 0)))
+        schedule = WorkingDaySchedule(team_member_id=member.id, day_of_week=dow, is_working=True)
+        session.add(schedule)
+        await session.flush()
+        session.add(WorkingInterval(schedule_id=schedule.id, start_time=time(8), end_time=time(20)))
 
     await session.commit()
     return {"service_id": str(service.id), "member_id": str(member.id)}
@@ -98,8 +101,8 @@ async def test_slot_unavailable_after_booking(public_client: AsyncClient, setup:
     assert avail_resp.status_code == 200
     slots = avail_resp.json()["slots"]
     booked_time = _slot_in_7_days()
-    booked_start = booked_time[:19]  # strip tz for comparison
-    assert all(s["starts_at"][:19] != booked_start for s in slots), "Booked slot still appears"
+    booked_start = dt.datetime.fromisoformat(booked_time)
+    assert all(dt.datetime.fromisoformat(s["starts_at"]) != booked_start for s in slots), "Booked slot still appears"
 
 
 # ---------------------------------------------------------------------------

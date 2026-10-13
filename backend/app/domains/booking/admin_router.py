@@ -171,14 +171,27 @@ async def daily_plan_pdf(
         col_w = [22, 45, 38, 45, 40]
         headers.append("Notiz")
 
-    for i, h in enumerate(headers):
-        pdf.cell(col_w[i], 7, h, border=1)
-    pdf.ln()
+    def table_header():
+        pdf.set_font("Helvetica", "B", 9)
+        for i, h in enumerate(headers):
+            pdf.cell(col_w[i], 7, h, border=1)
+        pdf.ln()
+        pdf.set_font("Helvetica", "", 8)
 
-    pdf.set_font("Helvetica", "", 8)
+    def wrap_cell(value: str, width: float) -> list[str]:
+        lines, line = [], ""
+        for character in value:
+            if character == "\n" or pdf.get_string_width(line + character) > width - 3:
+                lines.append(line)
+                line = ""
+            if character != "\n":
+                line += character
+        return lines + [line]
+
+    table_header()
     for a in appts:
         local_time = to_salon(a.starts_at).strftime("%H:%M")
-        service_name = svc_map.get(a.service_id, str(a.service_id))
+        service_name = a.service_summary or svc_map.get(a.service_id, str(a.service_id))
         stylist = member_map.get(a.team_member_id, str(a.team_member_id))
         customer = a.guest_name or a.customer_name or "–"
 
@@ -186,9 +199,24 @@ async def daily_plan_pdf(
         if include_notes:
             row.append(a.notes or "")
 
-        for i, val in enumerate(row):
-            pdf.cell(col_w[i], 6, val[:30], border=1)
-        pdf.ln()
+        # Combined service names must remain complete, including long visits.
+        columns = [wrap_cell(val, col_w[i]) for i, val in enumerate(row)]
+        while any(columns):
+            available_lines = int((pdf.h - pdf.b_margin - pdf.get_y()) // 6)
+            if available_lines < 1:
+                pdf.add_page()
+                table_header()
+                continue
+            count = min(max(map(len, columns)), available_lines)
+            y, x = pdf.get_y(), pdf.l_margin
+            for i, lines in enumerate(columns):
+                pdf.rect(x, y, col_w[i], count * 6)
+                for j, line in enumerate(lines[:count]):
+                    pdf.set_xy(x, y + j * 6)
+                    pdf.cell(col_w[i], 6, line)
+                columns[i] = lines[count:]
+                x += col_w[i]
+            pdf.set_y(y + count * 6)
 
     buf = BytesIO(bytes(pdf.output()))
     filename = f"tagesplan-{date.isoformat()}.pdf"

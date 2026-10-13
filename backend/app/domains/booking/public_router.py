@@ -1,8 +1,9 @@
-from datetime import date
+from datetime import date, timedelta
 from typing import Optional
 from uuid import UUID
 
-from fastapi import APIRouter, BackgroundTasks, Depends, Request
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request
+from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.core.config import settings
@@ -15,6 +16,7 @@ from app.domains.booking.schemas import (
     PublicAppointmentCreate,
     PublicAppointmentRead,
     PublicSlot,
+    BookingDayRead,
 )
 from app.domains.booking.service import (
     cancel_by_token,
@@ -26,14 +28,30 @@ from app.domains.notifications.service import send_confirmation
 router = APIRouter(prefix="/booking", tags=["public-booking"])
 
 
+@router.get("/days", response_model=list[BookingDayRead])
+async def get_booking_days(from_date: date, to_date: date, session: AsyncSession = Depends(get_session)):
+    """Public open/closed flags only, never internal closure reasons."""
+    from app.domains.stammdaten.models import SalonClosure, SalonHours
+    count = (to_date - from_date).days + 1
+    if count < 1 or count > 60:
+        raise HTTPException(422, "Bitte einen Zeitraum von höchstens 60 Tagen wählen")
+    hours = (await session.execute(select(SalonHours))).scalars().all()
+    open_weekdays = {h.day_of_week for h in hours if h.is_open}
+    closures = (await session.execute(select(SalonClosure.date).where(
+        SalonClosure.date >= from_date, SalonClosure.date <= to_date))).scalars().all()
+    return [BookingDayRead(date=(day := from_date + timedelta(days=i)).isoformat(),
+                           is_open=day.weekday() in open_weekdays and day not in closures) for i in range(count)]
+
+
 @router.get("/availability", response_model=AvailabilityResponse)
 async def get_availability(
-    service_id: UUID,
     date: date,
+    service_id: Optional[UUID] = None,
     team_member_id: Optional[UUID] = None,
+    service_ids: Optional[list[UUID]] = Query(default=None, max_length=20),
     session: AsyncSession = Depends(get_session),
 ) -> AvailabilityResponse:
-    slots = await get_public_slots(session, service_id, date, team_member_id)
+    slots = await get_public_slots(session, service_id, date, team_member_id, service_ids)
     return AvailabilityResponse(
         date=date.isoformat(),
         slots=[

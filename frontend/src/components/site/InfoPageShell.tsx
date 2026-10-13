@@ -21,7 +21,7 @@ export default function InfoPageShell({ profile, hours, children, activePath }: 
       <SiteHeader phone={profile?.phone} phoneHref={phoneHref} activePath={activePath} />
       <main id="main-content">{children}</main>
       <SiteFooter profile={profile} hours={hours} copyrightYear={Number(salonToday().slice(0, 4))} description={`Friseur für Damen und Herren${profile?.city ? ` in ${profile.city}` : ""}.`} contactLinks={contactLinks} />
-      <BottomBarSpacer />
+      <BottomBarSpacer activePath={activePath} />
       <BottomBar activePath={activePath} />
     </div>
   );

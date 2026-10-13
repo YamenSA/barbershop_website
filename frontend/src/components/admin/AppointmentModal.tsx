@@ -102,7 +102,7 @@ export default function AppointmentModal({
         <div className="flex items-start justify-between">
           <div>
             <h2 className="text-lg font-semibold text-gray-900">
-              {serviceNames[appointment.service_id] ?? 'Termin'}
+              {appointment.service_names?.join(' + ') || serviceNames[appointment.service_id] || 'Termin'}
             </h2>
             <p className="text-sm text-gray-500">
               {fmt(appointment.starts_at)} – {fmt(appointment.ends_at)}

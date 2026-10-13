@@ -12,3 +12,12 @@
   outline-offset: 2px;
   box-shadow: none;
 }
+
+@media (max-width: 1023px) {
+  .page:has([data-booking-flow]) [data-booking-header] {
+    display: none;
+  }
+  .page:has([data-booking-bar]) > footer {
+    padding-bottom: calc(14rem + env(safe-area-inset-bottom));
+  }
+}

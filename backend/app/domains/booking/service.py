@@ -23,6 +23,22 @@ from app.domains.booking.schemas import (
     PublicAppointmentCreate,
 )
 from app.domains.stammdaten.models import Service
+from app.domains.booking.selection import load_selected_services, selection_ids, service_snapshots
+
+
+async def _validate_combined_move(session: AsyncSession, appointment: Appointment, member_id: UUID,
+                                  starts_at: datetime) -> datetime:
+    """Existing snapshots keep duration; current eligibility/schedules still apply."""
+    from app.domains.booking.availability import _load_members_for_selection, get_available_slots
+    ids = [UUID(s["id"]) for s in appointment.selected_services]
+    duration = sum(s["duration_minutes"] for s in appointment.selected_services)
+    if not await _load_members_for_selection(session, ids, member_id):
+        raise HTTPException(409, "Mitarbeiter kann nicht alle gewählten Leistungen ausführen")
+    slots = await get_available_slots(session, member_id, ids[0], to_salon(starts_at).date(),
+                                     duration_minutes=duration, exclude_appointment_id=appointment.id)
+    if not any(slot.starts_at == starts_at for slot in slots):
+        raise HTTPException(409, "BOOKING_CONFLICT")
+    return starts_at + timedelta(minutes=duration)
 
 
 class BookingService:
@@ -269,7 +285,11 @@ class BookingService:
             )
 
             svc = await session.get(Service, appointment.service_id)
-            new_ends = new_starts + timedelta(minutes=svc.duration_minutes)
+            new_ends = (
+                await _validate_combined_move(session, appointment, new_member_id, new_starts)
+                if appointment.service_selection
+                else new_starts + timedelta(minutes=svc.duration_minutes)
+            )
 
             overlap_stmt = select(Appointment).where(
                 Appointment.team_member_id == new_member_id,
@@ -329,7 +349,7 @@ async def list_customer_appointments(session: AsyncSession, customer_id: UUID):
         )
         row = AccountAppointmentRead(
             id=appt.id,
-            service_name=service.name if service else "Unbekannt",
+            service_name=appt.service_summary or (service.name if service else "Unbekannt"),
             team_member_name=member.name if member else "Unbekannt",
             starts_at=starts,
             ends_at=appt.ends_at,
@@ -381,7 +401,7 @@ async def cancel_own_appointment(
     member = await session.get(TeamMember, appt.team_member_id)
     return AccountAppointmentRead(
         id=appt.id,
-        service_name=service.name if service else "Unbekannt",
+        service_name=appt.service_summary or (service.name if service else "Unbekannt"),
         team_member_name=member.name if member else "Unbekannt",
         starts_at=appt.starts_at,
         ends_at=appt.ends_at,
@@ -428,8 +448,12 @@ async def reschedule_appointment(
     if not service:
         raise HTTPException(status_code=404, detail="Service not found")
 
-    new_ends = new_starts + timedelta(minutes=service.duration_minutes)
     team_member_id = new_team_member_id or appt.team_member_id
+    new_ends = (
+        await _validate_combined_move(session, appt, team_member_id, new_starts)
+        if appt.service_selection
+        else new_starts + timedelta(minutes=service.duration_minutes)
+    )
 
     # Check for overlap on new slot (excluding current appointment)
     overlap_stmt = select(Appointment).where(
@@ -450,6 +474,7 @@ async def reschedule_appointment(
     new_appt = Appointment(
         team_member_id=team_member_id,
         service_id=appt.service_id,
+        service_selection=appt.service_selection,
         customer_id=customer_id,
         starts_at=new_starts,
         ends_at=new_ends,
@@ -479,7 +504,7 @@ async def reschedule_appointment(
         if customer and member and service:
             subject, body = render_reschedule_confirmation(
                 customer_name=customer.name,
-                service_name=service.name,
+                service_name=new_appt.service_summary or service.name,
                 team_member_name=member.name,
                 starts_at=new_appt.starts_at,
                 cancellation_token=new_appt.cancellation_token,
@@ -497,7 +522,7 @@ async def reschedule_appointment(
     member = await session.get(TeamMember, new_appt.team_member_id)
     return AccountAppointmentRead(
         id=new_appt.id,
-        service_name=service.name,
+        service_name=new_appt.service_summary or service.name,
         team_member_name=member.name if member else "Unbekannt",
         starts_at=new_appt.starts_at,
         ends_at=new_appt.ends_at,
@@ -552,7 +577,7 @@ async def _build_cancellation_view(
     )
     return CancellationView(
         id=appointment.id,
-        service_name=service.name if service else "Unbekannt",
+        service_name=appointment.service_summary or (service.name if service else "Unbekannt"),
         team_member_name=team_member.name if team_member else "Unbekannt",
         starts_at=appointment.starts_at,
         status=appointment.status,
@@ -613,21 +638,20 @@ async def create_public_appointment(
     if local_start.minute % 15 != 0 or local_start.second != 0 or local_start.microsecond != 0:
         raise HTTPException(status_code=422, detail="INVALID_SLOT_TIME")
 
-    # Load service
-    service = await session.get(Service, data.service_id)
-    if not service or not service.is_active:
-        raise HTTPException(status_code=404, detail="Service not found")
-
-    ends_at = starts_at + timedelta(minutes=service.duration_minutes)
-
-    # Resolve team member
-    if data.team_member_id is None:
-        from app.domains.booking.availability import resolve_any_member
-        team_member_id = await resolve_any_member(session, data.service_id, starts_at, ends_at)
-        if team_member_id is None:
-            raise HTTPException(status_code=409, detail="BOOKING_CONFLICT")
-    else:
-        team_member_id = data.team_member_id
+    # Recalculate every detail on the server; a posted timestamp is not a hold.
+    ids = selection_ids(data.service_id, data.service_ids)
+    services = await load_selected_services(session, ids)
+    if (data.expected_total_price_cents is not None and data.expected_total_price_cents != sum(s.price_cents for s in services)) or (
+        data.expected_total_duration_minutes is not None and data.expected_total_duration_minutes != sum(s.duration_minutes for s in services)
+    ):
+        raise HTTPException(409, "SELECTION_CHANGED")
+    ends_at = starts_at + timedelta(minutes=sum(s.duration_minutes for s in services))
+    from app.domains.booking.availability import get_public_slots
+    offered = await get_public_slots(session, None, local_start.date(), data.team_member_id, ids)
+    matching = [s for s in offered if s.starts_at == starts_at and s.ends_at == ends_at]
+    if not matching:
+        raise HTTPException(status_code=409, detail="BOOKING_CONFLICT")
+    team_member_id = matching[0].team_member_id
 
     # App-level overlap check (DB EXCLUDE is the hard guarantee)
     overlap_stmt = select(Appointment).where(
@@ -640,11 +664,16 @@ async def create_public_appointment(
         raise HTTPException(status_code=409, detail="BOOKING_CONFLICT")
 
     # Customer upsert
-    customer = await _upsert_customer(session, data.customer)
+    try:
+        customer = await _upsert_customer(session, data.customer)
+    except IntegrityError:
+        await session.rollback()
+        raise HTTPException(status_code=409, detail="BOOKING_CONFLICT")
 
     appointment = Appointment(
         team_member_id=team_member_id,
-        service_id=data.service_id,
+        service_id=ids[0],
+        service_selection=service_snapshots(services),
         customer_id=customer.id,
         starts_at=starts_at,
         ends_at=ends_at,
