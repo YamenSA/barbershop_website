@@ -3,3 +3,12 @@
   outline-offset: 2px;
   box-shadow: none;
 }
+
+/* The root skip link sits outside the page shell. Match the public palette. */
+:global(body):has(.page) > :global(a[href="#main-content"]):focus-visible {
+  background-color: var(--color-gold-300);
+  color: var(--color-surface-pitch);
+  outline: 2px solid var(--color-gold-300);
+  outline-offset: 2px;
+  box-shadow: none;
+}

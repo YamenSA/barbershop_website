@@ -1,14 +1,15 @@
 import Container from "@/components/ui/Container";
 import ImpressumContent, { sections as imprintSections } from "@/components/legal/ImpressumContent";
 import DatenschutzContent, { sections as privacySections } from "@/components/legal/DatenschutzContent";
-import InfoPageShell, { type InfoPageData } from "./InfoPageShell";
+import type { InfoPageData } from "./InfoPageShell";
+import SitePageFrame from "./SitePageFrame";
 import styles from "./LegalPageView.module.css";
 
-export default function LegalPageView({ kind, ...data }: InfoPageData & { kind: "impressum" | "datenschutz" }) {
+export default function LegalPageView({ kind, embedded = false, ...data }: InfoPageData & { kind: "impressum" | "datenschutz"; embedded?: boolean }) {
   const sections = kind === "impressum" ? imprintSections : privacySections;
   const navigation = <nav aria-label="Inhaltsverzeichnis"><ul className="space-y-1">{sections.map((section) => <li key={section.id}><a href={`#${section.id}`} className="inline-flex min-h-11 items-center py-2 text-sm leading-6 text-ink-muted hover:text-gold-300">{section.label}</a></li>)}</ul></nav>;
   return (
-    <InfoPageShell {...data}>
+    <SitePageFrame {...data} embedded={embedded}>
       <Container className="py-8 lg:pb-24 lg:pt-16">
         <div className="grid gap-8 lg:grid-cols-12 lg:gap-6">
           <aside className="hidden lg:col-span-3 lg:block">
@@ -28,6 +29,6 @@ export default function LegalPageView({ kind, ...data }: InfoPageData & { kind: 
           </div>
         </div>
       </Container>
-    </InfoPageShell>
+    </SitePageFrame>
   );
 }

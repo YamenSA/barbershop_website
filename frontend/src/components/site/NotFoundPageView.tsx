@@ -1,10 +1,11 @@
 import Container from "@/components/ui/Container";
 import Button from "@/components/ui/Button";
-import InfoPageShell, { type InfoPageData } from "./InfoPageShell";
+import type { InfoPageData } from "./InfoPageShell";
+import SitePageFrame from "./SitePageFrame";
 
-export default function NotFoundPageView(data: InfoPageData) {
+export default function NotFoundPageView({ embedded = false, ...data }: InfoPageData & { embedded?: boolean }) {
   return (
-    <InfoPageShell {...data}>
+    <SitePageFrame {...data} embedded={embedded}>
       <Container className="py-10 lg:py-16">
         <div className="grid items-center gap-8 lg:grid-cols-12 lg:gap-6">
           <div aria-hidden="true" className="mx-auto flex h-[220px] w-[170px] items-center justify-center rounded-arch border border-gold-500 font-brand text-[100px] leading-none text-gold-300 lg:col-span-4 lg:h-[380px] lg:w-full lg:max-w-[300px] lg:text-[144px]">404</div>
@@ -18,6 +19,6 @@ export default function NotFoundPageView(data: InfoPageData) {
           </div>
         </div>
       </Container>
-    </InfoPageShell>
+    </SitePageFrame>
   );
 }

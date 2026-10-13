@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { cancelAppointment } from '@/lib/api';
 import { ApiError } from '@/lib/api';
 import type { CancellationView } from '@/lib/types';
@@ -149,7 +150,7 @@ export default function CancelCard({ view: initial, token }: Props) {
       {!isCancelled && !view.cancellable && (
         <p className="text-ash text-sm">
           Die Stornierungsfrist ist abgelaufen. Bitte kontaktieren Sie uns telefonisch, falls Sie Ihren
-          Termin verschieben oder absagen möchten.
+          Termin absagen möchten.
         </p>
       )}
 
@@ -160,12 +161,12 @@ export default function CancelCard({ view: initial, token }: Props) {
       )}
 
       <div className="mt-8">
-        <a
+        <Link
           href="/"
           className="text-ash text-sm hover:text-ink transition-colors duration-[var(--duration-fast)] focus-visible:outline-none focus-visible:shadow-[0_0_0_3px_oklch(0.65_0.19_140/0.5)] rounded"
         >
           ← Zurück zur Startseite
-        </a>
+        </Link>
       </div>
     </div>
   );

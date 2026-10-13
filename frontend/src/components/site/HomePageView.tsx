@@ -1,3 +1,4 @@
+import SitePageFrame from "./SitePageFrame";
 import Image from "next/image";
 import Link from "next/link";
 import Container from "@/components/ui/Container";
@@ -5,9 +6,6 @@ import Section from "@/components/ui/Section";
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import TextLink from "@/components/ui/TextLink";
-import SiteHeader from "./SiteHeader";
-import SiteFooter from "./SiteFooter";
-import BottomBar, { BottomBarSpacer } from "./BottomBar";
 import HomeLocationMap from "./HomeLocationMap";
 import { photoTreatment, photoShading } from "./photo-treatment";
 import type { PublicServiceRead, PublicTeamMemberRead, PublicSalonHoursRead, SalonProfile, Review } from "@/lib/types";
@@ -19,6 +17,7 @@ export type HomePageViewProps = {
   team: PublicTeamMemberRead[];
   hours: PublicSalonHoursRead[];
   profile: SalonProfile | null;
+  embedded?: boolean;
   reviews?: Review[];
 };
 
@@ -27,19 +26,12 @@ const focus = "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visi
 const dayNames = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"];
 const price = (cents: number) => new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(cents / 100);
 
-export default function HomePageView({ services, team, hours, profile, reviews = [] }: HomePageViewProps) {
+export default function HomePageView({ services, team, hours, profile, reviews = [], embedded = false }: HomePageViewProps) {
   const today = weekdayMonday0(salonToday());
   const phoneHref = profile?.phone ? `tel:${profile.phone.replace(/\s/g, "")}` : undefined;
-  const contactLinks = [
-    ...(siteConfig.instagramUrl ? [{ label: "Instagram", href: siteConfig.instagramUrl }] : []),
-    ...(siteConfig.whatsappNumber ? [{ label: "WhatsApp", href: `https://wa.me/${siteConfig.whatsappNumber}` }] : []),
-    ...(siteConfig.writeReviewUrl ? [{ label: "Google-Bewertung schreiben", href: siteConfig.writeReviewUrl }] : []),
-  ];
 
   return (
-    <div className="bg-surface-base font-text text-ink">
-      <SiteHeader phone={profile?.phone} phoneHref={phoneHref} />
-      <main id="main-content">
+    <SitePageFrame profile={profile} hours={hours} embedded={embedded} activePath="/" className="bg-surface-base font-text text-ink">
         <Container className="pb-10 pt-4 lg:pb-10 lg:pt-8">
           <div className="grid gap-6 lg:grid-cols-12 lg:items-center">
             <div className="relative h-[clamp(220px,42svh,340px)] overflow-hidden rounded-arch border border-gold-700 lg:order-2 lg:col-span-5 lg:col-start-8 lg:aspect-[3/4] lg:h-auto lg:w-[min(100%,43.5svh,360px)] lg:justify-self-center">
@@ -160,10 +152,6 @@ export default function HomePageView({ services, team, hours, profile, reviews =
             <Button size="lg" href="/termin">Termin buchen</Button>
           </div>
         </Section>
-      </main>
-      <SiteFooter profile={profile} hours={hours} copyrightYear={Number(salonToday().slice(0, 4))} description={`Friseur für Damen und Herren${profile?.city ? ` in ${profile.city}` : ""}.`} contactLinks={contactLinks} />
-      <BottomBarSpacer />
-      <BottomBar />
-    </div>
+    </SitePageFrame>
   );
 }

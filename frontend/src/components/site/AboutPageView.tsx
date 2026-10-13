@@ -1,14 +1,10 @@
+import SitePageFrame from "./SitePageFrame";
 import Image from "next/image";
 import Container from "@/components/ui/Container";
 import Section from "@/components/ui/Section";
 import TextLink from "@/components/ui/TextLink";
 import Button from "@/components/ui/Button";
-import SiteHeader from "./SiteHeader";
-import SiteFooter from "./SiteFooter";
-import BottomBar, { BottomBarSpacer } from "./BottomBar";
 import { photoTreatment, photoShading } from "./photo-treatment";
-import { salonToday } from "@/lib/time";
-import { siteConfig } from "@/lib/site-config";
 import type { PublicTeamMemberRead, PublicSalonHoursRead, SalonProfile } from "@/lib/types";
 import styles from "./AboutPageView.module.css";
 
@@ -16,6 +12,7 @@ type AboutPageViewProps = {
   team: PublicTeamMemberRead[];
   hours: PublicSalonHoursRead[];
   profile: SalonProfile | null;
+  embedded?: boolean;
 };
 
 const values = [
@@ -25,18 +22,10 @@ const values = [
   { title: "Klarheit", description: "Preise vorab ansehen. Bezahlt wird bar vor Ort." },
 ];
 
-export default function AboutPageView({ team, hours, profile }: AboutPageViewProps) {
-  const phoneHref = profile?.phone ? `tel:${profile.phone.replace(/\s/g, "")}` : undefined;
-  const contactLinks = [
-    ...(siteConfig.instagramUrl ? [{ label: "Instagram", href: siteConfig.instagramUrl }] : []),
-    ...(siteConfig.whatsappNumber ? [{ label: "WhatsApp", href: `https://wa.me/${siteConfig.whatsappNumber}` }] : []),
-    ...(siteConfig.writeReviewUrl ? [{ label: "Google-Bewertung schreiben", href: siteConfig.writeReviewUrl }] : []),
-  ];
+export default function AboutPageView({ team, hours, profile, embedded = false }: AboutPageViewProps) {
 
   return (
-    <div className={`${styles.page} bg-surface-base font-text text-ink`}>
-      <SiteHeader phone={profile?.phone} phoneHref={phoneHref} activePath="/ueber-uns" />
-      <main id="main-content">
+    <SitePageFrame profile={profile} hours={hours} embedded={embedded} activePath="/ueber-uns" className={`${styles.page} bg-surface-base font-text text-ink`}>
         <Container className="pt-8 lg:pt-12">
           <div className="mb-8 grid gap-5 lg:mb-10 lg:grid-cols-12 lg:items-end lg:gap-6">
             <div className="lg:col-span-7">
@@ -94,10 +83,6 @@ export default function AboutPageView({ team, hours, profile }: AboutPageViewPro
             <Button size="lg" href="/termin">Termin buchen</Button>
           </div>
         </Section>
-      </main>
-      <SiteFooter profile={profile} hours={hours} copyrightYear={Number(salonToday().slice(0, 4))} description={`Friseur für Damen und Herren${profile?.city ? ` in ${profile.city}` : ""}.`} contactLinks={contactLinks} />
-      <BottomBarSpacer />
-      <BottomBar />
-    </div>
+    </SitePageFrame>
   );
 }

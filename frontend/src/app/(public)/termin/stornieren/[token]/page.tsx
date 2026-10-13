@@ -16,18 +16,18 @@ interface Props {
 export default async function CancellationPage({ params }: Props) {
   const { token } = await params;
 
+  let view: Awaited<ReturnType<typeof getCancellation>>;
   try {
-    const view = await getCancellation(token);
-    
-    return (
-      <main className="container-page py-12 md:py-20">
-        <CancelCard view={view} token={token} />
-      </main>
-    );
+    view = await getCancellation(token);
   } catch (err) {
     if (err instanceof ApiError && err.status === 404) {
       notFound();
     }
     throw err;
   }
+  return (
+    <section className="container-page py-12 md:py-20">
+      <CancelCard view={view} token={token} />
+    </section>
+  );
 }

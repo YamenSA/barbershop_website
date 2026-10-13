@@ -1,29 +1,18 @@
+import SitePageFrame from "./SitePageFrame";
 import Container from "@/components/ui/Container";
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import TextLink from "@/components/ui/TextLink";
-import SiteHeader from "./SiteHeader";
-import SiteFooter from "./SiteFooter";
-import BottomBar, { BottomBarSpacer } from "./BottomBar";
 import FaqAccordion from "./FaqAccordion";
 import { faqs } from "@/content/faq";
-import { salonToday } from "@/lib/time";
-import { siteConfig } from "@/lib/site-config";
 import type { SalonProfile, PublicSalonHoursRead } from "@/lib/types";
 import styles from "./FaqPageView.module.css";
 
-export default function FaqPageView({ profile, hours }: { profile: SalonProfile | null; hours: PublicSalonHoursRead[] }) {
+export default function FaqPageView({ profile, hours, embedded = false }: { profile: SalonProfile | null; hours: PublicSalonHoursRead[]; embedded?: boolean }) {
   const phoneHref = profile?.phone ? `tel:${profile.phone.replace(/\s/g, "")}` : undefined;
-  const contactLinks = [
-    ...(siteConfig.instagramUrl ? [{ label: "Instagram", href: siteConfig.instagramUrl }] : []),
-    ...(siteConfig.whatsappNumber ? [{ label: "WhatsApp", href: `https://wa.me/${siteConfig.whatsappNumber}` }] : []),
-    ...(siteConfig.writeReviewUrl ? [{ label: "Google-Bewertung schreiben", href: siteConfig.writeReviewUrl }] : []),
-  ];
 
   return (
-    <div className={`${styles.page} bg-surface-base font-text text-ink`}>
-      <SiteHeader phone={profile?.phone} phoneHref={phoneHref} activePath="/faq" />
-      <main id="main-content">
+    <SitePageFrame profile={profile} hours={hours} embedded={embedded} activePath="/faq" className={`${styles.page} bg-surface-base font-text text-ink`}>
         <Container className="pb-12 pt-8 lg:pb-24 lg:pt-12">
           <div className="grid gap-8 lg:grid-cols-12 lg:gap-6">
             <div className="lg:col-span-4">
@@ -46,10 +35,6 @@ export default function FaqPageView({ profile, hours }: { profile: SalonProfile 
             </Card>
           </div>
         </Container>
-      </main>
-      <SiteFooter profile={profile} hours={hours} copyrightYear={Number(salonToday().slice(0, 4))} description={`Friseur für Damen und Herren${profile?.city ? ` in ${profile.city}` : ""}.`} contactLinks={contactLinks} />
-      <BottomBarSpacer />
-      <BottomBar />
-    </div>
+    </SitePageFrame>
   );
 }

@@ -147,7 +147,7 @@ export default function ContactForm({ serviceId, slot, onSuccess }: Props) {
         </button>
 
         <p className="text-ash text-xs">
-          <span aria-hidden>*</span> Pflichtfelder · Zahlung vor Ort (bar oder Karte)
+          <span aria-hidden>*</span> Pflichtfelder · Barzahlung vor Ort
         </p>
       </form>
     </div>

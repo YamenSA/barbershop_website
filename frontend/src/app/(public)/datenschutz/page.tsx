@@ -1,12 +1,14 @@
-import type { Metadata } from 'next';
+import type { Metadata } from "next";
+import LegalPageView from "@/components/site/LegalPageView";
+import { getPublicSiteData } from "@/lib/public-site-data";
 
 export const metadata: Metadata = {
-  title: { absolute: 'Datenschutzerklärung | Azzam Barbershop' },
-  description:
-    'Informationen zur Verarbeitung personenbezogener Daten auf dieser Website.',
+  title: "Datenschutzerklärung",
+  description: "Informationen zur Verarbeitung personenbezogener Daten auf dieser Website.",
   robots: { index: false },
 };
 
-export const revalidate = 3600;
-
-export { default } from '@/components/legal/DatenschutzContent';
+export default async function Page() {
+  const data = await getPublicSiteData();
+  return <LegalPageView {...data} embedded kind="datenschutz" />;
+}

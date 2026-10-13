@@ -1,10 +1,8 @@
+import SitePageFrame from "./SitePageFrame";
 import type { ReactNode } from "react";
 import Container from "@/components/ui/Container";
 import Button from "@/components/ui/Button";
-import SiteHeader from "./SiteHeader";
-import SiteFooter from "./SiteFooter";
 import HomeLocationMap from "./HomeLocationMap";
-import BottomBar, { BottomBarSpacer } from "./BottomBar";
 import { salonToday, weekdayMonday0 } from "@/lib/time";
 import { siteConfig } from "@/lib/site-config";
 import type { SalonProfile, PublicSalonHoursRead } from "@/lib/types";
@@ -12,6 +10,7 @@ import styles from "./ContactPageView.module.css";
 
 type ContactPageViewProps = {
   profile: SalonProfile | null;
+  embedded?: boolean;
   hours: PublicSalonHoursRead[];
 };
 
@@ -36,22 +35,15 @@ function ContactTile({ kind, label, href, external = false, children }: {
 
 const days = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"];
 
-export default function ContactPageView({ profile, hours }: ContactPageViewProps) {
+export default function ContactPageView({ profile, hours, embedded = false }: ContactPageViewProps) {
   const today = weekdayMonday0(salonToday());
   const phoneHref = profile?.phone ? `tel:${profile.phone.replace(/\s/g, "")}` : undefined;
   const address = profile ? `${profile.street}, ${profile.postal_code} ${profile.city}` : null;
   const routeHref = address ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}` : null;
   const whatsappHref = siteConfig.whatsappNumber ? `https://wa.me/${siteConfig.whatsappNumber}` : null;
-  const contactLinks = [
-    ...(siteConfig.instagramUrl ? [{ label: "Instagram", href: siteConfig.instagramUrl }] : []),
-    ...(whatsappHref ? [{ label: "WhatsApp", href: whatsappHref }] : []),
-    ...(siteConfig.writeReviewUrl ? [{ label: "Google-Bewertung schreiben", href: siteConfig.writeReviewUrl }] : []),
-  ];
 
   return (
-    <div className={`${styles.page} bg-surface-base font-text text-ink`}>
-      <SiteHeader phone={profile?.phone} phoneHref={phoneHref} activePath="/kontakt" />
-      <main id="main-content">
+    <SitePageFrame profile={profile} hours={hours} embedded={embedded} activePath="/kontakt" className={`${styles.page} bg-surface-base font-text text-ink`}>
         <Container className="pb-12 pt-8 lg:pb-24 lg:pt-12">
           <p className="text-xs font-semibold uppercase tracking-[.14em] text-gold-500">Kontakt & Anfahrt</p>
           <h1 className="mt-3 max-w-[14ch] font-brand text-[40px] uppercase leading-[44px] text-balance lg:text-[72px] lg:leading-[76px]">So findest du uns</h1>
@@ -84,10 +76,6 @@ export default function ContactPageView({ profile, hours }: ContactPageViewProps
             </section>
           </div>
         </Container>
-      </main>
-      <SiteFooter profile={profile} hours={hours} copyrightYear={Number(salonToday().slice(0, 4))} description={`Friseur für Damen und Herren${profile?.city ? ` in ${profile.city}` : ""}.`} contactLinks={contactLinks} />
-      <BottomBarSpacer />
-      <BottomBar activePath="/kontakt" />
-    </div>
+    </SitePageFrame>
   );
 }

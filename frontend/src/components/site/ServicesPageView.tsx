@@ -1,34 +1,24 @@
+import SitePageFrame from "./SitePageFrame";
 import Container from "@/components/ui/Container";
 import Button from "@/components/ui/Button";
-import SiteHeader from "./SiteHeader";
-import SiteFooter from "./SiteFooter";
-import BottomBar, { BottomBarSpacer } from "./BottomBar";
 import ServicePriceBoard from "./ServicePriceBoard";
 import type { PublicServiceRead, PublicSalonHoursRead, SalonProfile } from "@/lib/types";
-import { salonToday } from "@/lib/time";
-import { siteConfig } from "@/lib/site-config";
 import styles from "./ServicesPageView.module.css";
 
 type ServicesPageViewProps = {
   services: PublicServiceRead[];
   hours: PublicSalonHoursRead[];
   profile: SalonProfile | null;
+  embedded?: boolean;
   loadFailed?: boolean;
   retryHref?: string;
 };
 
-export default function ServicesPageView({ services, hours, profile, loadFailed = false, retryHref = "/dienstleistungen" }: ServicesPageViewProps) {
+export default function ServicesPageView({ services, hours, profile, loadFailed = false, retryHref = "/dienstleistungen", embedded = false }: ServicesPageViewProps) {
   const phoneHref = profile?.phone ? `tel:${profile.phone.replace(/\s/g, "")}` : undefined;
-  const contactLinks = [
-    ...(siteConfig.instagramUrl ? [{ label: "Instagram", href: siteConfig.instagramUrl }] : []),
-    ...(siteConfig.whatsappNumber ? [{ label: "WhatsApp", href: `https://wa.me/${siteConfig.whatsappNumber}` }] : []),
-    ...(siteConfig.writeReviewUrl ? [{ label: "Google-Bewertung schreiben", href: siteConfig.writeReviewUrl }] : []),
-  ];
 
   return (
-    <div className={`${styles.page} bg-surface-base font-text text-ink`}>
-      <SiteHeader phone={profile?.phone} phoneHref={phoneHref} activePath="/dienstleistungen" />
-      <main id="main-content">
+    <SitePageFrame profile={profile} hours={hours} embedded={embedded} activePath="/dienstleistungen" className={`${styles.page} bg-surface-base font-text text-ink`}>
         <Container className="pb-12 pt-8 lg:pb-24 lg:pt-12">
           <div className="mb-6 flex flex-wrap items-end justify-between gap-5 lg:mb-10">
             <div>
@@ -46,10 +36,6 @@ export default function ServicesPageView({ services, hours, profile, loadFailed 
             <div className="mt-5 flex flex-wrap gap-3"><a href={retryHref} className="inline-flex h-12 items-center justify-center rounded-lg border border-gold-500 px-6 font-bold text-gold-300 hover:bg-surface-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold-300">Erneut laden</a>{phoneHref && <Button href={phoneHref} variant="secondary">Anrufen</Button>}</div>
           </div> : <ServicePriceBoard services={services} />}
         </Container>
-      </main>
-      <SiteFooter profile={profile} hours={hours} copyrightYear={Number(salonToday().slice(0,4))} description={`Friseur für Damen und Herren${profile?.city ? ` in ${profile.city}` : ""}.`} contactLinks={contactLinks} />
-      <BottomBarSpacer />
-      <BottomBar activePath="/dienstleistungen" />
-    </div>
+    </SitePageFrame>
   );
 }
