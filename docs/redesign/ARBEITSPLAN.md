@@ -1,8 +1,8 @@
 # Redesign „Bogen & Linie“ – Arbeitsplan
 
 ## Arbeitsweise (verbindlich)
-- Yamen ist Student und arbeitet in kleinen Schritten. Immer nur EIN kleiner Schritt, dann stoppen und kurz berichten. Erklärungen kurz, erst Gesamtbild, dann Detail. Keine Termin-/Zeitplan-Diskussionen.
-- Du (Codex) implementierst und prüfst selbst kritisch. Du darfst nicht in .git schreiben: Commits macht Yamen selbst, immer mit expliziten Pfaden (nie `git add -A`). Gib ihm dafür die fertigen Befehle (einzeln, kurz).
+- Zusammengehörige Aufgaben dürfen gebündelt umgesetzt und gemeinsam geprüft werden. Nach dem vereinbarten Aufgabenpaket stoppen und kurz berichten. Erklärungen kurz, erst Gesamtbild, dann Detail. Keine Termin-/Zeitplan-Diskussionen.
+- Du (Codex) implementierst und prüfst selbst kritisch und übernimmst Dev-Server, Build und Git-Befehle. Nach erfolgreicher Browserprüfung und Yamens Freigabe darfst du das geprüfte Paket mit expliziten Dateipfaden stagen und committen. Nie `git add -A`.
 - Bei jedem Befehl sagen, wo er läuft: RECHNER, SERVER oder COOLIFY.
 - Kein Merge, kein Push ohne Yamens ausdrückliche Freigabe in dem Moment.
 - Nach jeder Änderung: `npm run build` grün. Neue Komponenten zuerst auf `/design-vorschau` zeigen; Yamen prüft im Browser (Dev-Server läuft oft auf Port 3001).
@@ -32,8 +32,8 @@
 
 ## Nächste Schritte (Reihenfolge)
 1. [x] Footer (Daten als Props, Links Impressum/Datenschutz/Cookie-Einstellungen; auf `/design-vorschau` mit Platzhalterdaten)
-2. Kleine Bausteine: Container, Section, Badge, TextLink, Karte
-   - Container im Browser geprüft und freigegeben. Section implementiert und auf `/design-vorschau` eingebaut; Browserprüfung noch offen. Badge, TextLink und Karte sind noch offen.
+2. [x] Kleine Bausteine: Container, Section, Badge, TextLink, Karte
+   - Alle Bausteine implementiert; `npm run build` grün. Gemeinsames beschriftetes Beispiel auf `/design-vorschau` im Browser geprüft und von Yamen freigegeben.
 3. Startseite
 4. Leistungen & Preise (Daten aus API)
 5. Über uns / Team
