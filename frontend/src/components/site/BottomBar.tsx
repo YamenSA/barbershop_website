@@ -12,8 +12,9 @@ const entries = [
 
 const focus = "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold-300";
 
-export default function BottomBar() {
+export default function BottomBar({ activePath }: { activePath?: string }) {
   const pathname = usePathname();
+  const navigationPath = activePath ?? pathname;
   if (pathname.startsWith("/termin")) return null;
 
   return (
@@ -27,7 +28,7 @@ export default function BottomBar() {
           );
         }
 
-        const active = pathname === href || (href !== "/" && pathname.startsWith(`${href}/`));
+        const active = navigationPath === href || (href !== "/" && navigationPath.startsWith(`${href}/`));
         return (
           <Link key={href} href={href} aria-current={active ? "page" : undefined} className={`flex h-12 flex-col items-center justify-center gap-1.5 font-text text-[11px] font-semibold ${focus} ${active ? "text-gold-300" : "text-ink-muted"}`}>
             <span aria-hidden="true" className={`h-0.5 w-[18px] ${active ? "bg-gold-300" : "bg-transparent"}`} />

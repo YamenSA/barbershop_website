@@ -40,7 +40,9 @@
 3. [x] Startseite
    - Als zusammenhängendes Paket auf `/design-vorschau` implementiert; bestehende `/` bleibt unverändert. Preise, Team, Profil und Öffnungszeiten aus öffentlichen APIs. Bewertungen/Verfügbarkeits-Badges ohne bestätigte Grundlage ausgeblendet. Kompakte Hero-Proportionen von Yamen im Browser freigegeben. Die vier von Yamen ausgewählten `.jpeg`-Fotos eingebaut; schriftliche Einwilligung für erkennbare Personen von Yamen bestätigt. Originaldateien unverändert, Darstellung mit zentriertem `object-cover`; Bilddarstellung in der Vorschau durch Yamen freigegeben. Team-Porträts bleiben Monogramme. Dev-Vorschau auf Port 3001. Abschließende Browserprüfung mit Fotos und Schattierungen durch Yamen freigegeben.
    - Proportionen bei 100 % Zoom geprüft: Hero vollständig sichtbar bei 1366×625, 1440×720, 1280×650 und 1024×600 px Inhaltsfläche. Nach Fotoeinbau erneut bei 1366×625, 1280×650, 1024×600, 768×900, 390×844 und 360×640 geprüft: kein horizontaler Überlauf, alle vier Fotos laden. Build und gezieltes ESLint grün.
-4. Leistungen & Preise (Daten aus API)
+4. [x] Leistungen & Preise (Daten aus API)
+   - Vorschau unter `/design-vorschau?seite=preise`: mobil Segment-Tabs mit Tastaturbedienung, Desktop Gruppenspalten. Kategorien aus bestehendem Preislisten-Mapping; zusätzliche Admin-Leistungen bleiben unter „Weitere Leistungen“ sichtbar. Preise, Dauer und „ab“-Kennzeichnung aus API, Barzahlungshinweis. Buchungslinks übergeben eine gültige Service-ID an die bestehende Buchungsseite. Von Yamen im Browser geprüft und freigegeben.
+   - Geprüft mit 34 API-Leistungen: Namen, Preise, Dauer und Links vollständig abgeglichen; 360/390/768/1024/1366 px ohne horizontalen Überlauf. Mobile Tabs und Pfeiltasten, Goldfokus ohne alten grünen Schatten, Buchungs-Vorauswahl und ungültige ID geprüft. Build und gezieltes ESLint grün. Lokaler Dev-API-Proxy über ignorierte `.env.local`; Next-Konfiguration nutzt in Entwicklung den lokalen Host, Produktions-Standard bleibt Docker.
 5. Über uns / Team
 6. Kontakt (Karte erst nach Einwilligung)
 7. FAQ (Akkordeon)

@@ -73,8 +73,20 @@ export default function TerminPage() {
   const [result, setResult] = useState<PublicAppointmentRead | null>(null);
 
   useEffect(() => {
-    getPublicServices().then(setServices).catch(() => {});
-    getPublicTeamMembers().then(setMembers).catch(() => {});
+    let active = true;
+    getPublicServices().then((availableServices) => {
+      if (!active) return;
+      setServices(availableServices);
+      const requestedService = new URLSearchParams(window.location.search).get('service');
+      if (requestedService && availableServices.some((service) => service.id === requestedService)) {
+        setSelectedService(requestedService);
+        setStep('stylist');
+      }
+    }).catch(() => {});
+    getPublicTeamMembers().then((availableMembers) => {
+      if (active) setMembers(availableMembers);
+    }).catch(() => {});
+    return () => { active = false; };
   }, []);
 
   function goBack() {

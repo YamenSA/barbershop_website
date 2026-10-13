@@ -9,6 +9,7 @@ import Button from "@/components/ui/Button";
 type SiteHeaderProps = {
   phone?: string;
   phoneHref?: string;
+  activePath?: string;
 };
 
 const links = [
@@ -20,8 +21,9 @@ const links = [
 
 const focus = "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold-300";
 
-export default function SiteHeader({ phone, phoneHref }: SiteHeaderProps) {
+export default function SiteHeader({ phone, phoneHref, activePath }: SiteHeaderProps) {
   const pathname = usePathname();
+  const navigationPath = activePath ?? pathname;
   const dialogId = useId();
   const dialogRef = useRef<HTMLDialogElement>(null);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
@@ -90,7 +92,7 @@ export default function SiteHeader({ phone, phoneHref }: SiteHeaderProps) {
 
         <nav aria-label="Hauptnavigation" className="hidden items-center md:flex">
           {links.map(({ label, href }) => {
-            const active = pathname === href || pathname.startsWith(`${href}/`);
+            const active = navigationPath === href || navigationPath.startsWith(`${href}/`);
             return (
               <Link key={href} href={href} aria-current={active ? "page" : undefined} className={`relative flex h-12 items-center px-2 font-text text-[13px] font-semibold lg:px-3.5 lg:text-[15px] ${focus} ${active ? "text-gold-300" : "text-ink-muted hover:text-ink"}`}>
                 {label}
@@ -131,7 +133,7 @@ export default function SiteHeader({ phone, phoneHref }: SiteHeaderProps) {
           <nav aria-label="Mobile Hauptnavigation" className="min-h-0 flex-1 overflow-y-auto px-4 pb-32 pt-8">
             <ul>
               {links.map(({ label, href }) => {
-                const active = pathname === href || pathname.startsWith(`${href}/`);
+                const active = navigationPath === href || navigationPath.startsWith(`${href}/`);
                 return (
                   <li key={href}>
                     <Link href={href} onClick={closeMenu} aria-current={active ? "page" : undefined} className={`flex min-h-14 items-center font-brand text-[32px] uppercase leading-9 ${focus} ${active ? "text-gold-300" : "text-ink hover:text-gold-300"}`}>
