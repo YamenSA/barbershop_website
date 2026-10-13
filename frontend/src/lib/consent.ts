@@ -18,6 +18,12 @@
 import { useCallback, useEffect, useState } from 'react';
 
 const STORAGE_PREFIX = 'consent:';
+const CONSENT_CHANGE_EVENT = 'salon:consent-change';
+type ConsentChange = { key: string; granted: boolean };
+
+function notifyConsentChange(key: string, granted: boolean): void {
+  window.dispatchEvent(new CustomEvent<ConsentChange>(CONSENT_CHANGE_EVENT, { detail: { key, granted } }));
+}
 
 export type ConsentState = {
   /** Whether the user has actively granted consent for this key. */
@@ -50,6 +56,19 @@ export function useConsent(key: string): ConsentState {
   // Hydrate from localStorage once on mount (client only).
   useEffect(() => {
     setGranted(readStorage(key));
+    const handleConsentChange = (event: Event) => {
+      const change = (event as CustomEvent<ConsentChange>).detail;
+      if (change.key === key) setGranted(change.granted);
+    };
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key === storageKey(key) || event.key === null) setGranted(readStorage(key));
+    };
+    window.addEventListener(CONSENT_CHANGE_EVENT, handleConsentChange);
+    window.addEventListener('storage', handleStorage);
+    return () => {
+      window.removeEventListener(CONSENT_CHANGE_EVENT, handleConsentChange);
+      window.removeEventListener('storage', handleStorage);
+    };
   }, [key]);
 
   const grant = useCallback(() => {
@@ -59,6 +78,7 @@ export function useConsent(key: string): ConsentState {
       // localStorage unavailable — state still updates in memory.
     }
     setGranted(true);
+    notifyConsentChange(key, true);
   }, [key]);
 
   const revoke = useCallback(() => {
@@ -68,6 +88,7 @@ export function useConsent(key: string): ConsentState {
       // localStorage unavailable — state still updates in memory.
     }
     setGranted(false);
+    notifyConsentChange(key, false);
   }, [key]);
 
   return { granted, grant, revoke };

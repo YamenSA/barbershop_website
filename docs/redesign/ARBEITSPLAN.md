@@ -21,6 +21,9 @@
 - Tokens nur additiv; alter Token `ink` (#F5F5F5) bleibt bis die alten Seiten weg sind. Admin (/admin) und Konto (/konto) behalten ihren Look.
 - Schriften: nur Latin-Subset. Google-Fonts (Inter, Barlow 700/800) erst entfernen, wenn alle öffentlichen Seiten umgestellt sind.
 - Fotos: neue Salonfotos (hohe Auflösung) liegen bei Yamen. Bevorzugt Bilder ohne erkennbare Personen; erkennbare Personen nur mit schriftlicher Einwilligung. Keine Nahaufnahmen der Umhänge mit Schlangen-/Streifenmuster. Team-Porträts fehlen noch → Monogramm im Bogen als Platzhalter, keine erfundenen Namen.
+- Fotoauswahl und Freigabe liegen ausschließlich bei Yamen. Codex wählt keine Fotos oder Ausschnitte selbst aus. Bis zur ausdrücklichen Foto-Freigabe werden klar markierte Bildplatzhalter verwendet; Dateiliste und gewünschte Ausschnitte dienen Yamen zur Auswahl.
+- Bildwirkung: Yamen hat eine dezente Abstimmung der ausgewählten Fotos autorisiert. Nur reversible CSS-Effekte: Helligkeit 94 %, Sättigung 88 %, Kontrast 102 %, leichte Wärme (6 % Sepia). Leistungskacheln vergrößern das Foto bei Hover/Tastaturfokus um 2,5 % in 200 ms, ausschließlich bei `prefers-reduced-motion: no-preference`. Originale und gewählte Ausschnitte bleiben erhalten; abschließende Browserfreigabe durch Yamen erteilt.
+- Bildschattierung auf Yamens Wunsch: sichtbare Vignette an den Rändern (bis 35 %) und Abdunklung am unteren Bildrand (bis 56 %) in `surface-pitch`. Erste Abstimmung war zu dezent und wurde verstärkt. Rein dekorative, nicht interaktive CSS-Auflage; die Bildmitte bleibt heller, keine Kastenschatten.
 - Keine erfundenen Inhalte: Bewertungen, „4,9 aus 180“, Parken/ÖPNV, „Heute frei ab“ nur mit echten Daten, sonst ausblenden.
 
 ## Fallen im Handoff (nicht übernehmen)
@@ -34,7 +37,9 @@
 1. [x] Footer (Daten als Props, Links Impressum/Datenschutz/Cookie-Einstellungen; auf `/design-vorschau` mit Platzhalterdaten)
 2. [x] Kleine Bausteine: Container, Section, Badge, TextLink, Karte
    - Alle Bausteine implementiert; `npm run build` grün. Gemeinsames beschriftetes Beispiel auf `/design-vorschau` im Browser geprüft und von Yamen freigegeben.
-3. Startseite
+3. [x] Startseite
+   - Als zusammenhängendes Paket auf `/design-vorschau` implementiert; bestehende `/` bleibt unverändert. Preise, Team, Profil und Öffnungszeiten aus öffentlichen APIs. Bewertungen/Verfügbarkeits-Badges ohne bestätigte Grundlage ausgeblendet. Kompakte Hero-Proportionen von Yamen im Browser freigegeben. Die vier von Yamen ausgewählten `.jpeg`-Fotos eingebaut; schriftliche Einwilligung für erkennbare Personen von Yamen bestätigt. Originaldateien unverändert, Darstellung mit zentriertem `object-cover`; Bilddarstellung in der Vorschau durch Yamen freigegeben. Team-Porträts bleiben Monogramme. Dev-Vorschau auf Port 3001. Abschließende Browserprüfung mit Fotos und Schattierungen durch Yamen freigegeben.
+   - Proportionen bei 100 % Zoom geprüft: Hero vollständig sichtbar bei 1366×625, 1440×720, 1280×650 und 1024×600 px Inhaltsfläche. Nach Fotoeinbau erneut bei 1366×625, 1280×650, 1024×600, 768×900, 390×844 und 360×640 geprüft: kein horizontaler Überlauf, alle vier Fotos laden. Build und gezieltes ESLint grün.
 4. Leistungen & Preise (Daten aus API)
 5. Über uns / Team
 6. Kontakt (Karte erst nach Einwilligung)
@@ -42,3 +47,16 @@
 8. Impressum, Datenschutz (Bestandstexte), 404
 9. Öffentliches Layout auf neuen Header/Footer/BottomBar umstellen, alte Komponenten und Google-Fonts entfernen
 10. Teil B: neue Buchungsstrecke (mehrere Leistungen, „egal wer“) – braucht eigene Spec und Backend-Arbeit; erst planen, wenn Hotfix live ist.
+
+## Fotos für die Startseite (Auswahl durch Yamen)
+
+Vier Fotos für die sichtbaren Bildflächen, Ablageordner jeweils `frontend/public/brand/home/`. Alle vier Dateien von Yamen bereitgestellt und ausgewählt; Einwilligung bestätigt. Team-Porträts sind optional und bleiben bis zur Auswahl Monogramme. Logo und Kartenvorschau sind keine zusätzlichen Salonfotos.
+
+| Abschnitt | Motiv | Format / Dateiname | Vorgesehener Ausschnitt |
+|---|---|---|---|
+| Hero | Salon mit Bogenspiegel, Stuhl und Raumtiefe | Hochformat-Bildfläche 3:4, Original `hero-salon.jpeg` | Zentrales Motiv im mittleren Bereich; oben Luft für den Bogen, unten Stuhl/Spiegel erhalten. Mobil wird seitlich breiter, bei flacher Bildfläche ggf. oben/unten beschnitten. |
+| Leistungen: Damen | Damenplatz, Styling-Bereich | Hochformat-Bildfläche 2:3, Original `leistungen-damen.jpeg` | Kleiner schmaler Bogen: ein klares Motiv mittig, keine wichtigen Details am Rand oder Text im Foto. |
+| Leistungen: Herren | Herrenbereich mit Barbern bei der Arbeit | Hochformat-Bildfläche 2:3, Original `leistungen-herren.jpeg` | Kleiner schmaler Bogen: Motiv mittig, seitliche Reserven; oberer Rand wird durch den Bogen verdeckt. |
+| Über uns | Innenraum mit Plätzen und Atmosphäre | Querformat-Bildfläche 4:3, Original `salon-innenraum.jpeg` | Breiter Raumausschnitt, zentrale Plätze/Spiegel erhalten, keine reine Decken-Nahaufnahme. Keine wichtigen Details direkt am Rand. |
+
+Empfohlen: Originalfotos mit mindestens 1600 px an der langen Kante. Ausschnitt und etwaige Optimierung erst nach Yamens Fotoauswahl abstimmen.

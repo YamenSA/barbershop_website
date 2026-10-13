@@ -76,11 +76,11 @@ export default function SiteHeader({ phone, phoneHref }: SiteHeaderProps) {
 
   return (
     <header className="border-b border-line bg-surface-raise md:bg-surface-base">
-      <div className="mx-auto flex h-14 max-w-[1200px] items-center justify-between gap-2 pl-4 pr-1 md:h-20 md:px-8 lg:gap-4">
-        <Link href="/" aria-label="Azzam Salon Startseite" className={`flex shrink-0 items-center gap-2.5 md:gap-3.5 ${focus}`}>
-          <Image src="/brand/logo-256.png" alt="" width={56} height={56} className="h-10 w-10 md:h-14 md:w-14" />
-          <span className="font-brand text-2xl leading-none tracking-[.14em] text-ink md:text-[32px]">AZZAM</span>
-          <span className="font-text text-[9px] font-semibold leading-none tracking-[.3em] text-gold-500 md:text-[10px]">SALON</span>
+      <div className="mx-auto flex h-14 max-w-[1200px] items-center justify-between gap-2 pl-4 pr-1 md:h-20 md:px-4 lg:gap-4 lg:px-8">
+        <Link href="/" aria-label="Azzam Salon Startseite" className={`flex shrink-0 items-center gap-2.5 md:gap-1.5 lg:gap-3.5 ${focus}`}>
+          <Image src="/brand/logo-256.png" alt="" width={56} height={56} className="h-10 w-10 lg:h-14 lg:w-14" />
+          <span className="font-brand text-2xl leading-none tracking-[.14em] text-ink lg:text-[32px]">AZZAM</span>
+          <span className="font-text text-[9px] font-semibold leading-none tracking-[.3em] text-gold-500 lg:text-[10px]">SALON</span>
         </Link>
 
         <button ref={menuButtonRef} type="button" onClick={toggleMenu} aria-label={menuOpen ? "Menü schließen" : "Menü öffnen"} aria-expanded={menuOpen} aria-controls={dialogId} className={`flex h-12 w-12 shrink-0 flex-col items-center justify-center gap-1.5 md:hidden ${focus}`}>
@@ -92,7 +92,7 @@ export default function SiteHeader({ phone, phoneHref }: SiteHeaderProps) {
           {links.map(({ label, href }) => {
             const active = pathname === href || pathname.startsWith(`${href}/`);
             return (
-              <Link key={href} href={href} aria-current={active ? "page" : undefined} className={`relative flex h-12 items-center px-3.5 font-text text-[15px] font-semibold ${focus} ${active ? "text-gold-300" : "text-ink-muted hover:text-ink"}`}>
+              <Link key={href} href={href} aria-current={active ? "page" : undefined} className={`relative flex h-12 items-center px-2 font-text text-[13px] font-semibold lg:px-3.5 lg:text-[15px] ${focus} ${active ? "text-gold-300" : "text-ink-muted hover:text-ink"}`}>
                 {label}
                 {active && <span aria-hidden="true" className="absolute inset-x-0 bottom-0 h-0.5 bg-gold-300" />}
               </Link>
@@ -102,18 +102,18 @@ export default function SiteHeader({ phone, phoneHref }: SiteHeaderProps) {
 
         <div className="hidden items-center gap-2 font-text lg:gap-4 md:flex">
           {phone && (phoneHref ? (
-            <a href={phoneHref} className={`text-[15px] tabular-nums text-ink-muted ${focus}`}>{phone}</a>
+            <a href={phoneHref} className={`hidden text-[15px] tabular-nums text-ink-muted lg:inline-flex ${focus}`}>{phone}</a>
           ) : (
-            <span className="text-[15px] tabular-nums text-ink-muted">{phone}</span>
+            <span className="hidden text-[15px] tabular-nums text-ink-muted lg:inline-flex">{phone}</span>
           ))}
-          <Link href="/konto/login" className={`flex h-12 items-center gap-1.5 text-sm text-ink-subtle hover:text-gold-300 ${focus}`}>
+          <Link href="/konto/login" className={`flex h-12 items-center gap-1.5 whitespace-nowrap text-xs text-ink-subtle hover:text-gold-300 lg:text-sm ${focus}`}>
             <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
               <circle cx="12" cy="8" r="4" />
               <path d="M4 21v-2a8 8 0 0 1 16 0v2" />
             </svg>
             Mein Konto
           </Link>
-          <Button variant="primary" href="/termin">Termin buchen</Button>
+          <Button variant="primary" href="/termin" className="whitespace-nowrap text-sm md:px-3 lg:px-6">Termin buchen</Button>
         </div>
       </div>
       <dialog ref={dialogRef} id={dialogId} aria-label="Hauptmenü" onClose={handleClose} className="m-0 h-full max-h-none w-full max-w-none border-0 bg-surface-pitch p-0 text-ink backdrop:bg-transparent motion-safe:transition-[opacity,transform] motion-safe:duration-200 motion-safe:starting:opacity-0 motion-safe:starting:-translate-y-2">
