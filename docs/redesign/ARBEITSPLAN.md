@@ -33,7 +33,7 @@
 ## Nächste Schritte (Reihenfolge)
 1. [x] Footer (Daten als Props, Links Impressum/Datenschutz/Cookie-Einstellungen; auf `/design-vorschau` mit Platzhalterdaten)
 2. Kleine Bausteine: Container, Section, Badge, TextLink, Karte
-   - Container implementiert und auf `/design-vorschau` eingebaut; Browserprüfung noch offen. Section, Badge, TextLink und Karte sind noch offen.
+   - Container im Browser geprüft und freigegeben. Section implementiert und auf `/design-vorschau` eingebaut; Browserprüfung noch offen. Badge, TextLink und Karte sind noch offen.
 3. Startseite
 4. Leistungen & Preise (Daten aus API)
 5. Über uns / Team

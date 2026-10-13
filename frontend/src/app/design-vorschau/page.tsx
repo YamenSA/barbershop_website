@@ -5,6 +5,7 @@ import SiteHeader from "@/components/site/SiteHeader";
 import BottomBar, { BottomBarSpacer } from "@/components/site/BottomBar";
 import SiteFooter from "@/components/site/SiteFooter";
 import Container from "@/components/ui/Container";
+import Section from "@/components/ui/Section";
 
 export const metadata: Metadata = {
   title: "Design-Vorschau",
@@ -18,6 +19,12 @@ export default function DesignVorschauPage() {
     <>
     <SiteHeader phone="Platzhalter" phoneHref="tel:+490000000" />
     <main id="main-content" className="min-h-screen bg-surface-base py-12 font-text text-ink">
+      <Section tone="raise" aria-labelledby="section-preview" className="mb-12">
+        <div className="border border-line p-4">
+          <h2 id="section-preview" className="font-brand text-3xl">Section-Vorschau · hellere Fläche</h2>
+          <p className="mt-2 max-w-[65ch] text-ink-muted">Der Hintergrund reicht über die volle Seitenbreite. Der Inhalt sitzt im Container. Oberhalb und unterhalb dieses Rahmens liegen jeweils 48 px Abstand, ab 1024 px Fensterbreite jeweils 96 px.</p>
+        </div>
+      </Section>
       <Container>
       <section aria-labelledby="container-preview" className="mb-12 border border-line bg-surface-card p-4">
         <h2 id="container-preview" className="font-brand text-3xl">Container-Vorschau</h2>
