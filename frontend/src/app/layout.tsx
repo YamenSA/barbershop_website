@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Barlow_Condensed, Inter } from "next/font/google";
+import { brand, text } from "./fonts";
 import "./globals.css";
 
 const barlowCondensed = Barlow_Condensed({
@@ -32,7 +33,7 @@ export default function RootLayout({
   return (
     <html
       lang="de"
-      className={`${barlowCondensed.variable} ${inter.variable} h-full antialiased`}
+      className={`${barlowCondensed.variable} ${inter.variable} ${brand.variable} ${text.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         {/* Skip link (WCAG 2.4.1): sr-only at rest; on keyboard focus it appears

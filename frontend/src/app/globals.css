@@ -68,6 +68,8 @@
   --color-danger-line: #5A3129;
   --radius-arch: 9999px 9999px 12px 12px;
   --breakpoint-xs: 480px;
+  --font-brand: var(--font-brand-face), "Arial Narrow", sans-serif;
+  --font-text: var(--font-text-face), system-ui, sans-serif;
 }
 
 /* Depth-polish utilities (one box-shadow each, so they never fight).
