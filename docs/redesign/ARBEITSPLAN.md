@@ -43,7 +43,9 @@
 4. [x] Leistungen & Preise (Daten aus API)
    - Vorschau unter `/design-vorschau?seite=preise`: mobil Segment-Tabs mit Tastaturbedienung, Desktop Gruppenspalten. Kategorien aus bestehendem Preislisten-Mapping; zusätzliche Admin-Leistungen bleiben unter „Weitere Leistungen“ sichtbar. Preise, Dauer und „ab“-Kennzeichnung aus API, Barzahlungshinweis. Buchungslinks übergeben eine gültige Service-ID an die bestehende Buchungsseite. Von Yamen im Browser geprüft und freigegeben.
    - Geprüft mit 34 API-Leistungen: Namen, Preise, Dauer und Links vollständig abgeglichen; 360/390/768/1024/1366 px ohne horizontalen Überlauf. Mobile Tabs und Pfeiltasten, Goldfokus ohne alten grünen Schatten, Buchungs-Vorauswahl und ungültige ID geprüft. Build und gezieltes ESLint grün. Lokaler Dev-API-Proxy über ignorierte `.env.local`; Next-Konfiguration nutzt in Entwicklung den lokalen Host, Produktions-Standard bleibt Docker.
-5. Über uns / Team
+5. [x] Über uns / Team
+   - Vorschau unter `/design-vorschau?seite=team`: Handoff-Titel und vier Werte, bereits freigegebenes Salonfoto mit derselben Bildabstimmung. Echte Teamnamen und vorhandene Bios aus API, Monogramme bis zur Fotoauswahl; keine erfundenen Rollen. „Bei … buchen“ wählt das Teammitglied vor und zeigt nur dessen zugeordnete Leistungen. Von Yamen im Browser geprüft und freigegeben.
+   - Build und gezieltes ESLint grün. Browserprüfung bei 360/390/768/1024/1366 px: Teamdaten mit API abgeglichen, keine defekten Bilder oder Überläufe. Mitarbeiter-Vorauswahl, zugeordnete Leistungen, Slot-Anfrage für den gewählten Mitarbeiter, Zurück-Navigation und ungültige Team-ID geprüft. Preis-Buchungslinks als Regression erneut grün. Dev-Vorschau läuft auf Port 3001; von Yamen im Browser freigegeben.
 6. Kontakt (Karte erst nach Einwilligung)
 7. FAQ (Akkordeon)
 8. Impressum, Datenschutz (Bestandstexte), 404

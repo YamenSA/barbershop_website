@@ -68,37 +68,53 @@ export default function TerminPage() {
   const [services, setServices] = useState<PublicServiceRead[]>([]);
   const [members, setMembers] = useState<PublicTeamMemberRead[]>([]);
   const [selectedService, setSelectedService] = useState<string | null>(null);
+  const [preferredMember, setPreferredMember] = useState<PublicTeamMemberRead | null>(null);
   const [selectedMember, setSelectedMember] = useState<string | null | undefined>(undefined); // undefined = not chosen yet
   const [selectedSlot, setSelectedSlot] = useState<PublicSlot | null>(null);
   const [result, setResult] = useState<PublicAppointmentRead | null>(null);
 
   useEffect(() => {
     let active = true;
-    getPublicServices().then((availableServices) => {
+    Promise.all([getPublicServices(), getPublicTeamMembers().catch(() => [])]).then(([availableServices, availableMembers]) => {
       if (!active) return;
-      setServices(availableServices);
-      const requestedService = new URLSearchParams(window.location.search).get('service');
-      if (requestedService && availableServices.some((service) => service.id === requestedService)) {
+      setMembers(availableMembers);
+      const query = new URLSearchParams(window.location.search);
+      const requestedMember = availableMembers.find((member) => member.id === query.get('team'));
+      const memberServices = requestedMember
+        ? availableServices.filter((service) => requestedMember.services.some((offered) => offered.id === service.id))
+        : availableServices;
+      const preferred = requestedMember && memberServices.length > 0 ? requestedMember : null;
+      const bookableServices = preferred ? memberServices : availableServices;
+      setPreferredMember(preferred);
+      setServices(bookableServices);
+      const requestedService = query.get('service');
+      if (requestedService && bookableServices.some((service) => service.id === requestedService)) {
         setSelectedService(requestedService);
-        setStep('stylist');
+        if (preferred) {
+          setSelectedMember(preferred.id);
+          setStep('slot');
+        } else {
+          setStep('stylist');
+        }
       }
-    }).catch(() => {});
-    getPublicTeamMembers().then((availableMembers) => {
-      if (active) setMembers(availableMembers);
     }).catch(() => {});
     return () => { active = false; };
   }, []);
 
   function goBack() {
+    if (preferredMember && step === 'slot') {
+      setStep('service');
+      return;
+    }
     const idx = STEPS.indexOf(step);
     if (idx > 0) setStep(STEPS[idx - 1] as Step);
   }
 
   function handleServiceSelect(id: string) {
     setSelectedService(id);
-    setSelectedMember(undefined);
+    setSelectedMember(preferredMember?.id);
     setSelectedSlot(null);
-    setStep('stylist');
+    setStep(preferredMember ? 'slot' : 'stylist');
   }
 
   function handleMemberSelect(id: string | null) {
@@ -128,6 +144,10 @@ export default function TerminPage() {
         </h1>
 
         {step !== 'done' && <StepIndicator current={step} />}
+
+        {preferredMember && step !== 'done' && (
+          <p className="mb-6 text-secondary">Dein Termin bei <strong className="text-ink">{preferredMember.name}</strong>. Wähle eine passende Leistung und Uhrzeit.</p>
+        )}
 
         <div className="min-h-[24rem]">
           {step === 'service' && (

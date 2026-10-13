@@ -9,6 +9,7 @@ import SiteHeader from "./SiteHeader";
 import SiteFooter from "./SiteFooter";
 import BottomBar, { BottomBarSpacer } from "./BottomBar";
 import HomeLocationMap from "./HomeLocationMap";
+import { photoTreatment, photoShading } from "./photo-treatment";
 import type { PublicServiceRead, PublicTeamMemberRead, PublicSalonHoursRead, SalonProfile, Review } from "@/lib/types";
 import { salonToday, weekdayMonday0 } from "@/lib/time";
 import { siteConfig } from "@/lib/site-config";
@@ -23,12 +24,6 @@ export type HomePageViewProps = {
 
 const heading = "font-brand text-[32px] font-medium uppercase leading-9 text-balance lg:text-[56px] lg:leading-[60px]";
 const focus = "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold-300";
-// Gentle display-only grading: quieter light and color, a little warmth.
-// Keep originals and framing unchanged; animate only the service thumbnails.
-const photoTreatment = "object-cover object-center brightness-[.94] contrast-[1.02] saturate-[.88] sepia-[.06]";
-const photoShading = {
-  background: "radial-gradient(ellipse at center, transparent 35%, color-mix(in srgb, var(--color-surface-pitch) 35%, transparent) 100%), linear-gradient(to top, color-mix(in srgb, var(--color-surface-pitch) 56%, transparent), transparent 65%)",
-};
 const dayNames = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"];
 const price = (cents: number) => new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(cents / 100);
 
