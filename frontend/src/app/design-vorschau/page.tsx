@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import Button from "@/components/ui/Button";
 import SiteHeader from "@/components/site/SiteHeader";
 import BottomBar, { BottomBarSpacer } from "@/components/site/BottomBar";
+import SiteFooter from "@/components/site/SiteFooter";
 
 export const metadata: Metadata = {
   title: "Design-Vorschau",
@@ -37,6 +38,13 @@ export default function DesignVorschauPage() {
         Platzhalter zum Testen des Scrollens
       </div>
     </main>
+    <SiteFooter
+      copyrightYear={2026}
+      description="Vorschau mit Platzhalterdaten, keine echten Salonangaben."
+      profile={{ name: "Platzhalter", street: "Platzhalter-Straße", postal_code: "00000", city: "Platzhalter-Ort", country: "DE", phone: "+49 000 000000" }}
+      hours={Array.from({ length: 7 }, (_, day_of_week) => ({ day_of_week, is_open: day_of_week < 6, open_time: "09:00", close_time: "18:00" }))}
+      contactLinks={[{ label: "Kontakt (Vorschau)", href: "/kontakt" }]}
+    />
     <BottomBarSpacer />
     <BottomBar />
     </>

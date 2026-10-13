@@ -31,7 +31,7 @@
 - Texte korrigieren: FAQ „Karte?“ → „Nein, bezahlt wird bar vor Ort.“; „absagen oder verschieben“ → nur „absagen“; Impressum/Datenschutz: bestehende Texte behalten, nur neu gestalten (Vorlagen aus dem Handoff nicht verwenden).
 
 ## Nächste Schritte (Reihenfolge)
-1. Footer (Daten als Props, Links Impressum/Datenschutz/Cookie-Einstellungen)
+1. [x] Footer (Daten als Props, Links Impressum/Datenschutz/Cookie-Einstellungen; auf `/design-vorschau` mit Platzhalterdaten)
 2. Kleine Bausteine: Container, Section, Badge, TextLink, Karte
 3. Startseite
 4. Leistungen & Preise (Daten aus API)
