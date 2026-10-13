@@ -4,13 +4,20 @@ Ziel: **Sonntag 18.10.2026** (Salon geschlossen); keine Reserve; harte Grenze is
 Hintergrund und Begründungen: `TIMEZONE_HOTFIX_SPEC.md`. Die Migration `017` läuft **automatisch beim Backend-Start** (`entrypoint.sh` → `alembic upgrade head`), Code und Datenmigration gehen also in **einem** Deploy live.
 Kein Merge und kein Push ohne deine ausdrückliche Freigabe (Push = Produktions-Deploy).
 
-Vorab in jeder Server-Sitzung (Namen der Container setzen, Coolify hängt UUIDs an):
+Vorab in jeder Server-Sitzung (Namen der Container setzen, Coolify hängt die App-UUID an):
 
 ```sh
-B=$(docker ps --format '{{.Names}}' | grep -i backend  | head -1)
-F=$(docker ps --format '{{.Names}}' | grep -i frontend | head -1)
-DB=$(docker ps --format '{{.Names}}' | grep -i -E 'postgres|(^|[-_])db' | head -1)
-echo "backend=$B frontend=$F db=$DB"      # alle drei müssen genau einen Namen zeigen
+APP=fqn7wcg6j298388nl152nrty
+
+# Trefferzahl je Container zuerst ausgeben: jede muss 1 sein, sonst stoppen
+docker ps --format '{{.Names}}' | grep "^backend-$APP"  | wc -l
+docker ps --format '{{.Names}}' | grep "^frontend-$APP" | wc -l
+docker ps --format '{{.Names}}' | grep "^db-$APP"       | wc -l
+
+B=$(docker ps --format '{{.Names}}' | grep "^backend-$APP")
+F=$(docker ps --format '{{.Names}}' | grep "^frontend-$APP")
+DB=$(docker ps --format '{{.Names}}' | grep "^db-$APP")
+echo "backend=$B frontend=$F db=$DB"      # je genau ein Name mit dem Präfix der App
 PSQL="docker exec $DB psql -U postgres -d barbershop -At"     # DB-Name laut Compose: barbershop
 $PSQL -c "SELECT current_database(), version_num FROM alembic_version"   # erwartet: barbershop|016
 ```
@@ -102,7 +109,7 @@ Ein Online-Termin, dessen Bestätigungs-Log verloren ging (Background-Task), wü
 Die Migration ist nur ohne Nachzügler-Risiko, wenn der **alte Container weg ist, bevor der neue startet**. Beleg vom letzten Deploy: das Coolify-Log zeigt „Removing old containers“ **vor** „Starting new application“. Prüfe dasselbe im **Deploy-Log dieses Deploys** (Coolify → Deployments → Log). Steht die Reihenfolge anders, sofort melden (dann Nachzügler-Prüfung 3.6 besonders ernst nehmen).
 
 ```sh
-docker ps -a --format '{{.Names}}\t{{.Status}}\t{{.CreatedAt}}' | grep -i backend
+docker ps -a --format '{{.Names}}\t{{.Status}}\t{{.CreatedAt}}' | grep "^backend-$APP"
 docker inspect -f '{{.State.StartedAt}}' $B
 docker logs $B 2>&1 | grep -a -E "Running upgrade|Traceback|RuntimeError|REVIEW_UNDECIDED|OVERLAP|DST_EDGE"
 ```

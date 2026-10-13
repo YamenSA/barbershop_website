@@ -22,14 +22,21 @@ Jeder Schritt trägt den Ort: **SERVER** (SSH), **RECHNER** (Repo auf dem eigene
 ### 1. SERVER: Variablen setzen und Ausgangslage prüfen
 
 ```sh
-B=$(docker ps --format '{{.Names}}' | grep -i backend  | head -1)
-F=$(docker ps --format '{{.Names}}' | grep -i frontend | head -1)
-DB=$(docker ps --format '{{.Names}}' | grep -i -E 'postgres|(^|[-_])db' | head -1)
+APP=fqn7wcg6j298388nl152nrty
+
+# Trefferzahl je Container zuerst ausgeben (jede muss 1 sein), erst dann die Variablen setzen
+docker ps --format '{{.Names}}' | grep "^backend-$APP"  | wc -l
+docker ps --format '{{.Names}}' | grep "^frontend-$APP" | wc -l
+docker ps --format '{{.Names}}' | grep "^db-$APP"       | wc -l
+
+B=$(docker ps --format '{{.Names}}' | grep "^backend-$APP")
+F=$(docker ps --format '{{.Names}}' | grep "^frontend-$APP")
+DB=$(docker ps --format '{{.Names}}' | grep "^db-$APP")
 echo "backend=$B frontend=$F db=$DB"
 PSQL="docker exec $DB psql -U postgres -d barbershop -At"
 $PSQL -c "SELECT current_database(), version_num FROM alembic_version"
 ```
-Erwartung: je Variable genau ein Name; Ausgabe `barbershop|016`.
+Erwartung: **jede der drei Zählungen = 1, sonst stoppen** (kein `head -1`, damit Mehrfachtreffer nicht versteckt werden; das frühere Muster `postgres|(^|[-_])db` traf auch `coolify-db`). Danach zeigt `echo` je einen Namen mit dem Präfix der App; Ausgabe `barbershop|016`.
 
 ### 2. COOLIFY: Scheduled Tasks pausieren
 
@@ -149,12 +156,14 @@ Der Push löst den Produktions-Deploy aus. Uhrzeit notieren (`MERGE_ZEIT`, UTC u
 
 **SERVER:**
 ```sh
-B=$(docker ps --format '{{.Names}}' | grep -i backend | head -1)
-docker ps -a --format '{{.Names}}\t{{.Status}}\t{{.CreatedAt}}' | grep -i backend
+APP=fqn7wcg6j298388nl152nrty
+docker ps --format '{{.Names}}' | grep "^backend-$APP" | wc -l      # laufende Backend-Container: muss 1 sein, sonst stoppen
+B=$(docker ps --format '{{.Names}}' | grep "^backend-$APP")
+docker ps -a --format '{{.Names}}\t{{.Status}}\t{{.CreatedAt}}' | grep "^backend-$APP"
 docker inspect -f '{{.State.StartedAt}}' $B
 docker logs $B 2>&1 | grep -a -E "Running upgrade|Traceback|RuntimeError|REVIEW_UNDECIDED|OVERLAP|DST_EDGE"
 ```
-Erwartung: `Running upgrade 016 -> 017`, kein Traceback. Backend nach höchstens 10 Minuten healthy, sonst Abbruchkriterium.
+Erwartung: Zählung `1` (sonst stoppen); die `docker ps -a`-Zeile zeigt den neuen Container laufend, ein alter Container darf nur als beendet erscheinen; `Running upgrade 016 -> 017`, kein Traceback. Backend nach höchstens 10 Minuten healthy, sonst Abbruchkriterium.
 
 ### 9. SERVER: Kontrollen nach der Migration (nur lesend)
 
