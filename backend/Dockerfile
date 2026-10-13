@@ -10,8 +10,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-COPY pyproject.toml .
-RUN pip install --no-cache-dir .
+COPY pyproject.toml constraints.txt ./
+RUN pip install --no-cache-dir -c constraints.txt .
 
 COPY . .
 
