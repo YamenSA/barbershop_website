@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Button from "@/components/ui/Button";
+import SiteHeader from "@/components/site/SiteHeader";
 
 export const metadata: Metadata = {
   title: "Design-Vorschau",
@@ -11,6 +12,8 @@ export default function DesignVorschauPage() {
   if (process.env.NODE_ENV === "production") notFound();
 
   return (
+    <>
+    <SiteHeader phone="Platzhalter" phoneHref="tel:+490000000" />
     <main id="main-content" className="min-h-screen bg-surface-base px-6 py-12 font-text text-ink">
       <h1 className="mb-8 font-brand text-4xl">Button-Vorschau</h1>
       <div className="grid gap-8 sm:grid-cols-2">
@@ -30,5 +33,6 @@ export default function DesignVorschauPage() {
         </section>
       </div>
     </main>
+    </>
   );
 }
