@@ -36,7 +36,8 @@ export default function Button({
 }: ButtonProps) {
   const disabled = props.href === undefined && props.disabled;
   const classes = [
-    "inline-flex items-center justify-center gap-2 rounded-[8px] px-6 font-text font-bold transition-[background-color,transform] duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold-300",
+    "inline-flex items-center justify-center gap-2 rounded-[8px] font-text font-bold transition-[background-color,transform] duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold-300",
+    variant === "text" ? "px-0" : "px-6",
     size === "md" ? "h-12" : "h-14",
     disabled
       ? "bg-surface-hover text-ink-disabled cursor-not-allowed"

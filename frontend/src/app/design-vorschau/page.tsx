@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Button from "@/components/ui/Button";
 import SiteHeader from "@/components/site/SiteHeader";
+import BottomBar, { BottomBarSpacer } from "@/components/site/BottomBar";
 
 export const metadata: Metadata = {
   title: "Design-Vorschau",
@@ -32,7 +33,12 @@ export default function DesignVorschauPage() {
           <Button disabled>Termin buchen</Button>
         </section>
       </div>
+      <div className="mt-8 h-[150vh] border border-line bg-surface-card p-6 text-ink-muted">
+        Platzhalter zum Testen des Scrollens
+      </div>
     </main>
+    <BottomBarSpacer />
+    <BottomBar />
     </>
   );
 }
