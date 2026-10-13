@@ -46,7 +46,9 @@
 5. [x] Über uns / Team
    - Vorschau unter `/design-vorschau?seite=team`: Handoff-Titel und vier Werte, bereits freigegebenes Salonfoto mit derselben Bildabstimmung. Echte Teamnamen und vorhandene Bios aus API, Monogramme bis zur Fotoauswahl; keine erfundenen Rollen. „Bei … buchen“ wählt das Teammitglied vor und zeigt nur dessen zugeordnete Leistungen. Von Yamen im Browser geprüft und freigegeben.
    - Build und gezieltes ESLint grün. Browserprüfung bei 360/390/768/1024/1366 px: Teamdaten mit API abgeglichen, keine defekten Bilder oder Überläufe. Mitarbeiter-Vorauswahl, zugeordnete Leistungen, Slot-Anfrage für den gewählten Mitarbeiter, Zurück-Navigation und ungültige Team-ID geprüft. Preis-Buchungslinks als Regression erneut grün. Dev-Vorschau läuft auf Port 3001; von Yamen im Browser freigegeben.
-6. Kontakt (Karte erst nach Einwilligung)
+6. [x] Kontakt (Karte erst nach Einwilligung)
+   - Vorschau unter `/design-vorschau?seite=kontakt`: Telefon, Adresse, E-Mail und Öffnungszeiten aus API; WhatsApp aus bestehender Konfiguration. Heutiger Öffnungstag in Europe/Berlin markiert. Statische Kartenvorschau vor Einwilligung, Google-Iframe erst nach Zustimmung, Widerruf direkt an der Karte und über Cookie-Einstellungen. Keine unbestätigten Park-/ÖPNV-Angaben. Von Yamen im Browser geprüft und freigegeben.
+   - Build und gezieltes ESLint grün. Browserprüfung bei 360/390/768/1024/1366 px ohne Überlauf/defekte Bilder; Kontaktlinks und sieben Öffnungstage mit API abgeglichen. Europe/Berlin-Markierung unter Browser-Zeitzone New York geprüft. Keine Google-Anfragen vor Einwilligung, gespeicherte Zustimmung sowie beide Widerrufswege geprüft (Google-Iframe im Test abgefangen). Dev-Vorschau auf Port 3001; von Yamen im Browser freigegeben.
 7. FAQ (Akkordeon)
 8. Impressum, Datenschutz (Bestandstexte), 404
 9. Öffentliches Layout auf neuen Header/Footer/BottomBar umstellen, alte Komponenten und Google-Fonts entfernen
