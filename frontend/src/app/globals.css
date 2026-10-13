@@ -42,6 +42,32 @@
 
   /* Motion */
   --duration-fast: 150ms;
+
+  /* Redesign „Bogen & Linie“ – additiv, siehe design_handoff_azzam_salon/README.md. line-control = Rahmen für Eingabefelder/Slots (≥3:1). */
+  --color-surface-pitch: #0B0A08;
+  --color-surface-base: #12100D;
+  --color-surface-raise: #1A1713;
+  --color-surface-card: #221E19;
+  --color-surface-hover: #2B2620;
+  --color-gold-300: #EBCB6E;
+  --color-gold-400: #D8B253;
+  --color-gold-500: #C9A13B;
+  --color-gold-600: #B08A2E;
+  --color-gold-700: #8A6A22;
+  --color-ink-muted: #BDB3A5;
+  --color-ink-subtle: #948A7C;
+  --color-ink-disabled: #6E655A;
+  --color-line: #3A332A;
+  --color-line-strong: #544A3D;
+  --color-line-control: #7D7264;
+  --color-success: #9CCB9F;
+  --color-success-bg: #1F2A20;
+  --color-success-line: #33503A;
+  --color-danger: #E88A7D;
+  --color-danger-bg: #2A1C19;
+  --color-danger-line: #5A3129;
+  --radius-arch: 9999px 9999px 12px 12px;
+  --breakpoint-xs: 480px;
 }
 
 /* Depth-polish utilities (one box-shadow each, so they never fight).
