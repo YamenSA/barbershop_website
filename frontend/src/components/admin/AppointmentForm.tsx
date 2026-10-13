@@ -67,7 +67,7 @@ export default function AppointmentForm({ initialStartsAt, onSaved, onCancel }: 
       await createAppointment({
         service_id: serviceId,
         team_member_id: memberId,
-        starts_at: new Date(startsAt).toISOString(),
+        starts_at: startsAt, // datetime-local value = salon wall time; the API reads naive input as Berlin
         notes: notes || undefined,
         admin_override: adminOverride,
         ...(selectedCustomer

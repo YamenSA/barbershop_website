@@ -7,19 +7,23 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "validate:gallery": "node scripts/validate-gallery.mjs"
+    "validate:gallery": "node scripts/validate-gallery.mjs",
+    "test:time": "node --test tests/time.test.mjs"
   },
   "dependencies": {
     "@fullcalendar/core": "^6.1.20",
     "@fullcalendar/interaction": "^6.1.20",
+    "@fullcalendar/luxon3": "^6.1.20",
     "@fullcalendar/react": "^6.1.20",
     "@fullcalendar/timegrid": "^6.1.20",
+    "luxon": "^3.7.2",
     "next": "16.2.7",
     "react": "19.2.4",
     "react-dom": "19.2.4"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/luxon": "^3.7.6",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

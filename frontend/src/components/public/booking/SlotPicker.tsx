@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { getPublicAvailability, getPublicSalonHours } from '@/lib/api';
 import type { PublicSlot, PublicSalonHoursRead } from '@/lib/types';
+import { addDaysISO, formatDateOnly, formatSalonTime, salonToday, weekdayMonday0 } from '@/lib/time';
 
 interface Props {
   serviceId: string;
@@ -13,37 +14,16 @@ interface Props {
 
 const DAYS = 14;
 
-function addDays(d: Date, n: number): Date {
-  const r = new Date(d);
-  r.setDate(r.getDate() + n);
-  return r;
-}
-
-function toLocalDateString(d: Date): string {
-  return d.toISOString().slice(0, 10);
-}
-
-/** Weekday for a "YYYY-MM-DD" string as 0=Mon … 6=Sun (matches SalonHours). */
-function weekdayMonday0(dateStr: string): number {
-  const d = new Date(`${dateStr}T12:00:00`); // local noon → tz-robust weekday
-  return (d.getDay() + 6) % 7; // JS getDay(): 0=Sun … 6=Sat
-}
-
-function formatTime(iso: string): string {
-  return new Date(iso).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-}
+// Salon time only (lib/time.ts): never the browser's time zone.
+const formatTime = formatSalonTime;
 
 function formatDay(dateStr: string): string {
-  return new Date(`${dateStr}T12:00:00`).toLocaleDateString('de-DE', {
-    weekday: 'short',
-    day: 'numeric',
-    month: 'short',
-  });
+  return formatDateOnly(dateStr, { weekday: 'short', day: 'numeric', month: 'short' });
 }
 
 export default function SlotPicker({ serviceId, teamMemberId, selected, onSelect }: Props) {
-  const today = new Date();
-  const days = Array.from({ length: DAYS }, (_, i) => toLocalDateString(addDays(today, i + 1)));
+  const today = salonToday();
+  const days = Array.from({ length: DAYS }, (_, i) => addDaysISO(today, i + 1));
 
   const [salonHours, setSalonHours] = useState<PublicSalonHoursRead[]>([]);
   const [activeDay, setActiveDay] = useState(days[0]);

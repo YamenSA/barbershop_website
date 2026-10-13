@@ -4,11 +4,11 @@ import { useEffect, useState } from 'react';
 import { apiFetch } from '@/lib/api';
 import type { DashboardResponse } from '@/lib/types';
 import DailyPlanExport from '@/components/admin/DailyPlanExport';
+import { formatSalonTime, salonToday } from '@/lib/time';
 
-const today = () => new Date().toISOString().slice(0, 10);
+const today = () => salonToday();
 
-const fmtTime = (iso: string) =>
-  new Date(iso).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+const fmtTime = (iso: string) => formatSalonTime(iso);
 
 export default function DashboardPage() {
   const [data, setData] = useState<DashboardResponse | null>(null);

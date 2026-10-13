@@ -1,4 +1,5 @@
 import type { PublicPromotion } from '@/lib/types';
+import { formatDateOnly } from '@/lib/time';
 
 interface PromotionsSectionProps {
   promotions: PublicPromotion[];
@@ -30,16 +31,8 @@ export default function PromotionsSection({ promotions }: PromotionsSectionProps
 
         <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {promotions.map((promo) => {
-            const startsFormatted = new Date(promo.starts_on).toLocaleDateString('de-DE', {
-              day: '2-digit',
-              month: '2-digit',
-              year: 'numeric',
-            });
-            const endsFormatted = new Date(promo.ends_on).toLocaleDateString('de-DE', {
-              day: '2-digit',
-              month: '2-digit',
-              year: 'numeric',
-            });
+            const startsFormatted = formatDateOnly(promo.starts_on, { day: '2-digit', month: '2-digit', year: 'numeric' });
+            const endsFormatted = formatDateOnly(promo.ends_on, { day: '2-digit', month: '2-digit', year: 'numeric' });
 
             return (
               <li

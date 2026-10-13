@@ -8,6 +8,7 @@ import {
   ApiError,
 } from '@/lib/api';
 import type { Appointment, TeamMember } from '@/lib/types';
+import { formatSalonDateTimeNumeric, toSalonInputValue } from '@/lib/time';
 
 const STATUS_LABELS: Record<Appointment['status'], string> = {
   confirmed: 'Bestätigt',
@@ -47,11 +48,8 @@ export default function AppointmentModal({
     getTeamMembers(true).then(setMembers);
   }, []);
 
-  const localDt = (iso: string) => {
-    const d = new Date(iso);
-    const pad = (n: number) => String(n).padStart(2, '0');
-    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-  };
+  // datetime-local value in SALON time (never the browser's zone)
+  const localDt = (iso: string) => toSalonInputValue(iso);
 
   const handleStatusChange = async (next: Appointment['status']) => {
     setStatusSaving(true);
@@ -74,7 +72,7 @@ export default function AppointmentModal({
     setError('');
     try {
       const payload: Parameters<typeof patchAppointment>[1] = {};
-      if (newStartsAt) payload.starts_at = new Date(newStartsAt).toISOString();
+      if (newStartsAt) payload.starts_at = newStartsAt; // naive = salon wall time, localised by the API
       if (newMemberId) payload.team_member_id = newMemberId;
       if (notes !== appointment.notes) payload.notes = notes;
       const updated = await patchAppointment(appointment.id, payload);
@@ -95,14 +93,7 @@ export default function AppointmentModal({
     }
   };
 
-  const fmt = (iso: string) =>
-    new Date(iso).toLocaleString('de-DE', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
+  const fmt = (iso: string) => formatSalonDateTimeNumeric(iso);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">

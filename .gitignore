@@ -36,3 +36,6 @@ design_handoff_azzam_salon/
 # Design/site reference exports (not source)
 *.zip
 /*.pdf
+
+# Production schema dump used for migration rehearsals (structure only, still not for git)
+schema_prod.sql

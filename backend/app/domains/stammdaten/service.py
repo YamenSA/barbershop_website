@@ -1,4 +1,5 @@
 from datetime import date, datetime, timezone, time as time_type
+from app.core.time import salon_day_bounds
 from typing import List, Optional
 from uuid import UUID
 
@@ -191,12 +192,11 @@ class StammdatenService:
         from app.domains.booking.models import Appointment, AppointmentStatus
 
         if not closure_in.force:
-            day_start = datetime.combine(closure_in.date, time_type.min).replace(tzinfo=timezone.utc)
-            day_end = datetime.combine(closure_in.date, time_type.max).replace(tzinfo=timezone.utc)
+            day_start, day_end = salon_day_bounds(closure_in.date)
             stmt = select(Appointment).where(
                 Appointment.status == AppointmentStatus.confirmed,
                 Appointment.starts_at >= day_start,
-                Appointment.starts_at <= day_end,
+                Appointment.starts_at < day_end,
             )
             result = await session.execute(stmt)
             conflicting = result.scalars().all()

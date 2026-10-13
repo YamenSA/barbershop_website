@@ -4,32 +4,15 @@ import { useState } from 'react';
 import { cancelAppointment } from '@/lib/api';
 import { ApiError } from '@/lib/api';
 import type { CancellationView } from '@/lib/types';
+import { formatSalonDateTimeLong, formatSalonDeadline } from '@/lib/time';
 
 interface Props {
   view: CancellationView;
   token: string;
 }
 
-function formatDateTime(iso: string): string {
-  return new Date(iso).toLocaleString('de-DE', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-}
-
-function formatDeadline(iso: string): string {
-  return new Date(iso).toLocaleString('de-DE', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-}
+const formatDateTime = formatSalonDateTimeLong;
+const formatDeadline = formatSalonDeadline;
 
 export default function CancelCard({ view: initial, token }: Props) {
   const [view, setView] = useState<CancellationView>(initial);

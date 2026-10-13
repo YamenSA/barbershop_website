@@ -106,16 +106,20 @@ async def test_slot_available_again_after_cancellation(
         session.add(WorkingInterval(schedule_id=sched.id, start_time=time(8, 0), end_time=time(20, 0), sort_order=0))
     await session.commit()
 
-    target_date = apt.starts_at.date().isoformat()
+    from app.core.time import as_utc, to_salon
+
+    # The appointment is a real UTC instant; the availability endpoint takes a Berlin calendar date.
+    target_date = to_salon(apt.starts_at).date().isoformat()
 
     # Before cancel — slot absent
     avail_before = await public_client.get(
         "/api/v1/public/booking/availability",
         params={"service_id": str(service.id), "team_member_id": str(member.id), "date": target_date},
     )
-    booked_start = apt.starts_at.isoformat()[:19]
+    booked = as_utc(apt.starts_at)
     slots_before = avail_before.json()["slots"]
-    assert all(s["starts_at"][:19] != booked_start for s in slots_before)
+    # API slots carry the Berlin offset; compare instants, not string prefixes.
+    assert all(datetime.fromisoformat(s["starts_at"]) != booked for s in slots_before)
 
     # Cancel
     await public_client.post(f"/api/v1/public/booking/cancel/{token}")
@@ -126,7 +130,7 @@ async def test_slot_available_again_after_cancellation(
         params={"service_id": str(service.id), "team_member_id": str(member.id), "date": target_date},
     )
     slots_after = avail_after.json()["slots"]
-    assert any(s["starts_at"][:19] == booked_start for s in slots_after), "Slot not re-available"
+    assert any(datetime.fromisoformat(s["starts_at"]) == booked for s in slots_after), "Slot not re-available"
 
 
 # ---------------------------------------------------------------------------

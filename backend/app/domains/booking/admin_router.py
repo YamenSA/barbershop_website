@@ -12,6 +12,7 @@ from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.core.database import get_session
+from app.core.time import salon_day_bounds, salon_today, to_salon
 from app.domains.auth.dependencies import get_current_admin
 from app.domains.booking.models import Appointment, AppointmentStatus
 from app.domains.booking.schemas import DashboardResponse, AppointmentSummary, WorkingMemberSummary
@@ -90,10 +91,9 @@ async def get_dashboard(
     date: Optional[date] = Query(default=None),
     session: AsyncSession = Depends(get_session),
 ):
-    target = date or datetime.now(timezone.utc).date()
+    target = date or salon_today()
 
-    from_dt = datetime.combine(target, time.min, tzinfo=timezone.utc)
-    to_dt = datetime.combine(target + timedelta(days=1), time.min, tzinfo=timezone.utc)
+    from_dt, to_dt = salon_day_bounds(target)
 
     appt_stmt = (
         select(Appointment)
@@ -123,8 +123,7 @@ async def daily_plan_pdf(
     include_notes: bool = Query(default=False),
     session: AsyncSession = Depends(get_session),
 ):
-    from_dt = datetime.combine(date, time.min, tzinfo=timezone.utc)
-    to_dt = datetime.combine(date + timedelta(days=1), time.min, tzinfo=timezone.utc)
+    from_dt, to_dt = salon_day_bounds(date)
 
     appt_stmt = (
         select(Appointment)
@@ -178,7 +177,7 @@ async def daily_plan_pdf(
 
     pdf.set_font("Helvetica", "", 8)
     for a in appts:
-        local_time = a.starts_at.strftime("%H:%M")
+        local_time = to_salon(a.starts_at).strftime("%H:%M")
         service_name = svc_map.get(a.service_id, str(a.service_id))
         stylist = member_map.get(a.team_member_id, str(a.team_member_id))
         customer = a.guest_name or a.customer_name or "–"

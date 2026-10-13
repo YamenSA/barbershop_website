@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { getTeamMembers } from '@/lib/api';
 import type { TeamMember } from '@/lib/types';
+import { salonToday } from '@/lib/time';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
 
@@ -12,7 +13,7 @@ interface Props {
 
 export default function DailyPlanExport({ defaultDate }: Props) {
   const [members, setMembers] = useState<TeamMember[]>([]);
-  const [date, setDate] = useState(defaultDate ?? new Date().toISOString().slice(0, 10));
+  const [date, setDate] = useState(defaultDate ?? salonToday());
   const [memberId, setMemberId] = useState('');
   const [includeNotes, setIncludeNotes] = useState(false);
   const [loading, setLoading] = useState(false);

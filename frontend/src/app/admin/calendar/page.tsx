@@ -3,6 +3,7 @@
 import FullCalendar from '@fullcalendar/react';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
+import luxon3Plugin from '@fullcalendar/luxon3';
 import type { DateSelectArg, EventClickArg, DatesSetArg, EventInput } from '@fullcalendar/core';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { getAppointments, getTeamMembers, getServices } from '@/lib/api';
@@ -85,10 +86,9 @@ export default function CalendarPage() {
   }));
 
   const handleSelect = (arg: DateSelectArg) => {
-    const localDt = new Date(arg.start);
-    const pad = (n: number) => String(n).padStart(2, '0');
-    const iso = `${localDt.getFullYear()}-${pad(localDt.getMonth() + 1)}-${pad(localDt.getDate())}T${pad(localDt.getHours())}:${pad(localDt.getMinutes())}`;
-    setFormStartsAt(iso);
+    // With timeZone="Europe/Berlin" startStr carries the Berlin offset ("2026-10-13T10:00:00+02:00");
+    // the first 16 characters are the salon wall time the form expects — no browser-zone getters.
+    setFormStartsAt(arg.startStr.slice(0, 16));
     setShowForm(true);
   };
 
@@ -138,7 +138,9 @@ export default function CalendarPage() {
 
       <div className="bg-white rounded-lg shadow p-4">
         <FullCalendar
-          plugins={[timeGridPlugin, interactionPlugin]}
+          plugins={[timeGridPlugin, interactionPlugin, luxon3Plugin]}
+          timeZone="Europe/Berlin"
+          allDaySlot={false} // appointments are timed; an all-day click would give a date-only value the form rejects
           initialView="timeGridWeek"
           headerToolbar={{
             left: 'prev,next today',

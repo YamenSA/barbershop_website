@@ -4,6 +4,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
+from app.core.schema_types import SalonDatetimeIn, SalonDatetimeOut
 from app.domains.booking.models import AppointmentStatus
 
 
@@ -36,7 +37,7 @@ class AppointmentBase(BaseModel):
     customer_id: Optional[UUID] = None
     guest_name: Optional[str] = None
     guest_phone: Optional[str] = None
-    starts_at: datetime
+    starts_at: SalonDatetimeIn
     notes: Optional[str] = None
 
 
@@ -55,8 +56,8 @@ class AppointmentRead(BaseModel):
     customer_anonymized_at: Optional[datetime] = None
     guest_name: Optional[str] = None
     guest_phone: Optional[str] = None
-    starts_at: datetime
-    ends_at: datetime
+    starts_at: SalonDatetimeOut
+    ends_at: SalonDatetimeOut
     status: AppointmentStatus
     notes: Optional[str] = None
     model_config = ConfigDict(from_attributes=True)
@@ -67,7 +68,7 @@ class AppointmentStatusUpdate(BaseModel):
 
 
 class AppointmentUpdate(BaseModel):
-    starts_at: Optional[datetime] = None
+    starts_at: Optional[SalonDatetimeIn] = None
     team_member_id: Optional[UUID] = None
     notes: Optional[str] = None
 
@@ -81,8 +82,8 @@ class AppointmentSummary(BaseModel):
     customer_anonymized_at: Optional[datetime] = None
     guest_name: Optional[str] = None
     guest_phone: Optional[str] = None
-    starts_at: datetime
-    ends_at: datetime
+    starts_at: SalonDatetimeOut
+    ends_at: SalonDatetimeOut
     status: AppointmentStatus
     model_config = ConfigDict(from_attributes=True)
 
@@ -114,7 +115,7 @@ class PublicCustomerCreate(BaseModel):
 class PublicAppointmentCreate(BaseModel):
     service_id: UUID
     team_member_id: Optional[UUID] = None  # None = any available stylist
-    starts_at: datetime
+    starts_at: SalonDatetimeIn
     customer: PublicCustomerCreate
     privacy_acknowledged: bool
 
@@ -127,8 +128,8 @@ class PublicAppointmentCreate(BaseModel):
 
 
 class PublicSlot(BaseModel):
-    starts_at: datetime
-    ends_at: datetime
+    starts_at: SalonDatetimeOut
+    ends_at: SalonDatetimeOut
     team_member_id: UUID
     team_member_name: str
 
@@ -142,8 +143,8 @@ class PublicAppointmentRead(BaseModel):
     id: UUID
     service_id: UUID
     team_member_id: UUID
-    starts_at: datetime
-    ends_at: datetime
+    starts_at: SalonDatetimeOut
+    ends_at: SalonDatetimeOut
     status: AppointmentStatus
     cancellation_token: str
     payment_note: str = "Zahlung vor Ort"
@@ -159,7 +160,7 @@ class CancellationView(BaseModel):
     id: UUID
     service_name: str
     team_member_name: str
-    starts_at: datetime
+    starts_at: SalonDatetimeOut
     status: AppointmentStatus
     cancellable: bool
-    cancellation_deadline: Optional[datetime] = None
+    cancellation_deadline: Optional[SalonDatetimeOut] = None
