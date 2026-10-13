@@ -180,7 +180,7 @@ $PSQL -c "SELECT count(*) FROM pg_constraint WHERE conname='no_overlapping_confi
 ```
 Schlägt der Downgrade fehl, rollt seine Transaktion zurück (Stand 017 bleibt konsistent). Notfall-Fallback: Backup-Restore in eine frische Datenbank (`pg_restore` aus 3.2), Verbindung umstellen, Buchungen seit dem Backup aus Bestätigungsmails/Brevo nachtragen.
 
-Nach einem Rollback: Ursache klären, Fix, Dry-Run wiederholen, neuer Termin. Eine Reserve vor der Winterzeit gibt es nicht mehr; der nächste mögliche Termin wäre Samstag 24.10. und muss dann gesondert entschieden werden.
+Nach einem Rollback: Ursache klären, Fix, Dry-Run wiederholen, neuer Termin. Vor der Winterzeit gibt es keinen weiteren geschlossenen Sonntag. Ein neuer Termin wird gesondert entschieden (Samstag ist Öffnungstag).
 
 ---
 
