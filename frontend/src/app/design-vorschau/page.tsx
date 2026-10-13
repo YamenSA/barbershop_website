@@ -4,6 +4,7 @@ import HomePageView from "@/components/site/HomePageView";
 import ServicesPageView from "@/components/site/ServicesPageView";
 import AboutPageView from "@/components/site/AboutPageView";
 import ContactPageView from "@/components/site/ContactPageView";
+import FaqPageView from "@/components/site/FaqPageView";
 import { getPublicServices, getPublicTeamMembers, getPublicSalonProfile, getPublicSalonHours } from "@/lib/api";
 
 export const metadata: Metadata = {
@@ -16,6 +17,14 @@ export const dynamic = "force-dynamic";
 export default async function DesignVorschauPage({ searchParams }: { searchParams: Promise<{ seite?: string }> }) {
   if (process.env.NODE_ENV === "production") notFound();
   const { seite } = await searchParams;
+
+  if (seite === "faq") {
+    const [profile, hours] = await Promise.all([
+      getPublicSalonProfile().catch(() => null),
+      getPublicSalonHours().catch(() => []),
+    ]);
+    return <FaqPageView profile={profile} hours={hours} />;
+  }
 
   if (seite === "kontakt") {
     const [profile, hours] = await Promise.all([

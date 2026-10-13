@@ -49,7 +49,9 @@
 6. [x] Kontakt (Karte erst nach Einwilligung)
    - Vorschau unter `/design-vorschau?seite=kontakt`: Telefon, Adresse, E-Mail und Öffnungszeiten aus API; WhatsApp aus bestehender Konfiguration. Heutiger Öffnungstag in Europe/Berlin markiert. Statische Kartenvorschau vor Einwilligung, Google-Iframe erst nach Zustimmung, Widerruf direkt an der Karte und über Cookie-Einstellungen. Keine unbestätigten Park-/ÖPNV-Angaben. Von Yamen im Browser geprüft und freigegeben.
    - Build und gezieltes ESLint grün. Browserprüfung bei 360/390/768/1024/1366 px ohne Überlauf/defekte Bilder; Kontaktlinks und sieben Öffnungstage mit API abgeglichen. Europe/Berlin-Markierung unter Browser-Zeitzone New York geprüft. Keine Google-Anfragen vor Einwilligung, gespeicherte Zustimmung sowie beide Widerrufswege geprüft (Google-Iframe im Test abgefangen). Dev-Vorschau auf Port 3001; von Yamen im Browser freigegeben.
-7. FAQ (Akkordeon)
+7. [x] FAQ (Akkordeon)
+   - Vorschau unter `/design-vorschau?seite=faq`: zehn eindeutige Fragen mit nativ bedienbaren Buttons, `aria-expanded`/`aria-controls`, jeweils eine Antwort offen. Bestands-FAQ-Texte gemäß Entscheidungen bereinigt: mit/ohne Termin, nur Barzahlung, nur Absage, keine unbestätigten Parkangaben. Teamwahl und Anfahrt ergänzt, hilfreiche Links sowie echte Telefonnummer aus API. Von Yamen im Browser geprüft und freigegeben.
+   - Build und gezieltes ESLint grün. Browserprüfung bei 360/390/768/1024/1366 px: alle zehn Antworten, Einzelauswahl, Enter/Leertaste, ARIA-Verknüpfungen, Goldfokus ohne grünen Schatten und Buchungslink geprüft; keine Überläufe, defekten sichtbaren Bilder oder Browserfehler. Mobile und Desktop-Darstellung visuell geprüft. Dev-Vorschau läuft auf Port 3001; von Yamen im Browser geprüft und freigegeben.
 8. Impressum, Datenschutz (Bestandstexte), 404
 9. Öffentliches Layout auf neuen Header/Footer/BottomBar umstellen, alte Komponenten und Google-Fonts entfernen
 10. Teil B: neue Buchungsstrecke (mehrere Leistungen, „egal wer“) – braucht eigene Spec und Backend-Arbeit; erst planen, wenn Hotfix live ist.
