@@ -182,7 +182,7 @@ class PublicAppointmentRead(BaseModel):
     ends_at: SalonDatetimeOut
     status: AppointmentStatus
     cancellation_token: str
-    payment_note: str = "Barzahlung vor Ort"
+    payment_note: str = "Zahlung vor Ort"
     model_config = ConfigDict(from_attributes=True)
 
 

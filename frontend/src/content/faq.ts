@@ -38,7 +38,7 @@ export const faqs: FaqItem[] = [
     id: 'zahlung-online',
     question: 'Muss ich bei der Online-Buchung bezahlen?',
     answer:
-      'Nein. Bei der Online-Buchung wird nichts bezahlt. Du bezahlst nach deinem Besuch bar vor Ort im Salon.',
+      'Nein. Bei der Online-Buchung wird nichts bezahlt. Du bezahlst nach deinem Besuch vor Ort im Salon.',
   },
   {
     id: 'bartpflege',
@@ -60,12 +60,6 @@ export const faqs: FaqItem[] = [
     answer:
       'Ja. Bei der Online-Buchung kannst du ein Teammitglied auswählen oder ohne feste Auswahl buchen. Auf der Teamseite führt „Bei … buchen“ direkt zur Buchung mit deinem gewählten Teammitglied.',
     link: { href: '/ueber-uns', label: 'Unser Team kennenlernen' },
-  },
-  {
-    id: 'kartenzahlung',
-    question: 'Kann ich mit Karte zahlen?',
-    answer:
-      'Nein, bezahlt wird bar vor Ort.',
   },
   {
     id: 'anfahrt',

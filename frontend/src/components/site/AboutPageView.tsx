@@ -19,7 +19,7 @@ const values = [
   { title: "Zeit", description: "Deine Wünsche stehen am Anfang. Wir nehmen uns Zeit, sie zu verstehen." },
   { title: "Präzision", description: "Saubere Übergänge, klare Linien und ehrliche Beratung." },
   { title: "Beide", description: "Damen und Herren bekommen dieselbe Aufmerksamkeit." },
-  { title: "Klarheit", description: "Preise vorab ansehen. Bezahlt wird bar vor Ort." },
+  { title: "Klarheit", description: "Preise vorab ansehen. Bezahlt wird vor Ort." },
 ];
 
 export default function AboutPageView({ team, hours, profile, embedded = false }: AboutPageViewProps) {
@@ -79,7 +79,7 @@ export default function AboutPageView({ team, hours, profile, embedded = false }
         <Section aria-labelledby="about-booking">
           <div className="flex flex-col items-start gap-5 sm:items-center sm:text-center">
             <h2 id="about-booking" className="font-brand text-[32px] uppercase leading-9 lg:text-5xl">Lern uns persönlich kennen</h2>
-            <p className="max-w-[55ch] text-ink-muted">Buche deinen nächsten Termin online oder komm einfach vorbei. Barzahlung vor Ort.</p>
+            <p className="max-w-[55ch] text-ink-muted">Buche deinen nächsten Termin online oder komm einfach vorbei. Zahlung vor Ort.</p>
             <Button size="lg" href="/termin">Termin buchen</Button>
           </div>
         </Section>

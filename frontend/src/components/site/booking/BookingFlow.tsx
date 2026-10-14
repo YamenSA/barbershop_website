@@ -118,7 +118,7 @@ export default function BookingFlow({ services: initialServices, team, hours, pr
       const booked: PublicAppointmentRead = preview ? {
         id: "VORSCHAU", service_id: selected[0].id, team_member_id: slot.team_member_id,
         starts_at: slot.starts_at, ends_at: slot.ends_at, status: "confirmed", cancellation_token: "",
-        payment_note: "Barzahlung vor Ort", selected_services: selected,
+        payment_note: "Zahlung vor Ort", selected_services: selected,
       } : await createPublicAppointment({
         service_ids: selectedIds, team_member_id: memberId, starts_at: slot.starts_at,
         customer: { name: contact.name.trim(), email: contact.email.trim(), phone: contact.phone.trim() || undefined },
@@ -206,7 +206,7 @@ export default function BookingFlow({ services: initialServices, team, hours, pr
                 { title: "Termin", value: <>{formatSalonDateTimeLong(slot.starts_at)}<br />{selected.reduce((sum, s) => sum + s.duration_minutes, 0)} Min.</>, target: 2 },
                 { title: "Kontakt", value: <>{contact.name}<br /><span className="break-all">{contact.email}</span>{contact.phone && <><br />{contact.phone}</>}</>, target: 3 },
               ].map(row => <section key={row.title} className="flex items-start justify-between gap-4 rounded-xl border border-line bg-surface-card p-4"><div className="min-w-0"><h3 className="text-sm font-bold text-ink-muted">{row.title}</h3><div className="mt-2 text-sm leading-6">{row.value}</div></div><button type="button" disabled={submitting} aria-label={`${row.title} ändern`} onClick={() => goStep(row.target)} className="min-h-12 shrink-0 px-2 text-sm font-semibold text-gold-300 hover:text-ink disabled:cursor-not-allowed">Ändern</button></section>)}</div>
-              <p className="mt-5 text-sm leading-6 text-ink-muted">Barzahlung vor Ort. Bis 24 Stunden vorher kannst du über deine Bestätigungs-E-Mail absagen.</p>
+              <p className="mt-5 text-sm leading-6 text-ink-muted">Zahlung vor Ort. Bis 24 Stunden vorher kannst du über deine Bestätigungs-E-Mail absagen.</p>
               {selected.some(s => s.price_is_from) && <p className="mt-3 text-sm leading-6 text-ink-muted">Bei ab-Preisen hängt der Endpreis von Haarlänge und Aufwand ab. Wir besprechen ihn vor Beginn.</p>}
             </div>}
           </div>

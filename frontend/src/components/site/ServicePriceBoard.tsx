@@ -86,7 +86,7 @@ export default function ServicePriceBoard({ services }: { services: PublicServic
       </div>
       {services.some((service) => service.price_is_from) && <Card className="mt-8 lg:mt-12">
         <h2 className="font-semibold">„ab“-Preise</h2>
-        <p className="mt-2 max-w-[65ch] text-sm leading-6 text-ink-muted">Der Endpreis hängt von Haarlänge und Aufwand ab. Wir besprechen ihn vor Beginn. Bezahlt wird bar vor Ort.</p>
+        <p className="mt-2 max-w-[65ch] text-sm leading-6 text-ink-muted">Der Endpreis hängt von Haarlänge und Aufwand ab. Wir besprechen ihn vor Beginn. Bezahlt wird vor Ort.</p>
       </Card>}
     </>
   );

@@ -4,7 +4,7 @@ import { getPublicSiteData } from "@/lib/public-site-data";
 
 export const metadata: Metadata = {
   title: "Häufige Fragen",
-  description: "Antworten zu Terminbuchung, Preisen, Barzahlung und deinem Besuch im Azzam Salon.",
+  description: "Antworten zu Terminbuchung, Preisen, Zahlung und deinem Besuch im Azzam Salon.",
 };
 
 export default async function Page() {

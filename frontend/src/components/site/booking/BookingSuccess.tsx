@@ -24,7 +24,7 @@ export default function BookingSuccess({ result, services, memberName, name, pro
           <dt className="text-ink-muted">Termin</dt><dd className="tabular-nums">{formatSalonDateTimeLong(result.starts_at)}</dd>
           <dt className="text-ink-muted">Dauer</dt><dd>{services.reduce((sum, service) => sum + service.duration_minutes, 0)} Min.</dd>
           <dt className="text-ink-muted">Gesamt</dt><dd className="font-bold tabular-nums">{formatServicePrice(services.reduce((sum, service) => sum + service.price_cents, 0), services.some(service => service.price_is_from))}</dd>
-          <dt className="text-ink-muted">Zahlung</dt><dd>Bar vor Ort</dd>
+          <dt className="text-ink-muted">Zahlung</dt><dd>Vor Ort</dd>
         </dl>
       </div>
       <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">

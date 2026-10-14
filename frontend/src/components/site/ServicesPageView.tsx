@@ -28,7 +28,7 @@ export default function ServicesPageView({ services, hours, profile, loadFailed 
                 <span className="hidden lg:inline">Klar. Fair. Vorab.</span>
               </h1>
             </div>
-            <p className="flex items-center gap-3 rounded-lg border border-line bg-surface-raise px-4 py-3 text-sm font-semibold"><span aria-hidden="true" className="text-lg text-gold-300">€</span>Nur Barzahlung vor Ort</p>
+            <p className="flex items-center gap-3 rounded-lg border border-line bg-surface-raise px-4 py-3 text-sm font-semibold"><span aria-hidden="true" className="text-lg text-gold-300">€</span>Zahlung vor Ort</p>
           </div>
           {loadFailed ? <div role="status" className="rounded-xl border border-line bg-surface-card p-6">
             <h2 className="font-brand text-3xl">Preise gerade nicht verfügbar</h2>

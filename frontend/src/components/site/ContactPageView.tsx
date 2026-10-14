@@ -72,7 +72,7 @@ export default function ContactPageView({ profile, hours, embedded = false }: Co
                   <dd className="tabular-nums">{!day.is_open ? "geschlossen" : day.open_time && day.close_time ? `${day.open_time.slice(0,5)} – ${day.close_time.slice(0,5)}` : "Zeiten bitte erfragen"}</dd>
                 </div>)}
               </dl> : <p role="status" className="text-ink-muted">Öffnungszeiten sind gerade nicht verfügbar. Bitte kontaktiere uns.</p>}
-              <p className="mt-5 text-sm text-ink-muted">Barzahlung vor Ort.</p>
+              <p className="mt-5 text-sm text-ink-muted">Zahlung vor Ort.</p>
             </section>
           </div>
         </Container>

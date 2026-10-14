@@ -5,7 +5,7 @@ import { getPublicSiteData } from "@/lib/public-site-data";
 
 export const metadata: Metadata = {
   title: "Termin buchen",
-  description: "Wähle deine Leistungen, dein Teammitglied und eine freie Uhrzeit im Azzam Salon. Barzahlung vor Ort.",
+  description: "Wähle deine Leistungen, dein Teammitglied und eine freie Uhrzeit im Azzam Salon. Zahlung vor Ort.",
   robots: { index: false },
 };
 

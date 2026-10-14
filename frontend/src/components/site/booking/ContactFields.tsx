@@ -35,7 +35,7 @@ export default function ContactFields({ values, errors, onChange }: { values: Co
         </div>
         {errors.consent && <p id="booking-consent-error" className="mt-2 text-sm text-danger">{errors.consent}</p>}
       </div>
-      <p className="mt-5 text-xs leading-5 text-ink-subtle">* Pflichtfelder. Keine Online-Zahlung, bezahlt wird bar vor Ort.</p>
+      <p className="mt-5 text-xs leading-5 text-ink-subtle">* Pflichtfelder. Keine Online-Zahlung, bezahlt wird vor Ort.</p>
     </div>
   );
 }

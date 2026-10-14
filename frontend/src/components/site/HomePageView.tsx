@@ -46,7 +46,7 @@ export default function HomePageView({ services, team, hours, profile, reviews =
                 <Button size="lg" href="/termin">Termin buchen</Button>
                 <Button size="lg" variant="secondary" href="/dienstleistungen">Preise ansehen</Button>
               </div>
-              <p className="mt-4 text-sm text-ink-muted">Barzahlung vor Ort.</p>
+              <p className="mt-4 text-sm text-ink-muted">Zahlung vor Ort.</p>
             </div>
           </div>
         </Container>
@@ -81,7 +81,7 @@ export default function HomePageView({ services, team, hours, profile, reviews =
           <div className="grid gap-6 lg:grid-cols-12 lg:gap-12">
             <div className="lg:col-span-4">
               <h2 id="home-prices" className={heading}>Preise auf einen Blick</h2>
-              <p className="mt-4 text-ink-muted">Preise vorab ansehen. Bezahlt wird bar vor Ort.</p>
+              <p className="mt-4 text-ink-muted">Preise vorab ansehen. Bezahlt wird vor Ort.</p>
               <TextLink href="/dienstleistungen" className="mt-4">Alle Preise</TextLink>
             </div>
             <div className="lg:col-span-7 lg:col-start-6">
@@ -95,7 +95,7 @@ export default function HomePageView({ services, team, hours, profile, reviews =
                   ))}
                 </ul>
               ) : <p className="text-ink-muted">Preise sind gerade nicht verfügbar. Bitte kontaktiere uns oder versuche es später erneut.</p>}
-              <p className="mt-4 rounded-lg border border-line bg-surface-raise p-4 text-sm text-ink-muted">Barzahlung vor Ort. Bei „ab“-Preisen richtet sich der Endpreis nach dem Aufwand.</p>
+              <p className="mt-4 rounded-lg border border-line bg-surface-raise p-4 text-sm text-ink-muted">Zahlung vor Ort. Bei „ab“-Preisen richtet sich der Endpreis nach dem Aufwand.</p>
             </div>
           </div>
         </Section>
@@ -148,7 +148,7 @@ export default function HomePageView({ services, team, hours, profile, reviews =
         <Section aria-labelledby="home-booking">
           <div className="flex flex-col items-start gap-5 sm:items-center sm:text-center">
             <h2 id="home-booking" className={heading}>Dein nächster Schnitt?</h2>
-            <p className="text-ink-muted">Buche deinen Termin online oder komm einfach vorbei. Barzahlung vor Ort.</p>
+            <p className="text-ink-muted">Buche deinen Termin online oder komm einfach vorbei. Zahlung vor Ort.</p>
             <Button size="lg" href="/termin">Termin buchen</Button>
           </div>
         </Section>

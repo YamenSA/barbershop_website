@@ -5,7 +5,7 @@ import { getPublicSiteData } from "@/lib/public-site-data";
 
 export const metadata: Metadata = {
   title: { absolute: "Azzam Salon | Friseur für Damen und Herren in Cottbus" },
-  description: "Schnitt, Farbe, Bart und Styling in Cottbus. Damen und Herren sind mit oder ohne Termin willkommen. Online buchen, Barzahlung vor Ort.",
+  description: "Schnitt, Farbe, Bart und Styling in Cottbus. Damen und Herren sind mit oder ohne Termin willkommen. Online buchen, Zahlung vor Ort.",
 };
 export const dynamic = "force-dynamic";
 

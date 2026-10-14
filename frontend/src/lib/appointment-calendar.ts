@@ -25,7 +25,7 @@ export function appointmentCalendar(result: PublicAppointmentRead, serviceNames:
     `DTSTART:${timestamp(result.starts_at)}`, `DTEND:${timestamp(result.ends_at)}`,
     `SUMMARY:${escapeValue(`Azzam Salon: ${serviceNames.join(" + ")}`)}`,
     ...(profile ? [`LOCATION:${escapeValue(`${profile.street}, ${profile.postal_code} ${profile.city}`)}`] : []),
-    "DESCRIPTION:Barzahlung vor Ort. Absage bis 24 Stunden vorher über den Link in deiner Bestätigungs-E-Mail.",
+    "DESCRIPTION:Zahlung vor Ort. Absage bis 24 Stunden vorher über den Link in deiner Bestätigungs-E-Mail.",
     "END:VEVENT", "END:VCALENDAR", "",
   ].map(foldLine).join("\r\n");
 }

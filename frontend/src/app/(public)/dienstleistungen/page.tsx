@@ -5,7 +5,7 @@ import { getPublicServices } from "@/lib/api";
 
 export const metadata: Metadata = {
   title: "Leistungen & Preise",
-  description: "Alle Leistungen mit Preisen und Dauer für Damen, Herren und Kinder. Barzahlung vor Ort.",
+  description: "Alle Leistungen mit Preisen und Dauer für Damen, Herren und Kinder. Zahlung vor Ort.",
 };
 
 export default async function Page() {

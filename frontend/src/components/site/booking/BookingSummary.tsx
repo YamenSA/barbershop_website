@@ -23,7 +23,7 @@ export default function BookingSummary({ services, memberName, slot, label, disa
             <dt className="text-ink-muted">Dauer</dt><dd className="text-right">{duration ? `${duration} Min.` : "—"}</dd>
           </dl>
           <p className="mt-5 flex justify-between gap-4 text-xl font-bold"><span>Gesamt</span><span className="tabular-nums">{price}</span></p>
-          <p className="my-5 rounded-lg bg-surface-card p-3 text-sm leading-6 text-ink-muted"><span aria-hidden="true" className="mr-2 text-gold-300">€</span>Barzahlung vor Ort, keine Online-Zahlung.</p>
+          <p className="my-5 rounded-lg bg-surface-card p-3 text-sm leading-6 text-ink-muted"><span aria-hidden="true" className="mr-2 text-gold-300">€</span>Zahlung vor Ort, keine Online-Zahlung.</p>
           {action}
           {step > 0 && <button type="button" disabled={submitting} onClick={onBack} className="mt-2 min-h-12 w-full text-sm font-semibold text-ink-muted hover:text-gold-300 disabled:cursor-not-allowed">← Zurück</button>}
         </div>
@@ -34,7 +34,7 @@ export default function BookingSummary({ services, memberName, slot, label, disa
             <div className="min-w-0"><p className="truncate text-sm font-semibold">{services.length === 1 ? services[0].name : services.length ? `${services.length} Leistungen` : "Noch keine Leistung gewählt"}</p><p className="mt-1 text-xs leading-5 text-ink-muted">{duration ? `${duration} Min.` : "Preis und Dauer erscheinen hier"}{slot ? ` · ${formatSalonDateTimeNumeric(slot.starts_at)}` : ""}</p></div>
             <p className="shrink-0 whitespace-nowrap text-lg font-bold tabular-nums">{price}</p>
           </div>
-          <p className="mb-3 mt-2 text-xs text-ink-muted"><span aria-hidden="true" className="mr-2 text-gold-300">€</span>Barzahlung vor Ort</p>
+          <p className="mb-3 mt-2 text-xs text-ink-muted"><span aria-hidden="true" className="mr-2 text-gold-300">€</span>Zahlung vor Ort</p>
           {action}
         </div>
       </div>
