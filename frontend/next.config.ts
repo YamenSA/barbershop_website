@@ -1,5 +1,9 @@
 import type { NextConfig } from "next";
 
+// Local development uses the host backend; production keeps the Docker hostname.
+const backendOrigin = process.env.BACKEND_INTERNAL_URL ||
+  (process.env.NODE_ENV === 'development' ? 'http://127.0.0.1:8000' : 'http://backend:8000');
+
 const nextConfig: NextConfig = {
   // Schlankes Docker-Image: nur .next/standalone + server.js statt voller node_modules.
   output: 'standalone',
@@ -28,7 +32,7 @@ const nextConfig: NextConfig = {
       },
       {
         source: '/api/:path*',
-        destination: `${process.env.BACKEND_INTERNAL_URL || 'http://backend:8000'}/api/:path*`,
+        destination: `${backendOrigin}/api/:path*`,
       },
     ];
   },

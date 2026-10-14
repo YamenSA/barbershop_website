@@ -1,0 +1,18 @@
+.flow :focus-visible {
+  outline: 2px solid var(--color-gold-300);
+  outline-offset: 2px;
+  box-shadow: none;
+}
+.flow input {
+  color: var(--color-ink);
+  color-scheme: dark;
+}
+.flow input::placeholder {
+  color: var(--color-ink-subtle);
+}
+.flow input[type="checkbox"], .flow input[type="radio"] {
+  accent-color: var(--color-gold-500);
+}
+.flow h2, .flow legend {
+  scroll-margin-top: 5rem;
+}

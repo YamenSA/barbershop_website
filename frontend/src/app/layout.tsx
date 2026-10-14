@@ -1,27 +1,14 @@
 import type { Metadata } from "next";
-import { Barlow_Condensed, Inter } from "next/font/google";
+import { brand, text, legacyDisplay, legacyText } from "./fonts";
 import "./globals.css";
-
-const barlowCondensed = Barlow_Condensed({
-  weight: ["700", "800"],
-  subsets: ["latin"],
-  variable: "--font-barlow",
-  display: "swap",
-});
-
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
-  display: "swap",
-});
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? 'https://example.com'),
   title: {
-    template: "%s | Azzam Barbershop",
-    default: "Azzam Barbershop",
+    template: "%s | Azzam Salon",
+    default: "Azzam Salon",
   },
-  description: "Präzise Schnitte, professionelle Bartpflege — Ihr Barbershop in Cottbus.",
+  description: "Friseur für Damen und Herren in Cottbus. Schnitt, Farbe, Bart und Styling, mit oder ohne Termin.",
 };
 
 export default function RootLayout({
@@ -32,7 +19,7 @@ export default function RootLayout({
   return (
     <html
       lang="de"
-      className={`${barlowCondensed.variable} ${inter.variable} h-full antialiased`}
+      className={`${legacyDisplay.variable} ${legacyText.variable} ${brand.variable} ${text.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         {/* Skip link (WCAG 2.4.1): sr-only at rest; on keyboard focus it appears

@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, time, timedelta, timezone
 import pytest
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
@@ -6,7 +6,7 @@ from httpx import AsyncClient
 
 from app.domains.booking.models import Customer
 from app.domains.maintenance.service import MaintenanceService
-from app.domains.stammdaten.models import Service, TeamMember
+from app.domains.stammdaten.models import Service, TeamMember, TeamMemberServiceLink, SalonHours, WorkingDaySchedule, WorkingInterval
 
 @pytest.mark.asyncio
 async def test_online_booking_updates_last_active_and_respects_retention(
@@ -16,6 +16,15 @@ async def test_online_booking_updates_last_active_and_respects_retention(
     service = Service(name="Haarschnitt", duration_minutes=30, price_cents=2500, is_active=True)
     member = TeamMember(name="Max", is_active=True)
     session.add_all([service, member])
+    await session.commit()
+
+    session.add(TeamMemberServiceLink(team_member_id=member.id, service_id=service.id))
+    for weekday in range(7):
+        session.add(SalonHours(day_of_week=weekday, is_open=True, open_time=time(8), close_time=time(20)))
+        schedule = WorkingDaySchedule(team_member_id=member.id, day_of_week=weekday, is_working=True)
+        session.add(schedule)
+        await session.flush()
+        session.add(WorkingInterval(schedule_id=schedule.id, start_time=time(8), end_time=time(20)))
     await session.commit()
 
     # 2. Perform online booking

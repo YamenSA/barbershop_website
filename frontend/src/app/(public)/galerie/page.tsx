@@ -1,12 +1,12 @@
 import type { Metadata } from 'next';
 import { loadGallery } from '@/lib/content';
 import BeforeAfterGallery from '@/components/public/BeforeAfterGallery';
-import BookingCta from '@/components/public/BookingCta';
+import Button from '@/components/ui/Button';
 
 export const metadata: Metadata = {
-  title: 'Galerie — Vorher & Nachher | Azzam Barbershop Cottbus',
+  title: 'Galerie — Vorher & Nachher | Azzam Salon Cottbus',
   description:
-    'Vorher/Nachher-Beispiele aus dem Azzam Barbershop in Cottbus — Haarschnitte, Fade, Bartpflege und Styling. Die gezeigten Bilder sind KI-generierte Beispiele.',
+    'Vorher/Nachher-Beispiele aus dem Azzam Salon in Cottbus — Haarschnitte, Fade, Bartpflege und Styling. Die gezeigten Bilder sind KI-generierte Beispiele.',
 };
 
 export default function GaleriePage() {
@@ -18,16 +18,16 @@ export default function GaleriePage() {
     <section className="px-4 sm:px-6 lg:px-8 py-16">
       <div className="max-w-3xl mx-auto">
         <h1
-          className="font-display font-extrabold leading-[0.95] tracking-[-0.03em] text-ink mb-4"
+          className="font-brand font-medium uppercase leading-tight text-ink mb-4"
           style={{ fontSize: 'clamp(2rem, 5vw, 3.5rem)' }}
         >
           Galerie
         </h1>
-        <p className="text-secondary text-lg leading-relaxed max-w-[55ch] mb-3">
+        <p className="text-ink-muted text-lg leading-relaxed max-w-[55ch] mb-3">
           Beispielhafte Vorher/Nachher-Looks — sie zeigen, welche Schnitte, Fades und
-          Bartstylings im Azzam Barbershop in Cottbus möglich sind.
+          Bartstylings im Azzam Salon in Cottbus möglich sind.
         </p>
-        <p className="text-tertiary text-sm leading-relaxed max-w-[55ch] mb-12">
+        <p className="text-ink-subtle text-sm leading-relaxed max-w-[55ch] mb-12">
           Hinweis: Die gezeigten Bilder sind KI-generierte Beispiele und stellen keine
           realen Kundenfotos dar.
         </p>
@@ -35,10 +35,10 @@ export default function GaleriePage() {
         <BeforeAfterGallery items={items} />
 
         <div className="mt-14 pt-10 border-t border-[oklch(0.95_0.004_140/0.08)] flex flex-col items-start gap-4">
-          <p className="text-secondary">
+          <p className="text-ink-muted">
             Überzeugt? Buchen Sie jetzt Ihren Termin.
           </p>
-          <BookingCta />
+          <Button href="/termin">Termin buchen</Button>
         </div>
       </div>
     </section>

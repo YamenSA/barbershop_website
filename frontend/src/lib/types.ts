@@ -59,6 +59,8 @@ export interface Appointment {
   id: UUID;
   team_member_id: UUID;
   service_id: UUID;
+  selected_services?: BookedService[];
+  service_names?: string[];
   customer_id?: UUID;
   customer_name?: string;
   customer_email?: string;
@@ -97,6 +99,7 @@ export interface AppointmentSummary {
   id: UUID;
   team_member_id: UUID;
   service_id: UUID;
+  service_names?: string[];
   customer_id?: UUID;
   customer_name?: string;
   customer_email?: string;
@@ -179,13 +182,14 @@ export interface PublicCustomerCreate {
   phone?: string;
 }
 
-export interface PublicAppointmentCreate {
-  service_id: UUID;
+export type PublicAppointmentCreate = {
   team_member_id: UUID | null;
   starts_at: string;
   customer: PublicCustomerCreate;
   privacy_acknowledged: boolean;
-}
+  expected_total_price_cents?: number;
+  expected_total_duration_minutes?: number;
+} & ({ service_id: UUID; service_ids?: never } | { service_ids: UUID[]; service_id?: never });
 
 export interface PublicSlot {
   starts_at: string;
@@ -208,6 +212,15 @@ export interface PublicAppointmentRead {
   status: 'confirmed' | 'completed' | 'cancelled' | 'no_show';
   cancellation_token: string;
   payment_note: string;
+  selected_services?: BookedService[];
+}
+
+export interface BookedService {
+  id: UUID;
+  name: string;
+  duration_minutes: number;
+  price_cents: number;
+  price_is_from: boolean;
 }
 
 export interface CancellationView {

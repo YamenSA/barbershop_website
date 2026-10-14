@@ -18,7 +18,7 @@ interface BeforeAfterGalleryProps {
 export default function BeforeAfterGallery({ items }: BeforeAfterGalleryProps) {
   if (items.length === 0) {
     return (
-      <p className="text-ash text-sm text-center py-12">
+      <p className="text-ink-muted text-sm text-center py-12">
         Derzeit sind keine Galerie-Einträge verfügbar.
       </p>
     );
@@ -32,11 +32,11 @@ export default function BeforeAfterGallery({ items }: BeforeAfterGalleryProps) {
       {items.map((item, idx) => (
         <li
           key={item.id}
-          className="rounded-[8px] border border-hairline bg-slate overflow-hidden shadow-bevel"
+          className="rounded-xl border border-line bg-surface-card overflow-hidden"
         >
           {/* Pair label */}
-          <div className="px-5 py-3 border-b border-white/[0.06]">
-            <p className="text-ash text-xs uppercase tracking-[0.08em] font-semibold">
+          <div className="px-5 py-3 border-b border-line">
+            <p className="text-ink-muted text-xs uppercase tracking-[0.08em] font-semibold">
               Transformation {idx + 1}
               {item.publishedAt && (
                 <span className="ml-2 font-normal normal-case">
@@ -62,13 +62,13 @@ export default function BeforeAfterGallery({ items }: BeforeAfterGalleryProps) {
                 />
               </div>
               {/* Label overlay */}
-              <span className="absolute bottom-2 left-2 px-2 py-0.5 bg-midnight/80 text-ash text-[10px] font-bold uppercase tracking-[0.08em] rounded">
+              <span className="absolute bottom-2 left-2 px-2 py-0.5 bg-surface-pitch text-ink-muted text-[10px] font-bold uppercase tracking-[0.08em] rounded">
                 Vorher
               </span>
             </div>
 
             {/* After */}
-            <div className="relative border-l border-white/[0.06]">
+            <div className="relative border-l border-line">
               <div className="relative w-full" style={{ paddingBottom: '75%' }}>
                 <Image
                   src={item.afterSrc}
@@ -79,14 +79,14 @@ export default function BeforeAfterGallery({ items }: BeforeAfterGalleryProps) {
                   priority={idx === 0}
                 />
               </div>
-              <span className="absolute bottom-2 right-2 px-2 py-0.5 bg-malachite/90 text-midnight text-[10px] font-bold uppercase tracking-[0.08em] rounded">
+              <span className="absolute bottom-2 right-2 px-2 py-0.5 bg-gold-500 text-surface-pitch text-[10px] font-bold uppercase tracking-[0.08em] rounded">
                 Nachher
               </span>
             </div>
           </div>
 
           {/* Alt caption for screen readers & SEO */}
-          <p className="px-5 py-3 text-ash text-xs leading-relaxed border-t border-white/[0.06]">
+          <p className="px-5 py-3 text-ink-muted text-xs leading-relaxed border-t border-line">
             {item.alt}
           </p>
         </li>

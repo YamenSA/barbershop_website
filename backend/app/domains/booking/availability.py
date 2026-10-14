@@ -5,10 +5,12 @@ from uuid import UUID
 from pydantic import BaseModel
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
+from sqlalchemy import func
 
 from app.core.config import settings
 from app.core.schema_types import SalonDatetimeOut
 from app.core.time import as_utc, combine_local
+from app.domains.booking.selection import load_selected_services, selection_ids
 from app.domains.stammdaten.models import (
     DayOverride,
     SalonClosure,
@@ -28,7 +30,8 @@ class SlotResult(BaseModel):
 
 
 async def get_available_slots(
-    session: AsyncSession, team_member_id: UUID, service_id: UUID, target_date: date
+    session: AsyncSession, team_member_id: UUID, service_id: UUID, target_date: date,
+    *, duration_minutes: Optional[int] = None, exclude_appointment_id: Optional[UUID] = None,
 ) -> List[SlotResult]:
     # 1. Load service
     service = await session.get(Service, service_id)
@@ -111,11 +114,13 @@ async def get_available_slots(
         Appointment.starts_at < end_dt,
         Appointment.ends_at > start_dt,
     )
+    if exclude_appointment_id is not None:
+        apt_stmt = apt_stmt.where(Appointment.id != exclude_appointment_id)
     apt_result = await session.execute(apt_stmt)
     appointments = apt_result.scalars().all()
 
     # 8. Generate slots for each working window
-    duration = timedelta(minutes=service.duration_minutes)
+    duration = timedelta(minutes=duration_minutes if duration_minutes is not None else service.duration_minutes)
     slots: List[SlotResult] = []
     
     for w_start, w_end in working_windows:
@@ -152,25 +157,26 @@ async def get_available_slots(
 
 async def get_public_slots(
     session: AsyncSession,
-    service_id: UUID,
+    service_id: Optional[UUID],
     target_date: date,
     team_member_id: Optional[UUID] = None,
+    service_ids: Optional[List[UUID]] = None,
 ) -> List["PublicSlotResult"]:
     """Return slots enriched with team-member info, filtered to the booking window."""
     now = datetime.now(timezone.utc)
     window_open = now + timedelta(hours=settings.BOOKING_MIN_LEAD_HOURS)
     window_close = now + timedelta(days=settings.BOOKING_MAX_HORIZON_DAYS)
 
-    if team_member_id is not None:
-        members = await _load_members_for_service(session, service_id, only_id=team_member_id)
-    else:
-        members = await _load_members_for_service(session, service_id)
+    ids = selection_ids(service_id, service_ids)
+    services = await load_selected_services(session, ids)
+    duration_minutes = sum(s.duration_minutes for s in services)
+    members = await _load_members_for_selection(session, ids, only_id=team_member_id)
 
     result: List[PublicSlotResult] = []
     seen: set = set()
 
     for member in members:
-        raw_slots = await get_available_slots(session, member.id, service_id, target_date)
+        raw_slots = await get_available_slots(session, member.id, ids[0], target_date, duration_minutes=duration_minutes)
         for slot in raw_slots:
             if slot.starts_at < window_open or slot.starts_at > window_close:
                 continue
@@ -196,16 +202,23 @@ async def _load_members_for_service(
     service_id: UUID,
     only_id: Optional[UUID] = None,
 ) -> List[TeamMember]:
+    return await _load_members_for_selection(session, [service_id], only_id)
+
+
+async def _load_members_for_selection(
+    session: AsyncSession, service_ids: List[UUID], only_id: Optional[UUID] = None,
+) -> List[TeamMember]:
     stmt = (
         select(TeamMember)
         .join(TeamMemberServiceLink, TeamMemberServiceLink.team_member_id == TeamMember.id)
         .where(
-            TeamMemberServiceLink.service_id == service_id,
+            TeamMemberServiceLink.service_id.in_(service_ids),
             TeamMember.is_active == True,  # noqa: E712
         )
     )
     if only_id is not None:
         stmt = stmt.where(TeamMember.id == only_id)
+    stmt = stmt.group_by(TeamMember.id).having(func.count(TeamMemberServiceLink.service_id) == len(service_ids))
     result = await session.execute(stmt)
     return result.scalars().all()
 

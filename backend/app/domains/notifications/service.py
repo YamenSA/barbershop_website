@@ -90,7 +90,7 @@ async def send_confirmation(session: AsyncSession, appointment) -> None:
 
     subject, html_body = render_confirmation(
         customer_name=customer.name,
-        service_name=service.name,
+        service_name=appointment.service_summary or service.name,
         team_member_name=team_member.name,
         starts_at=appointment.starts_at,
         cancellation_token=appointment.cancellation_token,
@@ -123,7 +123,7 @@ async def send_reminder(session: AsyncSession, appointment) -> None:
 
     subject, html_body = render_reminder(
         customer_name=customer.name,
-        service_name=service.name,
+        service_name=appointment.service_summary or service.name,
         team_member_name=team_member.name,
         starts_at=appointment.starts_at,
     )

@@ -1,0 +1,59 @@
+/* Shared legacy text stays unchanged; presentation is scoped to the preview. */
+.content {
+  max-width: 65ch;
+  overflow-wrap: anywhere;
+  color: var(--color-ink-muted);
+  font-size: 1rem;
+  line-height: 1.75;
+}
+.content > section {
+  padding: 0;
+}
+.content > section > div {
+  max-width: none;
+  margin: 0;
+}
+.content h1 {
+  margin-bottom: 1.5rem;
+  font-family: var(--font-brand);
+  font-weight: 500;
+  font-size: clamp(2.5rem, 5vw, 4.5rem) !important;
+  line-height: 1.05;
+  letter-spacing: 0;
+  text-transform: uppercase;
+  text-wrap: balance;
+}
+.content h2 {
+  font-family: var(--font-text);
+  font-size: 1.125rem;
+  font-weight: 700;
+  line-height: 1.5;
+  letter-spacing: 0;
+  text-wrap: balance;
+  scroll-margin-top: 2rem;
+}
+.content h3 {
+  font-family: var(--font-text);
+  line-height: 1.5;
+  text-wrap: balance;
+}
+.content p, .content ul, .content div {
+  color: inherit;
+}
+.content p {
+  text-wrap: pretty;
+}
+.content a {
+  color: var(--color-gold-300);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.content a:hover {
+  color: var(--color-ink);
+}
+@media (min-width: 1024px) {
+  .content {
+    font-size: 1.0625rem;
+    line-height: 1.75;
+  }
+}
