@@ -49,7 +49,7 @@ def render_reschedule_confirmation(
   <li><strong>Stylist:</strong> {team_member_name}</li>
   <li><strong>Neuer Termin:</strong> {_fmt(starts_at)}</li>
 </ul>
-<p><strong>Zahlung:</strong> Vor Ort (bar oder Karte)</p>
+<p><strong>Zahlung:</strong> Vor Ort</p>
 <p>Möchten Sie den Termin stornieren? Das ist bis 24 Stunden vorher möglich:
 <br><a href="{cancel_url}">Termin stornieren</a></p>
 <p>Mit freundlichen Grüßen,<br>Ihr Azzam Barbershop-Team</p>"""
@@ -83,7 +83,7 @@ def render_confirmation(
   <li><strong>Stylist:</strong> {team_member_name}</li>
   <li><strong>Datum / Uhrzeit:</strong> {_fmt(starts_at)}</li>
 </ul>
-<p><strong>Zahlung:</strong> Vor Ort (bar oder Karte)</p>
+<p><strong>Zahlung:</strong> Vor Ort</p>
 <p>
   Möchten Sie den Termin stornieren? Das ist bis 24 Stunden vor dem Termin möglich:
   <br><a href="{cancel_url}">Termin stornieren</a>
@@ -110,7 +110,7 @@ def render_reminder(
   <li><strong>Stylist:</strong> {team_member_name}</li>
   <li><strong>Datum / Uhrzeit:</strong> {_fmt(starts_at)}</li>
 </ul>
-<p><strong>Zahlung:</strong> Vor Ort (bar oder Karte)</p>
+<p><strong>Zahlung:</strong> Vor Ort</p>
 <p>Wir freuen uns auf Ihren Besuch!</p>
 <p>Mit freundlichen Grüßen,<br>Ihr Azzam Barbershop-Team</p>"""
     return subject, body
